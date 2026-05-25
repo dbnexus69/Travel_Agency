@@ -19,6 +19,11 @@ import {
   loadDashboardCache,
   invalidateDashboardCache,
 } from '../utils/dashboardCache';
+import {
+  saveConfigCache,
+  loadConfigCache,
+  invalidateConfigCache,
+} from '../utils/configCache';
 
 // Limpiar caché de permisos de rol si quedó de versiones anteriores
 try { localStorage.removeItem('itea_role_permissions_cache'); } catch {}
@@ -104,16 +109,24 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<AppData>(() => {
     // ── Inicialización optimista desde caché ──────────────────────────────
     // Si hay datos cacheados válidos, pre-populamos el estado para que la
-    // tabla de ventas/usuarios se renderice en 0ms antes del primer fetch de red.
+    // tabla de ventas/usuarios/catálogos se renderice en 0ms antes del primer fetch de red.
     const cachedSales = loadSalesCache();
     const cachedClients = loadClientsCache();
     const cachedUsers = loadUsersCache();
-    if (cachedSales || cachedClients || cachedUsers) {
+    const cachedConfig = loadConfigCache();
+
+    const initialConfig = {
+      ...emptyData.config,
+      ...(cachedConfig || {})
+    };
+
+    if (cachedSales || cachedClients || cachedUsers || cachedConfig) {
       return {
         ...emptyData,
         sales: (cachedSales as Sale[]) || [],
         clients: (cachedClients as Client[]) || [],
         users: (cachedUsers as User[]) || [],
+        config: initialConfig,
       };
     }
     return emptyData;
@@ -211,6 +224,21 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
       // Guardar usuarios en caché
       if (usersRes.data?.length) saveUsersCache(usersRes.data);
+
+      // Guardar catálogos de configuración en caché (excluyendo permisos dinámicos)
+      if (configAll && Object.keys(configAll).length > 0) {
+        const configDataToCache = {
+          cards: configAll.cards || [],
+          paymentMethods: configAll['payment-methods'] || [],
+          documentTypes: configAll['document-types'] || [],
+          airlines: configAll.airlines || [],
+          suppliers: configAll.suppliers || [],
+          airports: configAll.airports || [],
+          baggage: configAll.baggage || [],
+          packages: configAll.packages || [],
+        };
+        saveConfigCache(configDataToCache);
+      }
 
       // Merge completo al estado — sin tocar sales/clients que ya están
       setData(prev => ({
@@ -414,37 +442,43 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
 
   const addConfigItem = async (section: ConfigSection, item: Record<string, unknown>): Promise<Record<string, unknown>> => {
+    // Flujo estándar y ultra-robusto (idéntico al de ventas):
+    // Esperamos la creación física en la base de datos (que ahora tarda milisegundos gracias a la optimización de 1 sola consulta en el back).
+    // Esto previene cualquier identificador temporal o parpadeo, y cierra la modal mostrando la tarjeta real creada.
     const created = await api.createConfigItem(section, item);
-    setData(prev => ({
-      ...prev,
-      config: {
+    setData(prev => {
+      const nextConfig = {
         ...prev.config,
         [section]: [...(prev.config as any)[section], created]
-      }
-    }));
+      };
+      saveConfigCache(nextConfig);
+      return { ...prev, config: nextConfig };
+    });
     return created;
   };
 
   const updateConfigItem = async (section: ConfigSection, id: number, itemUpdate: Record<string, unknown>) => {
     await api.updateConfigItem(section, id, itemUpdate);
-    setData(prev => ({
-      ...prev,
-      config: {
+    setData(prev => {
+      const nextConfig = {
         ...prev.config,
         [section]: (prev.config as any)[section].map((i: any) => i.id === id ? { ...i, ...itemUpdate } : i)
-      }
-    }));
+      };
+      saveConfigCache(nextConfig);
+      return { ...prev, config: nextConfig };
+    });
   };
 
   const deleteConfigItem = async (section: ConfigSection, id: number) => {
     await api.deleteConfigItem(section, id);
-    setData(prev => ({
-      ...prev,
-      config: {
+    setData(prev => {
+      const nextConfig = {
         ...prev.config,
         [section]: (prev.config as any)[section].filter((i: any) => i.id !== id)
-      }
-    }));
+      };
+      saveConfigCache(nextConfig);
+      return { ...prev, config: nextConfig };
+    });
   };
 
   const addCommissionAgent = async (agent: any) => {

@@ -41,7 +41,12 @@ export function Sidebar({ isMobileOpen = false, onClose }: SidebarProps) {
   ];
 
   const filteredMainLinks = mainLinks.filter(link => canView(link.permission));
-  const filteredAdminLinks = adminLinks.filter(link => canView(link.permission));
+  const filteredAdminLinks = (adminLinks as any[]).filter(link => {
+    if (link.permission === 'users' || link.permission === 'config') {
+      return isAdmin;
+    }
+    return canView(link.permission);
+  });
 
   return (
     <aside 

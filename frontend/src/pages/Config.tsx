@@ -48,6 +48,11 @@ const SECTIONS = [
 
 type SectionId = typeof SECTIONS[number]['id'];
 
+const isOptimisticId = (item: any): boolean => {
+  if (item === undefined || item === null) return false;
+  return item._isOptimistic === true;
+};
+
 export default function Config() {
   const { data, addConfigItem, updateConfigItem, deleteConfigItem } = useData();
   const [currentSection, setCurrentSection] = useState<SectionId>('cards');
@@ -59,8 +64,11 @@ export default function Config() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [deleteItemId, setDeleteItemId] = useState<number | null>(null);
   const [viewingPackage, setViewingPackage] = useState<any>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const currentData = (data.config[currentSection as keyof ConfigData] || []) as any[];
+  const currentData = ((data.config[currentSection as keyof ConfigData] || []) as any[])
+    .slice()
+    .sort((a, b) => Number(b.id) - Number(a.id));
 
   // Dynamic filter based on search input
   const filteredData = currentData.filter(item => {
@@ -201,15 +209,21 @@ export default function Config() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validate()) return;
-    
-    if (editingItem) {
-      updateConfigItem(currentSection as ConfigSection, editingItem.id, formData);
-    } else {
-      addConfigItem(currentSection as ConfigSection, formData);
+    setIsSaving(true);
+    try {
+      if (editingItem) {
+        await updateConfigItem(currentSection as ConfigSection, editingItem.id, formData);
+      } else {
+        await addConfigItem(currentSection as ConfigSection, formData);
+      }
+      setIsModalOpen(false);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSaving(false);
     }
-    setIsModalOpen(false);
   };
 
   const handleDelete = (id: number) => {
@@ -376,29 +390,50 @@ export default function Config() {
                   />
                 ) : (
                   <Table headers={getHeaders(currentSection)}>
-                    {filteredData.map((item: any) => (
-                      <TableRow key={item.id}>
-                        <TableCell>{item.id}</TableCell>
-                        {getRow(item, currentSection).map((val, i) => (
-                          <TableCell key={i}>{val}</TableCell>
-                        ))}
-                        <TableCell>
-                          <div className="flex gap-2">
-                            {currentSection === 'packages' && (
-                              <Button variant="outline" size="sm" onClick={() => setViewingPackage(item)} title="Ver Detalle">
-                                <Eye size={13} />
+                    {filteredData.map((item: any) => {
+                      const isOptimistic = isOptimisticId(item);
+                      return (
+                        <TableRow key={item.id}>
+                          <TableCell className="font-semibold text-gray-700">
+                            {item.id}
+                          </TableCell>
+                          {getRow(item, currentSection).map((val, i) => (
+                            <TableCell key={i}>{val}</TableCell>
+                          ))}
+                          <TableCell>
+                            <div className="flex gap-2">
+                              {currentSection === 'packages' && (
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  onClick={() => setViewingPackage(item)} 
+                                  title="Ver Detalle"
+                                  disabled={isOptimistic}
+                                >
+                                  <Eye size={13} />
+                                </Button>
+                              )}
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => handleOpenModal(item)}
+                                disabled={isOptimistic}
+                              >
+                                <Pencil size={13} />
                               </Button>
-                            )}
-                            <Button variant="outline" size="sm" onClick={() => handleOpenModal(item)}>
-                              <Pencil size={13} />
-                            </Button>
-                            <Button variant="danger" size="sm" onClick={() => handleDelete(item.id)}>
-                              <Trash2 size={13} />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                              <Button 
+                                variant="danger" 
+                                size="sm" 
+                                onClick={() => handleDelete(item.id)}
+                                disabled={isOptimistic}
+                              >
+                                <Trash2 size={13} />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </Table>
                 )
               )}
@@ -409,13 +444,19 @@ export default function Config() {
 
       <Modal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          if (!isSaving) {
+            setIsModalOpen(false);
+          }
+        }}
         title={editingItem ? 'Editar Registro' : 'Registrar Elemento'}
         size={currentSection === 'packages' ? 'xl' : 'lg'}
         footer={
           <>
-            <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSubmit}>Guardar Cambios</Button>
+            <Button variant="outline" onClick={() => setIsModalOpen(false)} disabled={isSaving}>Cancelar</Button>
+            <Button onClick={handleSubmit} disabled={isSaving}>
+              {isSaving ? (editingItem ? 'Guardando...' : 'Creando...') : 'Guardar Cambios'}
+            </Button>
           </>
         }
       >

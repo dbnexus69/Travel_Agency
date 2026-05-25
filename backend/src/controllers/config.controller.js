@@ -4,7 +4,7 @@ const { success, error } = require('../utils/apiResponse');
 const SECTION_MAP = {
   'cards': {
     model: 'tarjetasAgencia', idField: 'id', include: { metodoPago: true },
-    transform: (r) => ({ id: r.id, name: r.nombre, paymentMethod: r.metodoPago?.nombre || null, lastFourDigits: r.ultimosCuatro, description: r.descripcion, status: r.status })
+    transform: (r) => ({ id: r.id, name: r.nombre, paymentMethod: r.metodoPago?.nombre || null, lastFourDigits: r.ultimosCuatro, description: r.descripcion, status: r.status === 'active' || r.status === 'Activo' ? 'Activo' : 'Inactivo' })
   },
   'payment-methods': {
     model: 'metodosPago', idField: 'id',
@@ -24,7 +24,7 @@ const SECTION_MAP = {
   },
   'airports': {
     model: 'aeropuertos', idField: 'id',
-    transform: (r) => ({ id: r.id, name: r.nombre, abbreviation: r.codigoIata, location: [r.ciudad, r.pais].filter(Boolean).join(', '), type: r.tipo, status: r.status })
+    transform: (r) => ({ id: r.id, name: r.nombre, abbreviation: r.codigoIata, location: [r.ciudad, r.pais].filter(Boolean).join(', '), type: r.tipo, status: r.status === 'active' || r.status === 'Activo' ? 'Activo' : 'Inactivo' })
   },
   'baggage': {
     model: 'politicasEquipaje', idField: 'id', include: { aerolinea: true },
@@ -95,17 +95,185 @@ exports.getSection = async (req, res, next) => {
   }
 };
 
+// Helper asíncrono para des-mapear (untransform) el body del frontend al esquema de base de datos
+const untransformBody = async (section, body) => {
+  const data = {};
+  switch (section) {
+    case 'cards':
+      data.nombre = body.name;
+      data.ultimosCuatro = body.lastFourDigits || '';
+      data.descripcion = body.description || '';
+      data.status = body.status === 'Activo' || body.status === 'active' ? 'active' : 'inactive';
+      
+      if (body.paymentMethod) {
+        // Optimización extrema: usamos connectOrCreate para evitar roundtrips adicionales al buscar/crear relaciones únicas
+        data.metodoPago = {
+          connectOrCreate: {
+            where: { nombre: body.paymentMethod },
+            create: { nombre: body.paymentMethod }
+          }
+        };
+      }
+      break;
+
+    case 'payment-methods':
+      data.nombre = body.name;
+      break;
+
+    case 'document-types':
+      data.nombre = body.name;
+      data.abreviatura = body.abreviatura || body.name.slice(0, 3).toUpperCase();
+      break;
+
+    case 'airlines':
+      data.nombre = body.name;
+      data.codigoIata = body.code || '';
+      data.tipo = body.type || 'Internacional';
+      data.web = body.website || null;
+      break;
+
+    case 'suppliers':
+      data.nombre = body.name;
+      data.tipo = body.type || 'Hotel';
+      data.emailContacto = body.email || '';
+      data.telefono = body.phone || '';
+      data.web = body.website || null;
+      break;
+
+    case 'airports':
+      data.nombre = body.name;
+      data.codigoIata = body.abbreviation || '';
+      data.tipo = body.type || 'Ambos';
+      data.status = body.status === 'Activo' || body.status === 'active' ? 'active' : 'inactive';
+      if (body.location) {
+        const parts = body.location.split(',').map(p => p.trim());
+        data.ciudad = parts[0] || '';
+        data.pais = parts[1] || '';
+      }
+      break;
+
+    case 'baggage':
+      data.tipoTarifa = body.fareType || '';
+      data.articuloPersonal = body.personalItem || '';
+      data.equipajeMano = body.carryOn || '';
+      data.equipajeBodega = body.checkedBag || '';
+      data.notas = body.notes || null;
+      
+      if (body.airlineName) {
+        // Corrección de integridad: Usamos findFirst porque 'nombre' no es una llave única estricta en el modelo de aerolineas
+        let airline = await prisma.aerolineas.findFirst({ where: { nombre: body.airlineName } });
+        if (!airline) {
+          airline = await prisma.aerolineas.create({ data: { nombre: body.airlineName, codigoIata: body.airlineName.slice(0, 2).toUpperCase() } });
+        }
+        data.aerolineaId = airline.id;
+      }
+      break;
+
+    case 'packages':
+      data.nombre = body.name;
+      data.destino = body.destination;
+      data.serviciosIncluidos = body.includedServices || '';
+      data.noIncluido = body.notIncluded || '';
+      data.status = 'activo';
+      break;
+  }
+  return data;
+};
+
+// Helper asíncrono para crear las relaciones de los paquetes turísticos en las tablas relacionales correspondientes
+const createPackageRelations = async (paqueteId, body) => {
+  // 1. Relación de Vuelo
+  if (body.flight) {
+    let aerolineaId = null;
+    if (body.flight.airline) {
+      // Corrección de integridad: Usamos findFirst en lugar de findUnique
+      let airline = await prisma.aerolineas.findFirst({ where: { nombre: body.flight.airline } });
+      if (!airline) {
+        airline = await prisma.aerolineas.create({ data: { nombre: body.flight.airline, codigoIata: body.flight.airline.slice(0, 2).toUpperCase() } });
+      }
+      aerolineaId = airline.id;
+    }
+    await prisma.paqueteVuelo.create({
+      data: {
+        paqueteId,
+        aerolineaId,
+        nroVuelo: body.flight.route || null,
+        modoVuelo: body.flight.flightMode || 'round_trip'
+      }
+    });
+  }
+
+  // 2. Relación de Hotel / Alojamiento
+  if (body.accommodation) {
+    await prisma.paqueteHotel.create({
+      data: {
+        paqueteId,
+        hotelNombre: body.accommodation.hotel || '',
+        tipoHotel: body.accommodation.hotelType || 'hotel',
+        regimen: body.accommodation.mealPlan || 'todo_incluido',
+        noches: body.nights || 0
+      }
+    });
+  }
+
+  // 3. Relación de Tarifas
+  if (body.rates) {
+    await prisma.paqueteTarifas.create({
+      data: {
+        paqueteId,
+        tarifaAdulto: parseFloat(body.rates.adult) || 0,
+        tarifaMenor: parseFloat(body.rates.child) || 0
+      }
+    });
+  }
+
+  // 4. Relación de Asistencia Médica
+  if (body.medicalAssistance) {
+    await prisma.paqueteAsistenciaMedica.create({
+      data: {
+        paqueteId,
+        coberturaUsd: parseFloat(body.medicalAssistance.amountUsd) || 0,
+        diasCobertura: parseInt(body.medicalAssistance.coverageDays) || 0
+      }
+    });
+  }
+};
+
 exports.createItem = async (req, res, next) => {
   try {
     const { section } = req.params;
     const config = SECTION_MAP[section];
     if (!config) return error(res, `Sección "${section}" no válida`, 400);
 
-    const item = await prisma[config.model].create({
-      data: { ...req.body }
+    // Mapear el cuerpo de la petición de entrada al formato de la base de datos
+    const dbData = await untransformBody(section, req.body);
+
+    // Ejecutar creación transaccional optimizada (Carga Relaciones Eager e Inmediata)
+    let createdResponse = await prisma.$transaction(async (tx) => {
+      // Crear registro base e incluir sus relaciones en una sola consulta de base de datos
+      const createdItem = await tx[config.model].create({
+        data: dbData,
+        include: config.include || undefined
+      });
+
+      // Flujo de creación de relaciones hijas si es un Paquete Turístico
+      if (section === 'packages') {
+        await createPackageRelations(createdItem.id, req.body);
+        // Volvemos a buscar el paquete para retornar todas las relaciones hijas recién creadas
+        return await tx[config.model].findUnique({
+          where: { [config.idField]: createdItem.id },
+          include: config.include
+        });
+      }
+
+      return createdItem;
     });
 
-    success(res, item, null, 201);
+    if (config.transform) {
+      createdResponse = config.transform(createdResponse);
+    }
+
+    success(res, createdResponse, null, 201);
   } catch (err) {
     next(err);
   }
@@ -117,12 +285,44 @@ exports.updateItem = async (req, res, next) => {
     const config = SECTION_MAP[section];
     if (!config) return error(res, `Sección "${section}" no válida`, 400);
 
-    const item = await prisma[config.model].update({
-      where: { [config.idField]: parseInt(id) },
-      data: { ...req.body }
+    const itemId = parseInt(id);
+
+    // Mapear el cuerpo de la petición de entrada al formato de la base de datos
+    const dbData = await untransformBody(section, req.body);
+
+    // Ejecutar actualización transaccional optimizada (Carga Relaciones Eager e Inmediata)
+    let updatedResponse = await prisma.$transaction(async (tx) => {
+      // Actualizar registro base e incluir sus relaciones en una sola consulta de base de datos
+      const updatedItem = await tx[config.model].update({
+        where: { [config.idField]: itemId },
+        data: dbData,
+        include: config.include || undefined
+      });
+
+      // Si es un Paquete Turístico, limpiar relaciones antiguas y re-crear
+      if (section === 'packages') {
+        await tx.paqueteVuelo.deleteMany({ where: { paqueteId: itemId } });
+        await tx.paqueteHotel.deleteMany({ where: { paqueteId: itemId } });
+        await tx.paqueteTarifas.deleteMany({ where: { paqueteId: itemId } });
+        await tx.paqueteAsistenciaMedica.deleteMany({ where: { paqueteId: itemId } });
+
+        await createPackageRelations(itemId, req.body);
+
+        // Volvemos a buscar el paquete para retornar todas las relaciones hijas actualizadas
+        return await tx[config.model].findUnique({
+          where: { [config.idField]: itemId },
+          include: config.include
+        });
+      }
+
+      return updatedItem;
     });
 
-    success(res, item);
+    if (config.transform) {
+      updatedResponse = config.transform(updatedResponse);
+    }
+
+    success(res, updatedResponse);
   } catch (err) {
     next(err);
   }
@@ -134,11 +334,24 @@ exports.removeItem = async (req, res, next) => {
     const config = SECTION_MAP[section];
     if (!config) return error(res, `Sección "${section}" no válida`, 400);
 
-    await prisma[config.model].delete({
-      where: { [config.idField]: parseInt(id) }
+    const itemId = parseInt(id);
+
+    // Ejecutar eliminación transaccional
+    await prisma.$transaction(async (tx) => {
+      // Cascada manual previa de sub-tablas para evitar violaciones de llaves foráneas
+      if (section === 'packages') {
+        await tx.paqueteVuelo.deleteMany({ where: { paqueteId: itemId } });
+        await tx.paqueteHotel.deleteMany({ where: { paqueteId: itemId } });
+        await tx.paqueteTarifas.deleteMany({ where: { paqueteId: itemId } });
+        await tx.paqueteAsistenciaMedica.deleteMany({ where: { paqueteId: itemId } });
+      }
+
+      await tx[config.model].delete({
+        where: { [config.idField]: itemId }
+      });
     });
 
-    success(res, { message: 'Elemento eliminado' });
+    success(res, { message: 'Elemento eliminado con éxito' });
   } catch (err) {
     next(err);
   }
