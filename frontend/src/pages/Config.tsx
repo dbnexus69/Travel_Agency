@@ -186,7 +186,8 @@ export default function Config() {
         case 'airports':
           if (!formData.name || formData.name.trim().length === 0) newErrors.name = 'El nombre del aeropuerto es obligatorio.';
           if (!formData.abbreviation || formData.abbreviation.trim().length === 0) newErrors.abbreviation = 'La abreviación IATA es obligatoria.';
-          if (!formData.location || formData.location.trim().length === 0) newErrors.location = 'La ubicación es obligatoria.';
+          if (!formData.city || formData.city.trim().length === 0) newErrors.city = 'La ciudad es obligatoria.';
+          if (!formData.country || formData.country.trim().length === 0) newErrors.country = 'El país es obligatorio.';
           if (!formData.type) newErrors.type = 'Debe seleccionar un tipo de cobertura.';
           if (!formData.status) newErrors.status = 'Debe seleccionar un estado.';
           break;

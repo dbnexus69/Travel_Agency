@@ -224,15 +224,26 @@ export default function ConfigForms({ section, formData, setFormData, errors, se
               error={errors.name}
             />
           </FormField>
-          <FormField label="Ubicación (Ciudad, País)" error={errors.location}>
+          <FormField label="Ciudad" error={errors.city}>
             <Input 
-              value={formData.location || ''} 
+              value={formData.city || ''} 
               onChange={e => {
-                setFormData({ ...formData, location: e.target.value });
-                if (errors.location) setErrors({ ...errors, location: '' });
+                setFormData({ ...formData, city: e.target.value });
+                if (errors.city) setErrors({ ...errors, city: '' });
               }} 
-              placeholder="Ej. Bogotá, Colombia"
-              error={errors.location}
+              placeholder="Ej. Bogotá"
+              error={errors.city}
+            />
+          </FormField>
+          <FormField label="País" error={errors.country}>
+            <Input 
+              value={formData.country || ''} 
+              onChange={e => {
+                setFormData({ ...formData, country: e.target.value });
+                if (errors.country) setErrors({ ...errors, country: '' });
+              }} 
+              placeholder="Ej. Colombia"
+              error={errors.country}
             />
           </FormField>
           <FormField label="Abreviación IATA" error={errors.abbreviation}>

@@ -24,7 +24,7 @@ const SECTION_MAP = {
   },
   'airports': {
     model: 'aeropuertos', idField: 'id',
-    transform: (r) => ({ id: r.id, name: r.nombre, abbreviation: r.codigoIata, location: [r.ciudad, r.pais].filter(Boolean).join(', '), type: r.tipo, status: r.status === 'active' || r.status === 'Activo' ? 'Activo' : 'Inactivo' })
+    transform: (r) => ({ id: r.id, name: r.nombre, abbreviation: r.codigoIata, city: r.ciudad, country: r.pais, location: [r.ciudad, r.pais].filter(Boolean).join(', '), type: r.tipo, status: r.status === 'active' || r.status === 'Activo' ? 'Activo' : 'Inactivo' })
   },
   'baggage': {
     model: 'politicasEquipaje', idField: 'id', include: { aerolinea: true },
@@ -145,11 +145,8 @@ const untransformBody = async (section, body) => {
       data.codigoIata = body.abbreviation || '';
       data.tipo = body.type || 'Ambos';
       data.status = body.status === 'Activo' || body.status === 'active' ? 'active' : 'inactive';
-      if (body.location) {
-        const parts = body.location.split(',').map(p => p.trim());
-        data.ciudad = parts[0] || '';
-        data.pais = parts[1] || '';
-      }
+      data.ciudad = body.city || '';
+      data.pais = body.country || '';
       break;
 
     case 'baggage':
