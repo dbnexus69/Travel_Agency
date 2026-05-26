@@ -77,10 +77,31 @@ exports.updateCheckin = async (req, res, next) => {
   try {
     const id = req.params.id;
     const data = req.body;
+    const file = req.file;
 
     const tramo = await prisma.tramosVuelo.findUnique({
       where: { id },
-      include: { prodTiqueteria: true }
+      include: { 
+        prodTiqueteria: {
+          include: {
+            detalleVenta: {
+              include: {
+                venta: {
+                  include: {
+                    cliente: {
+                      include: {
+                        persona: true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        aeropuertoOrigen: true,
+        aeropuertoDestino: true
+      }
     });
     if (!tramo) return error(res, 'Vuelo no encontrado', 404);
 
@@ -88,6 +109,38 @@ exports.updateCheckin = async (req, res, next) => {
       where: { id: tramo.prodTiqueteriaId },
       data: { checkinStatus: data.checkin || 'pendiente' }
     });
+
+    // Send email if a file was uploaded and we have the client's email
+    if (file) {
+      const emailService = require('../utils/emailService');
+      const email = tramo.prodTiqueteria?.detalleVenta?.venta?.cliente?.persona?.email;
+      
+      if (email) {
+        const pasajeroNombres = tramo.prodTiqueteria?.detalleVenta?.venta?.cliente?.persona?.nombres || 'Cliente';
+        const ruta = `${tramo.aeropuertoOrigen?.codigoIata || '?'} - ${tramo.aeropuertoDestino?.codigoIata || '?'}`;
+        
+        await emailService.sendEmail({
+          to: email,
+          subject: `Su pase de abordar está listo - Vuelo ${ruta}`,
+          html: `
+            <div style="font-family: sans-serif; padding: 20px;">
+              <h2>¡Hola ${pasajeroNombres}!</h2>
+              <p>Su check-in para el vuelo <strong>${ruta}</strong> ha sido realizado exitosamente.</p>
+              <p>Adjuntamos a este correo su pase de abordar.</p>
+              <p>¡Buen viaje!</p>
+              <br>
+              <p>Atentamente,<br>El equipo de iTea Travel</p>
+            </div>
+          `,
+          attachments: [
+            {
+              filename: file.originalname,
+              content: file.buffer
+            }
+          ]
+        });
+      }
+    }
 
     success(res, { checkinStatus: updated.checkinStatus });
   } catch (err) {

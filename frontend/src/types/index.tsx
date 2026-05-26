@@ -277,7 +277,7 @@ export interface CheckInData {
   phone: string;
   specialNeeds: string;
   needsWheelchair: boolean;
-  voucher?: string;
+  voucher?: { name: string; base64: string };
   sendVoucher?: boolean;
   supplierName?: string;
   supplierCost?: number;
@@ -293,7 +293,7 @@ export interface MigrationData {
   destinationCountry: string;
   requestedDocType: string;
   email: string;
-  voucher?: string;
+  voucher?: { name: string; base64: string };
   sendVoucher?: boolean;
   supplierName?: string;
   supplierCost?: number;
@@ -310,7 +310,7 @@ export interface SimCardData {
   simType: string;
   deliveryMethod: string;
   email: string;
-  voucher?: string;
+  voucher?: { name: string; base64: string };
   sendVoucher?: boolean;
   supplierName?: string;
   supplierCost?: number;
@@ -327,7 +327,7 @@ export interface CarRentalData {
   additionalDrivers: number;
   insuranceType: "basic" | "all_risk";
   guaranteeCreditCard: string;
-  voucher?: string;
+  voucher?: { name: string; base64: string };
   sendVoucher?: boolean;
   supplierName?: string;
   supplierCost?: number;
@@ -345,7 +345,7 @@ export interface FincaData {
   petType: string;
   additionalServices: string[];
   phone: string;
-  voucher?: string;
+  voucher?: { name: string; base64: string };
   sendVoucher?: boolean;
   supplierName?: string;
   supplierCost?: number;
@@ -364,7 +364,7 @@ export interface TourData {
   pickupPoint: string;
   medicalConditions: string;
   phone: string;
-  voucher?: string;
+  voucher?: { name: string; base64: string };
   sendVoucher?: boolean;
   supplierName?: string;
   supplierCost?: number;
@@ -383,7 +383,7 @@ export interface ConventionData {
   hasCatering: boolean;
   cateringNotes: string;
   email: string;
-  voucher?: string;
+  voucher?: { name: string; base64: string };
   sendVoucher?: boolean;
   supplierName?: string;
   supplierCost?: number;
@@ -399,7 +399,7 @@ export interface RestaurantData {
   dietaryRestrictions: string[];
   specialOccasion: string;
   phone: string;
-  voucher?: string;
+  voucher?: { name: string; base64: string };
   sendVoucher?: boolean;
   supplierName?: string;
   supplierCost?: number;
@@ -416,7 +416,7 @@ export interface VisaData {
   visaType: string;
   estimatedTravelDate: string;
   email: string;
-  voucher?: string;
+  voucher?: { name: string; base64: string };
   sendVoucher?: boolean;
   supplierName?: string;
   supplierCost?: number;
@@ -431,7 +431,7 @@ export interface PassportData {
   processType: string;
   estimatedTravelDate: string;
   phone: string;
-  voucher?: string;
+  voucher?: { name: string; base64: string };
   sendVoucher?: boolean;
   supplierName?: string;
   supplierCost?: number;
@@ -450,7 +450,7 @@ export interface PetServiceData {
   destinationCountry: string;
   medicalConditions: string;
   phone: string;
-  voucher?: string;
+  voucher?: { name: string; base64: string };
   sendVoucher?: boolean;
   supplierName?: string;
   supplierCost?: number;

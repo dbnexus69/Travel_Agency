@@ -4,9 +4,9 @@ import { FormField } from "../../ui/Form";
 import { useRef } from "react";
 
 interface VoucherFieldProps {
-  voucher?: string;
+  voucher?: { name: string; base64: string };
   sendVoucher?: boolean;
-  onChange: (updates: { voucher?: string; sendVoucher?: boolean }) => void;
+  onChange: (updates: { voucher?: { name: string; base64: string } | undefined; sendVoucher?: boolean }) => void;
 }
 
 export function VoucherField({ voucher, sendVoucher, onChange }: VoucherFieldProps) {
@@ -15,14 +15,18 @@ export function VoucherField({ voucher, sendVoucher, onChange }: VoucherFieldPro
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Por ahora simulamos la subida guardando el nombre del archivo
-      // En una implementación real, aquí se subiría a un servidor o se convertiría a Base64
-      onChange({ voucher: file.name });
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          onChange({ voucher: { name: file.name, base64: reader.result } });
+        }
+      };
+      reader.readAsDataURL(file);
     }
   };
 
   const removeFile = () => {
-    onChange({ voucher: "" });
+    onChange({ voucher: undefined });
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -64,7 +68,7 @@ export function VoucherField({ voucher, sendVoucher, onChange }: VoucherFieldPro
                     <LuFileCheck className="text-emerald-600" size={18} />
                   </div>
                   <div className="max-w-[150px] md:max-w-[200px]">
-                    <p className="text-sm font-bold text-gray-700 truncate">{voucher}</p>
+                    <p className="text-sm font-bold text-gray-700 truncate">{voucher.name}</p>
                     <p className="text-[10px] text-emerald-600 font-medium">Archivo listo para enviar</p>
                   </div>
                 </div>
@@ -103,8 +107,8 @@ export function VoucherField({ voucher, sendVoucher, onChange }: VoucherFieldPro
       </div>
 
       {sendVoucher && voucher && (
-        <div className="flex items-center gap-2 text-[10px] text-accent font-bold bg-accent/10 p-2 rounded-lg animate-fade-in">
-          <LuSend size={12} /> Confirmado: El archivo <strong>{voucher}</strong> se enviará al cliente.
+        <div className="mt-3 text-[10px] text-emerald-600 bg-emerald-50 p-2 rounded-lg flex items-center gap-2">
+          <LuSend size={12} /> Confirmado: El archivo <strong>{voucher.name}</strong> se enviará al cliente.
         </div>
       )}
     </div>

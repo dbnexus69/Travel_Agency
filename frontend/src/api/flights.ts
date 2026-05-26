@@ -5,7 +5,10 @@ export async function listFlights(params: Record<string, unknown>) {
   return res.data;
 }
 
-export async function updateCheckin(id: string, data: Record<string, unknown>) {
-  const res = await api.put(`/flights/${id}/checkin`, data);
+export async function updateCheckin(id: string, data: Record<string, unknown> | FormData) {
+  const isFormData = data instanceof FormData;
+  const res = await api.put(`/flights/${id}/checkin`, data, {
+    headers: isFormData ? { 'Content-Type': 'multipart/form-data' } : undefined,
+  });
   return res.data.data;
 }

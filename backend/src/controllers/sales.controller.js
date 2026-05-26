@@ -1,6 +1,7 @@
 const prisma = require('../config/db');
 const { success, error } = require('../utils/apiResponse');
 const { buildMeta } = require('../utils/paginationHelper');
+const emailService = require('../utils/emailService');
 
 exports.list = async (req, res, next) => {
   try {
@@ -1185,12 +1186,59 @@ exports.create = async (req, res, next) => {
     const created = await prisma.ventas.findUnique({
       where: { id: result },
       include: {
-        cliente: { select: { persona: { select: { nombres: true, apellidos: true } } } },
+        cliente: { select: { persona: { select: { nombres: true, apellidos: true, email: true } } } },
         usuario: { select: { persona: { select: { nombres: true, apellidos: true } } } },
         comisionista: { select: { persona: { select: { nombres: true, apellidos: true } } } },
         metodoPagoPrincipal: true
       }
     });
+
+    const clientEmail = created.cliente?.persona?.email;
+    const clientName = `${created.cliente.persona.nombres} ${created.cliente.persona.apellidos}`;
+
+    // Send vouchers emails
+    console.log('[VOUCHER] clientEmail:', clientEmail);
+    if (clientEmail) {
+      for (const [field, handler] of Object.entries(PRODUCT_HANDLERS)) {
+        const items = Array.isArray(data[field]) ? data[field] : [];
+        console.log(`[VOUCHER] field=${field} items=${items.length}`);
+        for (const item of items) {
+          console.log(`[VOUCHER] item.sendVoucher=${item.sendVoucher} item.voucher=${JSON.stringify(item.voucher)?.substring(0, 80)}`);
+          if (item.voucher && item.voucher.base64 && item.sendVoucher) {
+            try {
+              const base64Data = item.voucher.base64.split(',')[1] || item.voucher.base64;
+              const buffer = Buffer.from(base64Data, 'base64');
+              console.log(`[VOUCHER] Sending email to ${clientEmail} for ${handler.nombreServicio}...`);
+              const result = await emailService.sendEmail({
+                to: clientEmail,
+                subject: `Tu voucher de ${handler.nombreServicio} - Curinoupel`,
+                html: `
+                  <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eaeaec; border-radius: 8px; overflow: hidden;">
+                    <div style="background-color: #0f172a; padding: 20px; text-align: center;">
+                      <h1 style="color: #ffffff; margin: 0; font-size: 24px;">¡Tu voucher está listo!</h1>
+                    </div>
+                    <div style="padding: 30px;">
+                      <p style="font-size: 16px;">Hola <strong>${clientName}</strong>,</p>
+                      <p style="font-size: 16px;">Adjunto a este correo encontrarás el comprobante correspondiente a tu servicio de <strong>${handler.nombreServicio}</strong>.</p>
+                      <p style="font-size: 16px; margin-top: 20px;">Gracias por confiar en nosotros.</p>
+                    </div>
+                  </div>
+                `,
+                attachments: [
+                  {
+                    filename: item.voucher.name || 'voucher.pdf',
+                    content: buffer
+                  }
+                ]
+              });
+              console.log(`[VOUCHER] sendEmail result:`, JSON.stringify(result));
+            } catch (err) {
+              console.error('[ERROR] Sending voucher email:', err.message);
+            }
+          }
+        }
+      }
+    }
 
     success(res, {
       id: created.id,

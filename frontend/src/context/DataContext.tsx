@@ -82,7 +82,7 @@ interface DataContextType {
   deleteSale: (id: number) => Promise<void>;
   registerCreditPayment: (saleId: number, amount: number, method?: string, isTotal?: boolean) => Promise<{ payment: any; status: string; creditPaidAmount: number }>;
   deleteSalePayment: (saleId: number, paymentId: string) => Promise<void>;
-  updateFlight: (id: string, flight: Partial<Flight>) => Promise<void>;
+  updateFlight: (id: string, flight: Partial<Flight> | FormData) => Promise<void>;
   settleCommissions: (agentId: number, settlement: any) => Promise<void>;
   refreshSettlements: () => Promise<void>;
   addConfigItem: (section: ConfigSection, item: Record<string, unknown>) => Promise<Record<string, unknown>>;
@@ -413,7 +413,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
 
 
-  const updateFlight = async (id: string, flightUpdate: Partial<Flight>) => {
+  const updateFlight = async (id: string, flightUpdate: Partial<Flight> | FormData) => {
     const result = await api.updateCheckin(id, flightUpdate as any);
     setData(prev => ({
       ...prev,

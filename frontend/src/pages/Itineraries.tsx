@@ -87,7 +87,14 @@ export default function Itineraries() {
 
     setIsSending(true);
     try {
-      await updateFlight(selectedFlightForCheckin.id, { checkin: 'realizado' });
+      if (checkinFile) {
+        const formData = new FormData();
+        formData.append('checkin', 'realizado');
+        formData.append('file', checkinFile);
+        await updateFlight(selectedFlightForCheckin.id, formData);
+      } else {
+        await updateFlight(selectedFlightForCheckin.id, { checkin: 'realizado' });
+      }
       setIsCheckinModalOpen(false);
       setSuccessMessage(`Check-in realizado para ${selectedFlightForCheckin.passenger}`);
       setShowSuccess(true);

@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const prisma = require('../config/db');
 const { success, error } = require('../utils/apiResponse');
 const { buildMeta } = require('../utils/paginationHelper');
+const emailService = require('../utils/emailService');
 
 exports.list = async (req, res, next) => {
   try {
@@ -162,6 +163,33 @@ exports.create = async (req, res, next) => {
       },
       include: { persona: { include: { tipoDocumento: true } }, rol: true }
     });
+
+    try {
+      await emailService.sendEmail({
+        to: data.email,
+        subject: '¡Bienvenido a Curinoupel - Cuenta Creada!',
+        html: `
+          <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eaeaec; border-radius: 8px; overflow: hidden;">
+            <div style="background-color: #0f172a; padding: 20px; text-align: center;">
+              <h1 style="color: #ffffff; margin: 0; font-size: 24px;">¡Bienvenido a Curinoupel!</h1>
+            </div>
+            <div style="padding: 30px;">
+              <p style="font-size: 16px;">Hola <strong>${persona.nombres}</strong>,</p>
+              <p style="font-size: 16px;">Tu cuenta ha sido creada exitosamente en nuestro sistema.</p>
+              <p style="font-size: 16px;"><strong>Tus credenciales de acceso temporal son:</strong></p>
+              <ul style="font-size: 16px; background: #f8fafc; padding: 15px 30px; border-radius: 6px;">
+                <li><strong>Correo:</strong> ${data.email}</li>
+                <li><strong>Contraseña:</strong> ${data.password}</li>
+              </ul>
+              <p style="font-size: 16px; margin-top: 20px;">Te recomendamos cambiar tu contraseña una vez inicies sesión por motivos de seguridad.</p>
+            </div>
+          </div>
+        `
+      });
+      console.log(`[USER CREATE] Welcome email sent successfully to ${data.email}`);
+    } catch (emailErr) {
+      console.error('[ERROR] Sending welcome email:', emailErr.message);
+    }
 
     success(res, {
       id: usuario.id,
