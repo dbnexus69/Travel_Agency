@@ -85,7 +85,8 @@ exports.dashboard = async (req, res, next) => {
     };
     let totalFlights = 0;
     for (const cs of categoryStats) {
-      const cat = cs.categoria;
+      const rawCat = cs.categoria;
+      const cat = rawCat === 'hoteleria' ? 'hoteles' : rawCat;
       const sum = cs._sum.subtotal || 0;
       const cnt = cs._count;
       if (categoryBreakdown[cat]) {
@@ -96,6 +97,18 @@ exports.dashboard = async (req, res, next) => {
     }
 
     const currentYear = new Date().getFullYear();
+
+    const groupedTrend = Array.from({ length: 12 }, (_, i) => {
+      const m = i + 1;
+      const currentData = monthlyTrend.find(t => t.month === m && t.year === currentYear);
+      const previousData = monthlyTrend.find(t => t.month === m && t.year === currentYear - 1);
+      return {
+        month: m,
+        currentYear: currentData ? Math.round(currentData.total) : 0,
+        previousYear: previousData ? Math.round(previousData.total) : 0
+      };
+    });
+
     const currentYearSales = ventas.filter(v => new Date(v.creadoAt).getFullYear() === currentYear)
       .reduce((s, v) => s + v.montoTotal, 0);
     const prevYearSales = ventas.filter(v => new Date(v.creadoAt).getFullYear() === currentYear - 1)
@@ -113,11 +126,7 @@ exports.dashboard = async (req, res, next) => {
       monthlyRevenue: Math.round(currentYearSales),
       categoryDistribution: categoryDistribution.slice(0, 8),
       carteraStatus,
-      monthlyTrend: monthlyTrend.map(t => ({
-        month: t.month,
-        currentYear: Math.round(t.total * (t.year === currentYear ? 1 : 0)),
-        previousYear: Math.round(t.total * (t.year === currentYear - 1 ? 1 : 0))
-      })),
+      monthlyTrend: groupedTrend,
       totalClients,
       activeClients,
       totalFlights,

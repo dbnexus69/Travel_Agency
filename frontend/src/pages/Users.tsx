@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Plus,
   Search,
@@ -55,6 +55,7 @@ export default function Users() {
     deleteUser,
     updateRolePermissions,
     updateUserPermissions,
+    fetchUsers,
   } = useData();
   const { user: currentUser } = useAuth();
 
@@ -95,6 +96,11 @@ export default function Users() {
   }>({ key: "name", direction: "asc" });
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
+
+  // Lazy Load Fetch
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   const [formData, setFormData] = useState({
     firstName: "",

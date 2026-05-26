@@ -62,6 +62,13 @@ interface DataContextType {
   dashboardLoading: boolean;
   salesLoading: boolean;
   fetchDashboard: (params?: Record<string, unknown>, isBackgroundRefresh?: boolean) => Promise<void>;
+  fetchSales: () => Promise<void>;
+  fetchClients: () => Promise<void>;
+  fetchUsers: () => Promise<void>;
+  fetchConfig: () => Promise<void>;
+  fetchFlights: () => Promise<void>;
+  fetchCommissionAgents: () => Promise<void>;
+  fetchSettlements: () => Promise<void>;
   refreshData: () => void;
   addUser: (user: Omit<User, 'id'>) => Promise<User>;
   updateUser: (id: number, user: Partial<User>) => Promise<void>;
@@ -164,70 +171,54 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  /**
-   * Carga en CASCADA:
-   * Fase 1 (crítica, bloqueante para la UI de ventas):
-   *   → Cargar sales + clients primero → renderiza tabla inmediatamente
-   *   → Guarda en caché localStorage
-   * Fase 2 (background, no bloqueante):
-   *   → Cargar el resto (users, flights, config, agents, etc.)
-   *   → Merge al estado ya visible, sin interrumpir la UI
-   */
-  const loadAll = useCallback(async () => {
-    // Si ya tenemos datos en caché, la tabla ya está visible.
-    // La fase 1 igualmente recarga en background para mantener datos frescos.
-    const hasCachedData = loadSalesCache() !== null;
-
-    if (!hasCachedData) {
-      setSalesLoading(true);
-    }
-
+  const fetchSales = useCallback(async () => {
+    setSalesLoading(true);
     try {
-      // ── FASE 1: Datos críticos (ventas + clientes) ────────────────────
-      const [salesRes, clientsRes] = await Promise.all([
-        api.listSales({ perPage: 100 }).catch(() => ({ data: [] })),
-        api.listClients({ perPage: 100 }).catch(() => ({ data: [] })),
-      ]);
-
-      const freshSales = salesRes.data || [];
-      const freshClients = clientsRes.data || [];
-
-      // Guardar en caché para próximas visitas
-      saveSalesAndClientsCache(freshSales, freshClients);
-
-      // Actualizar sólo sales + clients → tabla se renderiza de inmediato
-      setData(prev => ({ ...prev, sales: freshSales, clients: freshClients }));
+      const res = await api.listSales({ perPage: 50 }).catch(() => ({ data: [] }));
+      const freshSales = res.data || [];
+      setData(prev => {
+        saveSalesAndClientsCache(freshSales, prev.clients);
+        return { ...prev, sales: freshSales };
+      });
+    } catch {
+    } finally {
       setSalesLoading(false);
+    }
+  }, []);
 
-      // ── FASE 2: Resto de datos en background ─────────────────────────
-      if (backgroundLoadingRef.current) return; // Evitar cargas duplicadas en background
-      backgroundLoadingRef.current = true;
+  const fetchClients = useCallback(async () => {
+    try {
+      const res = await api.listClients({ perPage: 100 }).catch(() => ({ data: [] }));
+      const freshClients = res.data || [];
+      setData(prev => {
+        saveSalesAndClientsCache(prev.sales, freshClients);
+        return { ...prev, clients: freshClients };
+      });
+    } catch {}
+  }, []);
 
-      const [usersRes, flightsRes, agentsRes, settlementsRes, configAll, asesorPerms, freelancerPerms, salesHistory] = await Promise.all([
-        api.listUsers({ perPage: 100 }).catch(() => ({ data: [] })),
-        api.listFlights({ perPage: 100 }).catch(() => ({ data: [] })),
-        api.listCommissionAgents({ perPage: 100 }).catch(() => ({ data: [] })),
-        api.listSettlements({ perPage: 100 }).catch(() => ({ data: [] })),
+  const fetchUsers = useCallback(async () => {
+    try {
+      const res = await api.listUsers({ perPage: 100 }).catch(() => ({ data: [] }));
+      const freshUsers = res.data || [];
+      saveUsersCache(freshUsers);
+      setData(prev => ({ ...prev, users: freshUsers }));
+    } catch {}
+  }, []);
+
+  const fetchConfig = useCallback(async () => {
+    try {
+      const [configAll, asesorPerms, freelancerPerms] = await Promise.all([
         api.getAllConfig().catch(() => ({})),
         api.getRolePermissions('asesor').catch(() => null),
         api.getRolePermissions('freelancer').catch(() => null),
-        api.getSalesHistory(new Date().getFullYear()).catch(() => null),
       ]);
-
-      backgroundLoadingRef.current = false;
-
       const resolvedRolePermissions = {
-        // Los permisos siempre se leen frescos del servidor, nunca desde caché.
         asesor: asesorPerms ? normalizeRolePermissions(asesorPerms) : emptyData.config.rolePermissions.asesor,
         freelancer: freelancerPerms ? normalizeRolePermissions(freelancerPerms) : emptyData.config.rolePermissions.freelancer,
       };
-
-      // Guardar usuarios en caché
-      if (usersRes.data?.length) saveUsersCache(usersRes.data);
-
-      // Guardar catálogos de configuración en caché (excluyendo permisos dinámicos)
       if (configAll && Object.keys(configAll).length > 0) {
-        const configDataToCache = {
+        saveConfigCache({
           cards: configAll.cards || [],
           paymentMethods: configAll['payment-methods'] || [],
           documentTypes: configAll['document-types'] || [],
@@ -236,17 +227,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
           airports: configAll.airports || [],
           baggage: configAll.baggage || [],
           packages: configAll.packages || [],
-        };
-        saveConfigCache(configDataToCache);
+        });
       }
-
-      // Merge completo al estado — sin tocar sales/clients que ya están
       setData(prev => ({
         ...prev,
-        users: usersRes.data || [],
-        flights: flightsRes.data || [],
-        commissionAgents: agentsRes.data || [],
-        commissionSettlements: settlementsRes.data || [],
         config: {
           cards: configAll?.cards || [],
           paymentMethods: configAll?.['payment-methods'] || [],
@@ -257,29 +241,47 @@ export function DataProvider({ children }: { children: ReactNode }) {
           baggage: configAll?.baggage || [],
           packages: configAll?.packages || [],
           rolePermissions: resolvedRolePermissions,
-        },
-        salesHistory: salesHistory || [],
+        }
       }));
+    } catch {}
+  }, []);
 
-      // Dashboard en background (usando la función que previene duplicados)
-      const { start, end } = getCurrentMonth();
-      const dashParams: Record<string, unknown> = {};
-      if (start) dashParams.dateFrom = new Date(start).toISOString();
-      if (end) dashParams.dateTo = new Date(end).toISOString();
-      fetchDashboard(dashParams, true);
-    } catch {
-      setSalesLoading(false);
-      backgroundLoadingRef.current = false;
-      setData(emptyData);
-    }
+  const fetchFlights = useCallback(async () => {
+    try {
+      const res = await api.listFlights({ perPage: 100 }).catch(() => ({ data: [] }));
+      setData(prev => ({ ...prev, flights: res.data || [] }));
+    } catch {}
+  }, []);
+
+  const fetchCommissionAgents = useCallback(async () => {
+    try {
+      const res = await api.listCommissionAgents({ perPage: 100 }).catch(() => ({ data: [] }));
+      setData(prev => ({ ...prev, commissionAgents: res.data || [] }));
+    } catch {}
+  }, []);
+
+  const fetchSettlements = useCallback(async () => {
+    try {
+      const res = await api.listSettlements({ perPage: 100 }).catch(() => ({ data: [] }));
+      setData(prev => ({ ...prev, commissionSettlements: res.data || [] }));
+    } catch {}
   }, []);
 
   useEffect(() => {
     if (!user) return;
-    loadAll();
-  }, [loadAll, user]);
+    // Ya no disparamos la carga global que colapsaba la app.
+    // Solo pediremos configuración básica si no hay caché.
+    if (!loadConfigCache()) {
+       fetchConfig();
+    }
+  }, [user, fetchConfig]);
 
-  const refreshData = () => { loadAll(); };
+  const refreshData = () => { 
+    // Compatibilidad para el botón refrescar del usuario
+    fetchDashboard({}, true);
+    fetchSales();
+    fetchClients();
+  };
 
   const addUser = async (user: Omit<User, 'id'>): Promise<User> => {
     const created = await api.createUser(user as any);
@@ -582,6 +584,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
       dashboardLoading,
       salesLoading,
       fetchDashboard,
+      fetchSales,
+      fetchClients,
+      fetchUsers,
+      fetchConfig,
+      fetchFlights,
+      fetchCommissionAgents,
+      fetchSettlements,
       refreshData,
       addUser,
       updateUser,

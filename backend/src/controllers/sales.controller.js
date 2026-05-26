@@ -544,16 +544,22 @@ const PRODUCT_HANDLERS = {
   ticketData: {
     category: 'tiqueteria', table: 'prodTiqueteria',
     nombreServicio: 'Tiquetería',
-    transform: async (d, detalleId, tx) => ({
-      detalleVentaId: detalleId,
-      aerolineaId: await resolveAirlineId(tx, d.airline),
-      nroReserva: d.reservationNumber || null,
-      nroVuelo: d.flightNumber || null,
-      nroTiquete: d.ticketNumber || null,
-      modoVuelo: d.flightMode || 'one_way',
-      planEquipajeId: await resolveBaggagePlanId(tx, d.baggagePlan),
-      checkinStatus: 'pendiente'
-    })
+    transform: async (d, detalleId, tx) => {
+      const [aerolineaId, planEquipajeId] = await Promise.all([
+        resolveAirlineId(tx, d.airline),
+        resolveBaggagePlanId(tx, d.baggagePlan)
+      ]);
+      return {
+        detalleVentaId: detalleId,
+        aerolineaId,
+        nroReserva: d.reservationNumber || null,
+        nroVuelo: d.flightNumber || null,
+        nroTiquete: d.ticketNumber || null,
+        modoVuelo: d.flightMode || 'one_way',
+        planEquipajeId,
+        checkinStatus: 'pendiente'
+      };
+    }
   },
   hotelData: {
     category: 'hoteleria', table: 'prodHoteleria',
@@ -585,21 +591,24 @@ const PRODUCT_HANDLERS = {
   planData: {
     category: 'planes', table: 'prodPlanes',
     nombreServicio: 'Planes',
-    transform: async (d, detalleId, tx) => ({
-      detalleVentaId: detalleId,
-      paqueteId: d.packageId ? (parseInt(d.packageId) || null) : null,
-      nombrePlan: d.planName || null,
-      aerolineaId: await resolveAirlineId(tx, d.airline),
-      nroReserva: d.reservationNumber || null,
-      nroTiquete: d.ticketNumber || null,
-      fechaViajeInicio: d.startDate ? new Date(d.startDate) : null,
-      fechaViajeFin: d.endDate ? new Date(d.endDate) : null,
-      fechaSalidaVuelo: d.flightDepartureDate ? new Date(d.flightDepartureDate) : null,
-      fechaRegresoVuelo: d.flightReturnDate ? new Date(d.flightReturnDate) : null,
-      adultosCount: d.adultsCount || 0,
-      menoresCount: d.childrenCount || 0,
-      observaciones: d.observations || null
-    })
+    transform: async (d, detalleId, tx) => {
+      const aerolineaId = await resolveAirlineId(tx, d.airline);
+      return {
+        detalleVentaId: detalleId,
+        paqueteId: d.packageId ? (parseInt(d.packageId) || null) : null,
+        nombrePlan: d.planName || null,
+        aerolineaId,
+        nroReserva: d.reservationNumber || null,
+        nroTiquete: d.ticketNumber || null,
+        fechaViajeInicio: d.startDate ? new Date(d.startDate) : null,
+        fechaViajeFin: d.endDate ? new Date(d.endDate) : null,
+        fechaSalidaVuelo: d.flightDepartureDate ? new Date(d.flightDepartureDate) : null,
+        fechaRegresoVuelo: d.flightReturnDate ? new Date(d.flightReturnDate) : null,
+        adultosCount: d.adultsCount || 0,
+        menoresCount: d.childrenCount || 0,
+        observaciones: d.observations || null
+      };
+    }
   },
   checkInData: {
     category: 'checkin', table: 'prodCheckins',
@@ -771,20 +780,26 @@ const PRODUCT_HANDLERS = {
   }
 };
 
-async function resolvePaymentMethodId(prisma, paymentMethod) {
+async function resolvePaymentMethodId(prisma, paymentMethod, cache) {
   if (!paymentMethod) return null;
   const id = parseInt(paymentMethod);
   if (!isNaN(id)) return id;
+  if (cache && cache.paymentMethods && cache.paymentMethods.has(paymentMethod)) return cache.paymentMethods.get(paymentMethod);
+  
   // Try metodosPago first (by name)
   const method = await prisma.metodosPago.findFirst({ where: { nombre: paymentMethod } });
-  if (method) return method.id;
+  if (method) {
+    if (cache && cache.paymentMethods) cache.paymentMethods.set(paymentMethod, method.id);
+    return method.id;
+  }
   // Try tarjetasAgencia (by name) — return associated metodoPago id
   const card = await prisma.tarjetasAgencia.findFirst({
     where: { nombre: paymentMethod },
     include: { metodoPago: true }
   });
-  if (card?.metodoPago?.id) return card.metodoPago.id;
-  return null;
+  const resId = card?.metodoPago?.id || null;
+  if (cache && cache.paymentMethods) cache.paymentMethods.set(paymentMethod, resId);
+  return resId;
 }
 
 async function resolveAirlineId(prisma, airline) {
@@ -795,12 +810,25 @@ async function resolveAirlineId(prisma, airline) {
   return match?.id || null;
 }
 
-async function resolveSupplierId(prisma, supplier) {
+async function resolveSupplierId(prisma, supplier, cache) {
   if (!supplier) return null;
   const id = parseInt(supplier);
   if (!isNaN(id)) return id;
+  if (cache && cache.suppliers && cache.suppliers.has(supplier)) return cache.suppliers.get(supplier);
+
   const match = await prisma.proveedores.findFirst({ where: { nombre: supplier } });
-  return match?.id || null;
+  const resId = match?.id || null;
+  if (cache && cache.suppliers) cache.suppliers.set(supplier, resId);
+  return resId;
+}
+
+async function resolveAirportId(prisma, iata, cache) {
+  if (!iata) return null;
+  if (cache && cache.airports && cache.airports.has(iata)) return cache.airports.get(iata);
+  const match = await prisma.aeropuertos.findFirst({ where: { codigoIata: iata } });
+  const resId = match?.id || null;
+  if (cache && cache.airports) cache.airports.set(iata, resId);
+  return resId;
 }
 
 async function resolveBaggagePlanId(prisma, baggagePlan) {
@@ -828,6 +856,12 @@ async function resolveBaggagePlanId(prisma, baggagePlan) {
 }
 
 async function createProductItems(tx, ventaId, clienteId, data) {
+  const memCache = {
+    suppliers: new Map(),
+    paymentMethods: new Map(),
+    airports: new Map()
+  };
+
   const cliente = await tx.clientes.findUnique({
     where: { id: clienteId },
     select: { personaId: true }
@@ -840,8 +874,8 @@ async function createProductItems(tx, ventaId, clienteId, data) {
       if (!item || Object.keys(item).length === 0) continue;
 
       try {
-        const resolvedSupplierId = await resolveSupplierId(tx, item.supplier);
-        const resolvedSupplierPaymentMethodId = await resolvePaymentMethodId(tx, item.supplierPaymentMethod);
+        const resolvedSupplierId = await resolveSupplierId(tx, item.supplier, memCache);
+        const resolvedSupplierPaymentMethodId = await resolvePaymentMethodId(tx, item.supplierPaymentMethod, memCache);
 
         const detalle = await tx.detalleVenta.create({
           data: {
@@ -882,21 +916,17 @@ async function createProductItems(tx, ventaId, clienteId, data) {
           for (let i = 0; i < item.legs.length; i++) {
             const leg = item.legs[i];
             if (!leg.origin && !leg.destination) continue;
-            const originAirport = leg.origin
-              ? await tx.aeropuertos.findFirst({ where: { codigoIata: leg.origin } })
-              : null;
-            const destAirport = leg.destination
-              ? await tx.aeropuertos.findFirst({ where: { codigoIata: leg.destination } })
-              : null;
-            if (!originAirport || !destAirport) {
+            const originAirportId = leg.origin ? await resolveAirportId(tx, leg.origin, memCache) : null;
+            const destAirportId = leg.destination ? await resolveAirportId(tx, leg.destination, memCache) : null;
+            if (!originAirportId || !destAirportId) {
               console.warn(`[WARN] tramosVuelo leg ${i}: aeropuerto no encontrado (origin=${leg.origin}, dest=${leg.destination}) - saltando`);
               continue;
             }
             await tx.tramosVuelo.create({
               data: {
                 prodTiqueteriaId: product.id,
-                aeropuertoOrigenId: originAirport.id,
-                aeropuertoDestinoId: destAirport.id,
+                aeropuertoOrigenId: originAirportId,
+                aeropuertoDestinoId: destAirportId,
                 salida: leg.date ? new Date(leg.date) : new Date(),
                 llegada: leg.date ? new Date(leg.date) : new Date(),
                 nroVueloTramo: leg.flightNumber || null,
@@ -908,14 +938,14 @@ async function createProductItems(tx, ventaId, clienteId, data) {
 
           if (item.returnLeg && item.returnLeg.origin && item.returnLeg.destination) {
             const rLeg = item.returnLeg;
-            const rOrigin = await tx.aeropuertos.findFirst({ where: { codigoIata: rLeg.origin } });
-            const rDest = await tx.aeropuertos.findFirst({ where: { codigoIata: rLeg.destination } });
-            if (rOrigin && rDest) {
+            const rOriginId = await resolveAirportId(tx, rLeg.origin, memCache);
+            const rDestId = await resolveAirportId(tx, rLeg.destination, memCache);
+            if (rOriginId && rDestId) {
               await tx.tramosVuelo.create({
                 data: {
                   prodTiqueteriaId: product.id,
-                  aeropuertoOrigenId: rOrigin.id,
-                  aeropuertoDestinoId: rDest.id,
+                  aeropuertoOrigenId: rOriginId,
+                  aeropuertoDestinoId: rDestId,
                   salida: rLeg.date ? new Date(rLeg.date) : new Date(),
                   llegada: rLeg.date ? new Date(rLeg.date) : new Date(),
                   nroVueloTramo: rLeg.flightNumber || null,
@@ -952,40 +982,160 @@ exports.create = async (req, res, next) => {
     const metodoPagoId = await resolvePaymentMethodId(prisma, data.paymentMethod);
 
     const result = await prisma.$transaction(async (tx) => {
-      const venta = await tx.ventas.create({
-        data: {
-          clienteId: data.clientId,
-          usuarioId: req.user.id,
-          montoTotal: data.total || 0,
-          costoProveedorTotal: data.supplierCost || 0,
-          taTotal: data.ta || 0,
-          comisionistaId: data.commissionAgentId || null,
-          montoComisionBruto: data.commissionAgentAmount || 0,
-          porcentajeRetencionComision: data.commissionAgentRetentionPercentage || 0,
-          montoComisionNeto: data.commissionAgentNetPayment || 0,
-          metodoPagoPrincipalId: metodoPagoId,
-          status: data.status || 'credito',
-          esCredito: data.isCredit || false,
-          fechaVenceCredito: data.creditDueDate ? new Date(data.creditDueDate) : null,
-          montoPagadoCredito: data.creditPaidAmount || 0,
-          observaciones: data.observations || ''
-        }
-      });
+      const memCache = {
+        suppliers: new Map(),
+        paymentMethods: new Map(),
+        airports: new Map(),
+        airlines: new Map()
+      };
 
-      if (data.payments && data.payments.length > 0) {
-        for (const p of data.payments) {
-          await tx.pagosVenta.create({
-            data: {
-              ventaId: venta.id,
-              monto: p.amount,
-              metodoPagoId: parseInt(p.method) || null,
-              referencia: p.reference || null
+      const cliente = await tx.clientes.findUnique({
+        where: { id: data.clientId },
+        select: { personaId: true }
+      });
+      const personaId = cliente?.personaId;
+
+      const detalleVentasData = [];
+
+      for (const [field, handler] of Object.entries(PRODUCT_HANDLERS)) {
+        const items = Array.isArray(data[field]) ? data[field] : [];
+        for (const item of items) {
+          if (!item || Object.keys(item).length === 0) continue;
+
+          const [resolvedSupplierId, resolvedSupplierPaymentMethodId] = await Promise.all([
+            resolveSupplierId(tx, item.supplier, memCache),
+            resolvePaymentMethodId(tx, item.supplierPaymentMethod, memCache)
+          ]);
+
+          const productData = await handler.transform(item, undefined, tx);
+          delete productData.detalleVentaId; // Omit foreign key for nested create
+
+          const pasajerosDetalleData = [];
+          if (personaId && (item.passengerInfo || item.guests)) {
+            const passengers = item.passengerInfo ? [item.passengerInfo] : (item.guests || []);
+            for (const p of passengers) {
+              pasajerosDetalleData.push({
+                personaId,
+                esTitular: true,
+                asiento: item.seatNumber || null
+              });
             }
-          });
+          }
+
+          const detalleObj = {
+            categoria: handler.category,
+            nombreServicio: handler.nombreServicio,
+            subtotal: (item.supplierCost || 0) + (item.ta || 0),
+            costoProveedor: item.supplierCost || 0,
+            ta: item.ta || 0,
+            proveedorId: resolvedSupplierId,
+            metodoPagoProveedorId: resolvedSupplierPaymentMethodId,
+            origen: item.legs?.[0]?.origin || item.pickupLocation || null,
+            destino: item.destination || item.destinationCountry || item.legs?.[0]?.destination || null,
+            fechaInicioViaje: item.startDate ? new Date(item.startDate) : item.departureDate ? new Date(item.departureDate) : item.pickupDate ? new Date(item.pickupDate) : null,
+            fechaFinViaje: item.endDate ? new Date(item.endDate) : item.arrivalDate ? new Date(item.arrivalDate) : item.returnDate ? new Date(item.returnDate) : null,
+            observaciones: item.observations || null,
+            [handler.table]: {
+              create: productData
+            }
+          };
+
+          if (pasajerosDetalleData.length > 0) {
+            detalleObj.pasajerosDetalle = {
+              create: pasajerosDetalleData
+            };
+          }
+
+          if (handler.table === 'prodTiqueteria' && item.legs && item.legs.length > 0) {
+            const tramosVueloData = [];
+            for (let i = 0; i < item.legs.length; i++) {
+              const leg = item.legs[i];
+              if (!leg.origin && !leg.destination) continue;
+              const [originAirportId, destAirportId] = await Promise.all([
+                leg.origin ? resolveAirportId(tx, leg.origin, memCache) : null,
+                leg.destination ? resolveAirportId(tx, leg.destination, memCache) : null
+              ]);
+              if (originAirportId && destAirportId) {
+                tramosVueloData.push({
+                  aeropuertoOrigenId: originAirportId,
+                  aeropuertoDestinoId: destAirportId,
+                  salida: leg.date ? new Date(leg.date) : new Date(),
+                  llegada: leg.date ? new Date(leg.date) : new Date(),
+                  nroVueloTramo: leg.flightNumber || null,
+                  asiento: leg.seat || null,
+                  orden: i + 1
+                });
+              }
+            }
+            if (item.returnLeg && item.returnLeg.origin && item.returnLeg.destination) {
+              const rLeg = item.returnLeg;
+              const [rOriginId, rDestId] = await Promise.all([
+                resolveAirportId(tx, rLeg.origin, memCache),
+                resolveAirportId(tx, rLeg.destination, memCache)
+              ]);
+              if (rOriginId && rDestId) {
+                tramosVueloData.push({
+                  aeropuertoOrigenId: rOriginId,
+                  aeropuertoDestinoId: rDestId,
+                  salida: rLeg.date ? new Date(rLeg.date) : new Date(),
+                  llegada: rLeg.date ? new Date(rLeg.date) : new Date(),
+                  nroVueloTramo: rLeg.flightNumber || null,
+                  asiento: rLeg.seat || null,
+                  orden: (item.legs?.length || 0) + 1
+                });
+              }
+            }
+            if (tramosVueloData.length > 0) {
+              detalleObj.prodTiqueteria.create.tramosVuelo = {
+                create: tramosVueloData
+              };
+            }
+          }
+
+          detalleVentasData.push(detalleObj);
         }
       }
 
-      await createProductItems(tx, venta.id, venta.clienteId, data);
+      const metodoPagoId = await resolvePaymentMethodId(tx, data.paymentMethod, memCache);
+
+      const ventaCreateData = {
+        clienteId: data.clientId,
+        usuarioId: req.user.id,
+        montoTotal: data.total || 0,
+        costoProveedorTotal: data.supplierCost || 0,
+        taTotal: data.ta || 0,
+        comisionistaId: data.commissionAgentId || null,
+        montoComisionBruto: data.commissionAgentAmount || 0,
+        porcentajeRetencionComision: data.commissionAgentRetentionPercentage || 0,
+        montoComisionNeto: data.commissionAgentNetPayment || 0,
+        metodoPagoPrincipalId: metodoPagoId,
+        status: data.status || 'credito',
+        esCredito: data.isCredit || false,
+        fechaVenceCredito: data.creditDueDate ? new Date(data.creditDueDate) : null,
+        montoPagadoCredito: data.creditPaidAmount || 0,
+        observaciones: data.observations || ''
+      };
+
+      if (data.payments && data.payments.length > 0) {
+        ventaCreateData.pagosVenta = {
+          create: data.payments.map(p => ({
+            monto: p.amount,
+            metodoPagoId: parseInt(p.method) || null,
+            referencia: p.reference || null
+          }))
+        };
+      }
+
+      if (detalleVentasData.length > 0) {
+        ventaCreateData.detalleVentas = {
+          create: detalleVentasData
+        };
+      }
+
+      // SINGLE NESTED WRITE
+      const venta = await tx.ventas.create({
+        data: ventaCreateData
+      });
 
       return venta.id;
     });

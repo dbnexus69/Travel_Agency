@@ -20,7 +20,7 @@ import AvatarPicker, { AVATARS } from '../components/ui/AvatarPicker';
 
 
 export default function Clients() {
-  const { data, addClient, updateClient, toggleClientStatus } = useData();
+  const { data, addClient, updateClient, toggleClientStatus, fetchClients } = useData();
   const { user } = useAuth();
   const { permissions, canCreate, canEdit } = usePermissions();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -43,9 +43,10 @@ export default function Clients() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
-
-
-  const [formData, setFormData] = useState({
+  // Lazy Load Fetch
+  useEffect(() => {
+    fetchClients();
+  }, [fetchClients]);  const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     docType: '',

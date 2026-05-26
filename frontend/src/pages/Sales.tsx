@@ -27,7 +27,7 @@ import StatCard from "../components/ui/StatCard";
 import CreditDashboard from "../components/sales/CreditDashboard";
 
 export default function Sales() {
-  const { data, addSale, updateSale, deleteSale, registerCreditPayment, deleteSalePayment, salesLoading } = useData();
+  const { data, addSale, updateSale, deleteSale, registerCreditPayment, deleteSalePayment, salesLoading, fetchSales } = useData();
   const { user, isAdmin } = useAuth();
   const { canCreate, canEdit } = usePermissions();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -46,9 +46,14 @@ export default function Sales() {
   const [deleteConfirm, setDeleteConfirm] = useState<Sale | null>(null);
 
   const filteredSales = useMemo(() => {
-    if (isAdmin) return data.sales;
-    return data.sales.filter((s) => s.asesorId === user?.id);
+    const list = isAdmin ? data.sales : data.sales.filter((s) => s.asesorId === user?.id);
+    return [...list].sort((a, b) => b.id - a.id);
   }, [data.sales, isAdmin, user?.id]);
+
+  // Lazy Load Fetch
+  useEffect(() => {
+    fetchSales();
+  }, [fetchSales]);
 
   const totals = useMemo(() => {
     return filteredSales.reduce(
@@ -61,22 +66,8 @@ export default function Sales() {
     );
   }, [filteredSales]);
 
-  // Silent prefetch for the first 5 visible sales when list loads
-  useEffect(() => {
-    if (filteredSales && filteredSales.length > 0) {
-      const timer = setTimeout(() => {
-        const toPrefetch = filteredSales.slice(0, 5);
-        toPrefetch.forEach(sale => {
-          if (!salesDetails[sale.id]) {
-            api.getSale(sale.id).then(fetched => {
-              setSalesDetails(prev => ({ ...prev, [sale.id]: fetched }));
-            }).catch(() => null);
-          }
-        });
-      }, 800);
-      return () => clearTimeout(timer);
-    }
-  }, [filteredSales]);
+  // Eliminamos el prefetch silencioso para evitar peticiones "fantasma" que colapsan la red y el backend.
+  // La carga detallada se hará estrictamente "On Demand" (bajo demanda) cuando el usuario pase el mouse o haga click.
 
   const handlePrefetchDetail = (sale: Sale) => {
     if (!salesDetails[sale.id]) {

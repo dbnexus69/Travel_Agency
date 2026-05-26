@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Plus, 
   Pencil, 
@@ -54,7 +54,7 @@ const isOptimisticId = (item: any): boolean => {
 };
 
 export default function Config() {
-  const { data, addConfigItem, updateConfigItem, deleteConfigItem } = useData();
+  const { data, addConfigItem, updateConfigItem, deleteConfigItem, fetchConfig } = useData();
   const [currentSection, setCurrentSection] = useState<SectionId>('cards');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
@@ -64,6 +64,11 @@ export default function Config() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [deleteItemId, setDeleteItemId] = useState<number | null>(null);
   const [viewingPackage, setViewingPackage] = useState<any>(null);
+
+  // Lazy Load Fetch
+  useEffect(() => {
+    fetchConfig();
+  }, [fetchConfig]);
 
   const currentData = ((data.config[currentSection as keyof ConfigData] || []) as any[])
     .slice()

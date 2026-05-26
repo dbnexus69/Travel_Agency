@@ -1,6 +1,7 @@
+import { useState, useEffect } from "react";
 import { Eye, FileDown, Pencil, Trash2 } from "lucide-react";
 import { RxUpdate } from "react-icons/rx";
-import { Table, TableRow, TableCell } from "../ui/Table";
+import { Table, TableRow, TableCell, Pagination } from "../ui/Table";
 import { Button } from "../ui/Button";
 import { Badge } from "../ui/Badge";
 import { formatCurrency, formatDate } from "../../utils/formatters";
@@ -31,7 +32,19 @@ export default function SalesTable({
   canEditThis,
   isAdmin,
 }: SalesTableProps) {
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const totalPages = Math.ceil(sales.length / itemsPerPage);
+
+  // Volver a la página 1 cuando se agrega una nueva venta
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [sales.length]);
+
+  const currentSales = sales.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   return (
+    <div className="flex flex-col gap-4">
     <Table
       headers={[
         "#",
@@ -45,7 +58,7 @@ export default function SalesTable({
         "Acciones",
       ]}
     >
-      {sales.map((sale) => {
+      {currentSales.map((sale) => {
         const client = clients.find(c => c.id === sale.clientId);
         const asesor = users.find(u => u.id === sale.asesorId);
 
@@ -177,5 +190,12 @@ export default function SalesTable({
         );
       })}
     </Table>
+    
+    <Pagination 
+      currentPage={currentPage} 
+      totalPages={totalPages} 
+      onPageChange={setCurrentPage} 
+    />
+    </div>
   );
 }

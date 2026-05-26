@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Coins,
   Search,
@@ -27,7 +27,7 @@ import { formatCurrency } from "../utils/formatters";
 import StatCard from "../components/ui/StatCard";
 
 export default function CommissionAgents() {
-  const { data, addCommissionAgent, updateCommissionAgent, deleteCommissionAgent, settleCommissions, refreshSettlements } = useData();
+  const { data, addCommissionAgent, updateCommissionAgent, deleteCommissionAgent, settleCommissions, refreshSettlements, fetchCommissionAgents } = useData();
   const { canCreate, canEdit, canDelete } = usePermissions();
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -49,6 +49,11 @@ export default function CommissionAgents() {
   const [isSaving, setIsSaving] = useState(false);
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+
+  // Lazy Load Fetch
+  useEffect(() => {
+    fetchCommissionAgents();
+  }, [fetchCommissionAgents]);
 
   const notifySuccess = (msg: string) => {
     setSuccessMessage(msg);

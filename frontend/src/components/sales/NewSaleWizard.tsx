@@ -6,6 +6,10 @@ import {
   ChevronRight,
   ChevronLeft,
   ArrowRight,
+  CheckCircle2,
+  Trash2,
+  ChevronDown,
+  Loader2,
 } from "lucide-react";
 import { Button } from "../ui/Button";
 import { useData } from "../../context/DataContext";
@@ -90,6 +94,7 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
   const [activeForm, setActiveForm] = useState<SaleProductId | null>(null);
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const actions = {
     showOtherProducts,
@@ -482,6 +487,8 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
 
   const handleSubmit = async () => {
     if (!validateStep(3)) return;
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     const client = data.clients.find((c: any) => c.name === form.clientId);
     if (!client) {
       setErrors({ ...errors, clientId: "El cliente no es válido" });
@@ -591,6 +598,8 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
       console.error("Error al registrar venta:", err);
       const errMsg = err?.response?.data?.error?.message || "Ocurrió un error interno en el servidor al registrar la venta. Por favor, asegúrese de reiniciar el servidor backend local para cargar los nuevos módulos de base de datos.";
       alert(`Error al registrar venta: ${errMsg}`);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -696,9 +705,21 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
               ) : (
                 <Button
                   onClick={handleSubmit}
-                  className="px-10 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-200"
+                  disabled={isSubmitting}
+                  className={`px-10 text-white shadow-lg ${
+                    isSubmitting
+                      ? "bg-emerald-400 cursor-not-allowed shadow-none"
+                      : "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200"
+                  }`}
                 >
-                  Finalizar Venta
+                  {isSubmitting ? (
+                    <span className="flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Creando venta...
+                    </span>
+                  ) : (
+                    "Finalizar Venta"
+                  )}
                 </Button>
               )}
             </div>

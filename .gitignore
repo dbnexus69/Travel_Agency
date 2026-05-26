@@ -54,3 +54,32 @@ frontend/.vite/
 # Temporary & logs
 logs/
 *.log
+
+frontend-makeup/
+backend-makeup/
+
+# ==========================================
+# Testing & Code Coverage
+# ==========================================
+coverage/
+.nyc_output/
+.tox/
+.coverage
+*.lcov
+
+# ==========================================
+# Caches & Tooling
+# ==========================================
+.eslintcache
+.stylelintcache
+.npm/
+.pnpm-store/
+.yarn/cache/
+
+# ==========================================
+# Archivos subidos por usuarios (Por si acaso se filtran)
+# ==========================================
+*.pdf
+*.csv
+*.xlsx
+!backend/prisma/seed.js

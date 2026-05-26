@@ -41,7 +41,6 @@ export default function Dashboard() {
     if (dateRange?.startDate) params.dateFrom = dateRange.startDate.toISOString();
     if (dateRange?.endDate) params.dateTo = dateRange.endDate.toISOString();
     
-    // Si es el montaje inicial y ya tenemos datos en caché, hacemos un refresco silencioso
     const isBackground = isInitialMount.current && dashboardData !== null;
     fetchDashboard(params, isBackground);
     
@@ -85,302 +84,295 @@ export default function Dashboard() {
         { name: "Abonado", value: 0, color: "#3b82f6" },
         { name: "Pendiente", value: 0, color: "#f59e0b" },
       ],
-      categoryDist: d?.categoryDistribution ?? [],
     };
   }, [dashboardData]);
 
   const CARTERA_COLORS = ["#10b981", "#3b82f6", "#f59e0b"];
 
   return (
-    <div className="space-y-6">
-      {/* Header de Sección */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 animate-fade-in">
-        <div>
-          <h1 className="text-3xl font-bold text-primary flex items-center gap-3">
-            Panel de Control
-          </h1>
-          <p className="text-gray-500 text-sm mt-1">
-            Resumen general de operaciones, ingresos y estado de cartera.
-          </p>
+    <div className="space-y-8 pb-8">
+      {/* Header Premium con Gradient */}
+      <div className="relative rounded-2xl bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 p-8 shadow-2xl z-10">
+        {/* Capa de fondo con overflow-hidden para no recortar el contenido interactivo como el Datepicker */}
+        <div className="absolute inset-0 overflow-hidden rounded-2xl z-0 pointer-events-none">
+          <div className="absolute top-0 left-0 w-full h-full opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mix-blend-overlay"></div>
+          <div className="absolute -top-24 -right-24 w-64 h-64 bg-blue-500 rounded-full mix-blend-screen filter blur-[80px] opacity-40"></div>
+          <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-indigo-500 rounded-full mix-blend-screen filter blur-[80px] opacity-40"></div>
         </div>
-        <div className="flex items-center bg-white p-1 rounded-xl shadow-sm border border-gray-200 relative z-20">
-          <div className="w-72">
-            <Datepicker
-              value={dateRange as any}
-              onChange={(newValue: any) => setDateRange(newValue)}
-              showShortcuts={true}
-              primaryColor={"blue"}
-              displayFormat={"DD/MMM/YYYY"}
-              placeholder={"Selecciona un periodo"}
-              separator={" - "}
-              inputClassName="w-full text-xs font-bold text-gray-600 bg-gray-50 border-none rounded-lg py-2.5 px-4 focus:ring-2 focus:ring-blue-100 cursor-pointer transition-all"
-            />
+        
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div>
+            <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white to-blue-200 drop-shadow-sm flex items-center gap-3">
+              Panel de Control
+            </h1>
+            <p className="text-blue-100/80 text-sm mt-2 max-w-xl font-medium">
+              Supervisa el rendimiento financiero y operativo en tiempo real. Todos los indicadores estratégicos de tu agencia, en un solo vistazo.
+            </p>
+          </div>
+          <div className="flex items-center bg-white/10 backdrop-blur-md p-1.5 rounded-xl shadow-inner border border-white/20">
+            <div className="w-72">
+              <Datepicker
+                value={dateRange as any}
+                onChange={(newValue: any) => setDateRange(newValue)}
+                showShortcuts={true}
+                primaryColor={"indigo"}
+                displayFormat={"DD/MMM/YYYY"}
+                placeholder={"Selecciona un periodo"}
+                separator={" - "}
+                inputClassName="w-full text-sm font-semibold text-white bg-transparent border-none py-2 px-4 cursor-pointer focus:ring-0 placeholder-white/60"
+              />
+            </div>
           </div>
         </div>
       </div>
 
-      {/* KPIs */}
+      {/* Modern Glassmorphism KPIs */}
       {dashboardLoading && !dashboardData ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-pulse">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 animate-pulse">
           {[...Array(8)].map((_, i) => (
-            <Card key={i} className="border border-gray-200 shadow-sm bg-white rounded-xl h-[120px]">
-              <CardBody className="p-5 flex flex-col justify-between h-full">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="h-3 w-1/3 bg-gray-200 rounded"></div>
-                  <div className="h-8 w-8 bg-gray-100 rounded-xl"></div>
-                </div>
-                <div className="h-6 w-1/2 bg-gray-200 rounded"></div>
-                <div className="mt-4 pt-3 border-t border-gray-50 flex justify-between">
-                  <div className="h-2 w-1/3 bg-gray-100 rounded"></div>
-                  <div className="h-3 w-1/4 bg-gray-100 rounded"></div>
-                </div>
-              </CardBody>
-            </Card>
+            <div key={i} className="bg-gray-100 rounded-2xl h-[140px]"></div>
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
-            {
-              label: "OPERACIONES",
-              value: stats.totalFlights,
-              subtitle: "Tiquetes Emitidos",
-              detail: "",
-              icon: <Plane size={22} />,
-              color: "text-blue-600",
-              bg: "bg-blue-100",
-            },
-            {
-              label: "CLIENTES",
-              value: stats.totalClients,
-              subtitle: "Total Registrados",
-              detail: `${stats.activeClients} Activos`,
-              icon: <Users size={22} />,
-              color: "text-indigo-600",
-              bg: "bg-indigo-100",
-            },
             {
               label: "INGRESOS BRUTOS",
               value: formatCurrency(stats.totalIngresos),
               subtitle: "Ventas Totales",
-              detail: `+${formatCurrency(stats.monthIngresos)} en el periodo`,
-              icon: <DollarSign size={22} />,
-              color: "text-emerald-600",
-              bg: "bg-emerald-100",
+              detail: `+${formatCurrency(stats.monthIngresos)} mes`,
+              icon: <DollarSign size={24} />,
+              gradient: "from-emerald-500 to-teal-400",
+              lightBg: "bg-emerald-50 text-emerald-600",
             },
             {
               label: "PENDIENTES",
               value: formatCurrency(stats.totalPendiente),
               subtitle: "Cuentas por Cobrar",
-              detail: `${stats.PendienteCount} transacciones`,
-              icon: <CreditCard size={22} />,
-              color: "text-orange-600",
-              bg: "bg-orange-100",
+              detail: `${stats.PendienteCount} cuentas`,
+              icon: <CreditCard size={24} />,
+              gradient: "from-orange-500 to-amber-400",
+              lightBg: "bg-orange-50 text-orange-600",
             },
             {
               label: "PROVEEDORES",
               value: formatCurrency(stats.totalProveedores),
               subtitle: "Costos Operativos",
               detail: `${stats.supplierCount} activos`,
-              icon: <Briefcase size={22} />,
-              color: "text-rose-600",
-              bg: "bg-rose-100",
+              icon: <Briefcase size={24} />,
+              gradient: "from-rose-500 to-pink-400",
+              lightBg: "bg-rose-50 text-rose-600",
+            },
+            {
+              label: "CLIENTES",
+              value: stats.totalClients,
+              subtitle: "Total Registrados",
+              detail: `${stats.activeClients} Activos`,
+              icon: <Users size={24} />,
+              gradient: "from-blue-600 to-indigo-500",
+              lightBg: "bg-indigo-50 text-indigo-600",
+            },
+            {
+              label: "VUELOS",
+              value: stats.totalFlights,
+              subtitle: "Tramos Emitidos",
+              icon: <Plane size={24} />,
+              gradient: "from-cyan-500 to-blue-400",
+              lightBg: "bg-cyan-50 text-cyan-600",
             },
             {
               label: "HOTELES",
               value: stats.hotelesCount,
               subtitle: "Reservas Generadas",
-              detail: `Ingresos: ${formatCurrency(stats.hotelesIngresos)}`,
-              icon: <Building size={22} />,
-              color: "text-cyan-600",
-              bg: "bg-cyan-100",
+              detail: formatCurrency(stats.hotelesIngresos),
+              icon: <Building size={24} />,
+              gradient: "from-violet-500 to-purple-400",
+              lightBg: "bg-violet-50 text-violet-600",
             },
             {
               label: "SEGUROS",
               value: stats.segurosCount,
-              subtitle: "Pólizas Emitidas",
-              detail: `Ingresos: ${formatCurrency(stats.segurosIngresos)}`,
-              icon: <ShieldCheck size={22} />,
-              color: "text-violet-600",
-              bg: "bg-violet-100",
+              subtitle: "Pólizas Activas",
+              detail: formatCurrency(stats.segurosIngresos),
+              icon: <ShieldCheck size={24} />,
+              gradient: "from-fuchsia-500 to-pink-500",
+              lightBg: "bg-fuchsia-50 text-fuchsia-600",
             },
             {
               label: "PLANES",
               value: stats.planesCount,
               subtitle: "Paquetes Turísticos",
-              detail: `Ingresos: ${formatCurrency(stats.planesIngresos)}`,
-              icon: <Map size={22} />,
-              color: "text-fuchsia-600",
-              bg: "bg-fuchsia-100",
+              detail: formatCurrency(stats.planesIngresos),
+              icon: <Map size={24} />,
+              gradient: "from-amber-500 to-yellow-400",
+              lightBg: "bg-amber-50 text-amber-600",
             },
           ].map((kpi, i) => (
-            <Card
+            <div
               key={i}
-              className="hover:shadow-lg transition-all duration-300 border border-gray-200 shadow-md bg-white rounded-xl"
+              className="relative group bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
             >
-              <CardBody className="p-5 flex flex-col justify-between h-full">
-                <div>
-                  <div className="flex justify-between items-start mb-4">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                      {kpi.label}
-                    </p>
-                    <div className={`p-2.5 rounded-xl ${kpi.bg} ${kpi.color}`}>
-                      {kpi.icon}
-                    </div>
+              <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${kpi.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
+              <div className="p-6">
+                <div className="flex justify-between items-start mb-4">
+                  <p className="text-[11px] font-black text-gray-400 uppercase tracking-[0.15em]">
+                    {kpi.label}
+                  </p>
+                  <div className={`p-3 rounded-2xl ${kpi.lightBg} shadow-sm group-hover:scale-110 transition-transform duration-300`}>
+                    {kpi.icon}
                   </div>
-                  <h3 className="text-2xl font-black text-gray-800 mb-1">
-                    {kpi.value}
-                  </h3>
                 </div>
-                <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between gap-2">
-                  <span className="text-xs text-gray-500 font-medium truncate">
+                <h3 className="text-3xl font-black text-gray-800 mb-1 tracking-tight">
+                  {kpi.value}
+                </h3>
+                <div className="mt-4 pt-4 border-t border-gray-50 flex items-center justify-between gap-2">
+                  <span className="text-xs text-gray-500 font-semibold truncate">
                     {kpi.subtitle}
                   </span>
                   {kpi.detail && (
-                    <span className="text-[10px] font-bold text-gray-500 bg-gray-50/80 px-2 py-1 rounded-md whitespace-nowrap">
+                    <span className="text-[10px] font-bold text-gray-600 bg-gray-100/80 px-2 py-1 rounded-lg whitespace-nowrap shadow-sm">
                       {kpi.detail}
                     </span>
                   )}
                 </div>
-              </CardBody>
-            </Card>
+              </div>
+            </div>
           ))}
         </div>
       )}
 
-      {/* Charts — containers always in DOM, ResponsiveContainer only when ready */}
+      {/* Advanced Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            Comparativa de Ingresos (Año Anterior vs Actual)
-          </CardHeader>
-          <CardBody>
-            <div className="h-64 w-full mt-2">
-              {dashboardLoading && !dashboardData ? (
-                <div className="w-full h-full bg-gray-100 rounded-xl animate-pulse" />
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart
-                    data={stats.yearlyTrendData}
-                    margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-                  >
-                    <defs>
-                      <linearGradient id="colorCurrent" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#032650" stopOpacity={0.4} />
-                        <stop offset="95%" stopColor="#032650" stopOpacity={0} />
-                      </linearGradient>
-                      <linearGradient id="colorPrev" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#94a3b8" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="#94a3b8" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#64748b" }} dy={10} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#64748b" }} tickFormatter={(v) => `$${(v / 1000000).toFixed(1)}M`} width={80} />
-                    <Tooltip formatter={(value: number) => formatCurrency(value)} contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)" }} />
-                    <Legend iconType="circle" wrapperStyle={{ fontSize: "12px", paddingTop: "20px" }} />
-                    <Area type="monotone" dataKey="current" name="Año Actual" stroke="#032650" strokeWidth={3} fillOpacity={1} fill="url(#colorCurrent)" activeDot={{ r: 6, fill: "#032650", stroke: "#fff", strokeWidth: 2 }} />
-                    <Area type="monotone" dataKey="previous" name="Año Anterior" stroke="#94a3b8" strokeWidth={2} fillOpacity={1} fill="url(#colorPrev)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-          </CardBody>
-        </Card>
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-6 relative overflow-hidden">
+          <div className="absolute -right-20 -top-20 w-40 h-40 bg-blue-50 rounded-full blur-3xl"></div>
+          <h2 className="text-lg font-black text-gray-800 mb-6">Comparativa de Ingresos</h2>
+          <div className="h-72 w-full">
+            {dashboardLoading && !dashboardData ? (
+              <div className="w-full h-full bg-gray-50 rounded-xl animate-pulse" />
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart
+                  data={stats.yearlyTrendData}
+                  margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                >
+                  <defs>
+                    <linearGradient id="colorCurrent" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#4f46e5" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="colorPrev" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#94a3b8" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="#94a3b8" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#64748b", fontWeight: 600 }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#64748b", fontWeight: 600 }} tickFormatter={(v) => `$${(v / 1000000).toFixed(1)}M`} />
+                  <Tooltip 
+                    formatter={(value: number) => formatCurrency(value)} 
+                    contentStyle={{ borderRadius: "16px", border: "1px solid #f1f5f9", boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)", padding: "12px", fontWeight: "bold" }} 
+                  />
+                  <Legend iconType="circle" wrapperStyle={{ fontSize: "12px", fontWeight: 600, paddingTop: "20px" }} />
+                  <Area type="monotone" dataKey="current" name="Año Actual" stroke="#4f46e5" strokeWidth={4} fillOpacity={1} fill="url(#colorCurrent)" activeDot={{ r: 8, fill: "#4f46e5", stroke: "#fff", strokeWidth: 3, className: "drop-shadow-md" }} />
+                  <Area type="monotone" dataKey="previous" name="Año Anterior" stroke="#94a3b8" strokeWidth={2} strokeDasharray="5 5" fillOpacity={1} fill="url(#colorPrev)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader>Estado de Cartera</CardHeader>
-          <CardBody>
-            <div className="relative h-48 flex items-center justify-center mt-2">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col">
+          <h2 className="text-lg font-black text-gray-800 mb-2">Estado de Cartera</h2>
+          <div className="flex-grow flex flex-col justify-center">
+            <div className="relative h-56 flex items-center justify-center">
               {dashboardLoading && !dashboardData ? (
-                <div className="w-32 h-32 rounded-full border-[16px] border-gray-100 animate-pulse" />
+                <div className="w-40 h-40 rounded-full border-[20px] border-gray-50 animate-pulse" />
               ) : (
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="99%" height="100%">
                   <PieChart>
-                    <Pie data={stats.carteraData} cx="50%" cy="50%" innerRadius={65} outerRadius={85} paddingAngle={4} dataKey="value" stroke="none" cornerRadius={6}>
+                    <Pie data={stats.carteraData} cx="50%" cy="50%" innerRadius={75} outerRadius={95} paddingAngle={5} dataKey="value" stroke="none" cornerRadius={8}>
                       {stats.carteraData.map((_: any, index: number) => (
-                        <Cell key={`cell-${index}`} fill={CARTERA_COLORS[index % CARTERA_COLORS.length]} />
+                        <Cell key={`cell-${index}`} fill={CARTERA_COLORS[index % CARTERA_COLORS.length]} className="drop-shadow-sm hover:opacity-80 transition-opacity" />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(v: number) => `${v}%`} contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)", padding: "8px 12px" }} itemStyle={{ color: "#032650", fontWeight: "900", fontSize: "14px" }} />
+                    <Tooltip 
+                      formatter={(v: number) => `${v}%`} 
+                      contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 10px 25px -5px rgb(0 0 0 / 0.1)", padding: "8px 16px" }} 
+                      itemStyle={{ color: "#1e293b", fontWeight: "900", fontSize: "16px" }} 
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               )}
               {(!dashboardLoading || dashboardData) && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-[10px] uppercase font-bold text-gray-400 tracking-widest">Total</span>
-                  <span className="text-lg font-black text-primary">{formatCurrency(stats.totalIngresos)}</span>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none drop-shadow-sm">
+                  <span className="text-[10px] uppercase font-extrabold text-gray-400 tracking-[0.2em] mb-1">Total</span>
+                  <span className="text-xl font-black text-gray-800 bg-clip-text text-transparent bg-gradient-to-br from-gray-800 to-gray-500">{formatCurrency(stats.totalIngresos)}</span>
                 </div>
               )}
             </div>
-            <div className="mt-6 grid grid-cols-3 gap-2">
+            <div className="mt-6 grid grid-cols-3 gap-3">
               {dashboardLoading && !dashboardData ? (
-                <>
-                  {[...Array(3)].map((_, i) => (
-                    <div key={i} className="flex flex-col items-center justify-center p-2 bg-gray-50 rounded-xl animate-pulse">
-                      <div className="h-2 w-8 bg-gray-200 rounded mb-2"></div>
-                      <div className="h-3 w-10 bg-gray-200 rounded"></div>
-                    </div>
-                  ))}
-                </>
+                <></>
               ) : (
                 stats.carteraData.map((item: any, i: number) => (
-                  <div key={i} className="flex flex-col items-center justify-center p-2 bg-gray-50 rounded-xl border border-gray-100 overflow-hidden">
-                    <div className="flex items-center gap-1.5 mb-1">
+                  <div key={i} className="flex flex-col items-center justify-center py-3 px-1 bg-gray-50/80 rounded-xl border border-gray-100/50 shadow-inner">
+                    <div className="flex items-center gap-1.5 mb-2">
                       <span className="w-2.5 h-2.5 rounded-full shadow-sm shrink-0" style={{ backgroundColor: CARTERA_COLORS[i] }} />
-                      <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wider truncate">{item.name}</span>
+                      <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{item.name}</span>
                     </div>
-                    <span className="text-[11px] font-black text-gray-800 truncate w-full text-center">{item.value}%</span>
+                    <span className="text-sm font-black text-gray-800">{item.value}%</span>
                   </div>
                 ))
               )}
             </div>
-          </CardBody>
-        </Card>
+          </div>
+        </div>
       </div>
 
-      {/* Recent Sales */}
-      <Card>
-        <CardHeader>Ultimas Ventas</CardHeader>
+      {/* Modern Table */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-gray-100 bg-gray-50/50">
+          <h2 className="text-lg font-black text-gray-800">Últimas Ventas Aprobadas</h2>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase">
-                <th className="px-4 py-3">Cliente</th>
-                <th className="px-4 py-3">Asesor</th>
-                <th className="px-4 py-3">Fecha</th>
-                <th className="px-4 py-3">Valor</th>
-                <th className="px-4 py-3">Estado</th>
+              <tr className="bg-white text-left text-[11px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100">
+                <th className="px-6 py-4">Cliente</th>
+                <th className="px-6 py-4">Asesor</th>
+                <th className="px-6 py-4">Fecha</th>
+                <th className="px-6 py-4">Monto Total</th>
+                <th className="px-6 py-4">Estado</th>
               </tr>
             </thead>
-            <tbody className="divide-y">
+            <tbody className="divide-y divide-gray-50">
               {dashboardLoading && !dashboardData ? (
                 [...Array(5)].map((_, i) => (
-                  <tr key={i} className="animate-pulse">
-                    <td className="px-4 py-4"><div className="h-4 bg-gray-100 rounded w-3/4"></div></td>
-                    <td className="px-4 py-4"><div className="h-4 bg-gray-100 rounded w-1/2"></div></td>
-                    <td className="px-4 py-4"><div className="h-4 bg-gray-100 rounded w-1/3"></div></td>
-                    <td className="px-4 py-4"><div className="h-4 bg-gray-100 rounded w-1/2"></div></td>
-                    <td className="px-4 py-4"><div className="h-6 bg-gray-100 rounded-full w-20"></div></td>
+                  <tr key={i} className="animate-pulse bg-white">
+                    <td className="px-6 py-5"><div className="h-4 bg-gray-100 rounded-md w-3/4"></div></td>
+                    <td className="px-6 py-5"><div className="h-4 bg-gray-100 rounded-md w-1/2"></div></td>
+                    <td className="px-6 py-5"><div className="h-4 bg-gray-100 rounded-md w-1/3"></div></td>
+                    <td className="px-6 py-5"><div className="h-4 bg-gray-100 rounded-md w-1/2"></div></td>
+                    <td className="px-6 py-5"><div className="h-6 bg-gray-100 rounded-xl w-20"></div></td>
                   </tr>
                 ))
               ) : (
                 stats.recentSales.map((sale) => (
-                  <tr key={sale.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3">{sale.clientName}</td>
-                    <td className="px-4 py-3">{sale.asesorName}</td>
-                    <td className="px-4 py-3">{formatDate(sale.date)}</td>
-                    <td className="px-4 py-3 font-semibold">
+                  <tr key={sale.id} className="hover:bg-blue-50/30 transition-colors group">
+                    <td className="px-6 py-4 font-semibold text-gray-700">{sale.clientName}</td>
+                    <td className="px-6 py-4 text-sm text-gray-500">{sale.asesorName}</td>
+                    <td className="px-6 py-4 text-sm text-gray-500">{formatDate(sale.date)}</td>
+                    <td className="px-6 py-4 font-black text-gray-800">
                       {formatCurrency(sale.total)}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-6 py-4">
                       <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        className={`px-3 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-wider shadow-sm ${
                           sale.status === "pagado"
-                            ? "bg-green-100 text-green-800"
+                            ? "bg-green-100/80 text-green-700 border border-green-200/50"
                             : sale.status === "abonado"
-                              ? "bg-blue-100 text-blue-800"
-                              : "bg-yellow-100 text-yellow-800"
+                              ? "bg-blue-100/80 text-blue-700 border border-blue-200/50"
+                              : "bg-orange-100/80 text-orange-700 border border-orange-200/50"
                         }`}
                       >
                         {sale.status}
@@ -392,7 +384,7 @@ export default function Dashboard() {
             </tbody>
           </table>
         </div>
-      </Card>
+      </div>
     </div>
   );
 }

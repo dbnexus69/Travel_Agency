@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { 
   ChevronLeft, ChevronRight, Plane, X, Calendar as CalendarIcon, 
   UserCheck, PlaneTakeoff, PlaneLanding, Search, Filter, AlertCircle,
@@ -18,7 +18,7 @@ const MONTHS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 
 const DAYS = ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab'];
 
 export default function Itineraries() {
-  const { data, updateFlight } = useData();
+  const { data, updateFlight, fetchFlights } = useData();
   const { canEdit: canEditItinerary, canView } = usePermissions();
   const [activeTab, setActiveTab] = useState<'calendar' | 'checkin'>('calendar');
   const [calendarTab, setCalendarTab] = useState<'ida' | 'regreso'>('ida');
@@ -34,6 +34,11 @@ export default function Itineraries() {
   const [selectedFlightForCheckin, setSelectedFlightForCheckin] = useState<Flight | null>(null);
   const [checkinFile, setCheckinFile] = useState<File | null>(null);
   const [isSending, setIsSending] = useState(false);
+
+  // Lazy Load Fetch
+  useEffect(() => {
+    fetchFlights();
+  }, [fetchFlights]);
 
   // Estadísticas y filtros
   const pendingCheckins = useMemo(() => {

@@ -127,7 +127,7 @@ export const SALE_PRODUCTS: SaleProductDef[] = [
     icon: "LuShieldCheck",
     group: "main",
   },
-  { id: "planes", label: "Planes", icon: "LuPackage", group: "main" },
+  { id: "planes", label: "Paquetes", icon: "LuPackage", group: "main" },
   // --- Otros ---
   {
     id: "checkin",
@@ -757,7 +757,7 @@ export const EMPTY_DESGLOSE: DesgloseCategorias = {
 export const CATEGORIA_LABELS: Record<keyof DesgloseCategorias, string> = {
   documentos: "Documentos",
   hoteles: "Hoteles",
-  planes: "Planes",
+  planes: "Paquetes",
   seguros: "Seguros",
   tiquetes: "Tiquetes",
   otros: "Otros",
