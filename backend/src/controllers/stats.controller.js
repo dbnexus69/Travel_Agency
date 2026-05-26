@@ -4,20 +4,50 @@ const { success } = require('../utils/apiResponse');
 exports.dashboard = async (req, res, next) => {
   try {
     const { dateFrom, dateTo } = req.query;
+    const currentYear = new Date().getFullYear();
+    let dateCondition = '';
+    if (dateFrom && dateTo) {
+      dateCondition = `AND creado_at >= '${new Date(dateFrom).toISOString()}' AND creado_at <= '${new Date(dateTo).toISOString()}'`;
+    } else if (dateFrom) {
+      dateCondition = `AND creado_at >= '${new Date(dateFrom).toISOString()}'`;
+    } else if (dateTo) {
+      dateCondition = `AND creado_at <= '${new Date(dateTo).toISOString()}'`;
+    }
+
+    let userCondition = '';
+    if (req.permissionScope === 'own') {
+      userCondition = `AND usuario_id = '${req.user.id}'`;
+    }
+
     const where = {};
     if (dateFrom || dateTo) {
       where.creadoAt = {};
       if (dateFrom) where.creadoAt.gte = new Date(dateFrom);
       if (dateTo) where.creadoAt.lte = new Date(dateTo);
     }
-
     if (req.permissionScope === 'own') {
       where.usuarioId = req.user.id;
     }
 
+    const aggregatesSql = `
+      SELECT
+        COUNT(*)::int as "totalOperations",
+        COALESCE(SUM(CASE WHEN status IN ('pagado', 'abonado') THEN monto_total ELSE 0 END), 0) as "totalRevenue",
+        COALESCE(SUM(CASE WHEN status = 'credito' THEN (monto_total - COALESCE(monto_pagado_credito, 0)) ELSE 0 END), 0) as "pendingBalance",
+        COUNT(CASE WHEN status = 'credito' THEN 1 END)::int as "pendingCount",
+        COALESCE(SUM(costo_proveedor_total), 0) as "suppliersTotal",
+        COALESCE(SUM(CASE WHEN status = 'pagado' THEN monto_total ELSE 0 END), 0) as "paids",
+        COALESCE(SUM(CASE WHEN status = 'credito' THEN monto_total ELSE 0 END), 0) as "credits",
+        COALESCE(SUM(CASE WHEN status = 'abonado' THEN monto_total ELSE 0 END), 0) as "partPaids",
+        COALESCE(SUM(CASE WHEN EXTRACT(YEAR FROM creado_at) = ${currentYear} THEN monto_total ELSE 0 END), 0) as "currentYearSales",
+        COALESCE(SUM(CASE WHEN EXTRACT(YEAR FROM creado_at) = ${currentYear - 1} THEN monto_total ELSE 0 END), 0) as "prevYearSales"
+      FROM ventas
+      WHERE deleted_at IS NULL ${dateCondition} ${userCondition}
+    `;
+
     // Run all DB queries in parallel
-    const [ventas, monthlyTrend, categoryStats, [totalClients, activeClients], recentSales, supplierCount] = await Promise.all([
-      prisma.ventas.findMany({ where: { ...where, deletedAt: null } }),
+    const [aggregatesRaw, monthlyTrend, categoryStats, [totalClients, activeClients], recentSales, supplierCount] = await Promise.all([
+      prisma.$queryRawUnsafe(aggregatesSql),
       prisma.ventasMensuales.findMany({ orderBy: [{ year: 'asc' }, { month: 'asc' }], take: 24 }),
       prisma.detalleVenta.groupBy({
         by: ['categoria'],
@@ -41,19 +71,18 @@ exports.dashboard = async (req, res, next) => {
       prisma.proveedores.count(),
     ]);
 
-    // In-memory computations (no DB roundtrips)
-    const totalRevenue = ventas
-      .filter(v => v.status === 'pagado' || v.status === 'abonado')
-      .reduce((sum, v) => sum + v.montoTotal, 0);
-    const pendingBalance = ventas
-      .filter(v => v.status === 'credito')
-      .reduce((sum, v) => sum + (v.montoTotal - (v.montoPagadoCredito || 0)), 0);
-    const pendingCount = ventas.filter(v => v.status === 'credito').length;
-    const totalOperations = ventas.length;
-    const suppliersTotal = ventas.reduce((sum, v) => sum + (v.costoProveedorTotal || 0), 0);
-    const paids = ventas.filter(v => v.status === 'pagado').reduce((s, v) => s + v.montoTotal, 0);
-    const credits = ventas.filter(v => v.status === 'credito').reduce((s, v) => s + v.montoTotal, 0);
-    const partPaids = ventas.filter(v => v.status === 'abonado').reduce((s, v) => s + v.montoTotal, 0);
+    // O(1) properties assignment
+    const agg = aggregatesRaw[0];
+    const totalRevenue = Number(agg.totalRevenue) || 0;
+    const pendingBalance = Number(agg.pendingBalance) || 0;
+    const pendingCount = Number(agg.pendingCount) || 0;
+    const totalOperations = Number(agg.totalOperations) || 0;
+    const suppliersTotal = Number(agg.suppliersTotal) || 0;
+    const paids = Number(agg.paids) || 0;
+    const credits = Number(agg.credits) || 0;
+    const partPaids = Number(agg.partPaids) || 0;
+    const currentYearSales = Number(agg.currentYearSales) || 0;
+    const prevYearSales = Number(agg.prevYearSales) || 0;
 
     const categoryMap = {
       tiqueteria: 'Tiquetes', hoteleria: 'Hoteles', planes: 'Planes',
@@ -96,7 +125,6 @@ exports.dashboard = async (req, res, next) => {
       if (cat === 'tiqueteria') totalFlights = cnt;
     }
 
-    const currentYear = new Date().getFullYear();
 
     const groupedTrend = Array.from({ length: 12 }, (_, i) => {
       const m = i + 1;
@@ -109,10 +137,7 @@ exports.dashboard = async (req, res, next) => {
       };
     });
 
-    const currentYearSales = ventas.filter(v => new Date(v.creadoAt).getFullYear() === currentYear)
-      .reduce((s, v) => s + v.montoTotal, 0);
-    const prevYearSales = ventas.filter(v => new Date(v.creadoAt).getFullYear() === currentYear - 1)
-      .reduce((s, v) => s + v.montoTotal, 0);
+
 
     success(res, {
       totalRevenue: Math.round(totalRevenue),
@@ -175,39 +200,35 @@ exports.salesHistory = async (req, res, next) => {
 exports.asesorPerformance = async (req, res, next) => {
   try {
     const { dateFrom, dateTo } = req.query;
-    const where = { deletedAt: null };
-    if (dateFrom || dateTo) {
-      where.creadoAt = {};
-      if (dateFrom) where.creadoAt.gte = new Date(dateFrom);
-      if (dateTo) where.creadoAt.lte = new Date(dateTo);
+    let dateCondition = '';
+    if (dateFrom && dateTo) {
+      dateCondition = `AND v.creado_at >= '${new Date(dateFrom).toISOString()}' AND v.creado_at <= '${new Date(dateTo).toISOString()}'`;
+    } else if (dateFrom) {
+      dateCondition = `AND v.creado_at >= '${new Date(dateFrom).toISOString()}'`;
+    } else if (dateTo) {
+      dateCondition = `AND v.creado_at <= '${new Date(dateTo).toISOString()}'`;
     }
 
-    const ventas = await prisma.ventas.findMany({
-      where,
-      include: { usuario: { include: { persona: true } } }
-    });
+    const sql = `
+      SELECT 
+        v.usuario_id as "asesorId",
+        p.nombres || ' ' || p.apellidos as "asesorName",
+        COUNT(v.id)::int as "totalVentas",
+        COALESCE(SUM(v.monto_total), 0) as "totalIngresos",
+        COALESCE(SUM(v.monto_comision_neto), 0) as "comisiones"
+      FROM ventas v
+      JOIN usuarios u ON v.usuario_id = u.id
+      JOIN personas p ON u.persona_id = p.id
+      WHERE v.deleted_at IS NULL ${dateCondition}
+      GROUP BY v.usuario_id, p.nombres, p.apellidos
+    `;
 
-    const grouped = {};
-    for (const v of ventas) {
-      const uid = v.usuarioId;
-      if (!grouped[uid]) {
-        grouped[uid] = {
-          asesorId: uid,
-          asesorName: `${v.usuario.persona.nombres} ${v.usuario.persona.apellidos}`,
-          totalVentas: 0,
-          totalIngresos: 0,
-          comisiones: 0
-        };
-      }
-      grouped[uid].totalVentas++;
-      grouped[uid].totalIngresos += v.montoTotal;
-      grouped[uid].comisiones += v.montoComisionNeto || 0;
-    }
+    const result = await prisma.$queryRawUnsafe(sql);
 
-    success(res, Object.values(grouped).map(g => ({
+    success(res, result.map(g => ({
       ...g,
-      totalIngresos: Math.round(g.totalIngresos),
-      comisiones: Math.round(g.comisiones)
+      totalIngresos: Math.round(Number(g.totalIngresos)),
+      comisiones: Math.round(Number(g.comisiones))
     })));
   } catch (err) {
     next(err);
@@ -218,38 +239,36 @@ exports.topClients = async (req, res, next) => {
   try {
     const limit = parseInt(req.query.limit) || 10;
     const { dateFrom, dateTo } = req.query;
-    const where = { deletedAt: null };
-    if (dateFrom || dateTo) {
-      where.creadoAt = {};
-      if (dateFrom) where.creadoAt.gte = new Date(dateFrom);
-      if (dateTo) where.creadoAt.lte = new Date(dateTo);
+    let dateCondition = '';
+    if (dateFrom && dateTo) {
+      dateCondition = `AND v.creado_at >= '${new Date(dateFrom).toISOString()}' AND v.creado_at <= '${new Date(dateTo).toISOString()}'`;
+    } else if (dateFrom) {
+      dateCondition = `AND v.creado_at >= '${new Date(dateFrom).toISOString()}'`;
+    } else if (dateTo) {
+      dateCondition = `AND v.creado_at <= '${new Date(dateTo).toISOString()}'`;
     }
 
-    const ventas = await prisma.ventas.findMany({
-      where,
-      include: { cliente: { include: { persona: true } } }
-    });
+    const sql = `
+      SELECT 
+        c.id as "clienteId",
+        p.nombres || ' ' || p.apellidos as "clientName",
+        COUNT(v.id)::int as "totalVentas",
+        COALESCE(SUM(v.monto_total), 0) as "totalPagado"
+      FROM ventas v
+      JOIN clientes c ON v.cliente_id = c.id
+      JOIN personas p ON c.persona_id = p.id
+      WHERE v.deleted_at IS NULL ${dateCondition}
+      GROUP BY c.id, p.nombres, p.apellidos
+      ORDER BY "totalPagado" DESC
+      LIMIT ${limit}
+    `;
 
-    const grouped = {};
-    for (const v of ventas) {
-      const cid = v.clienteId;
-      if (!grouped[cid]) {
-        grouped[cid] = {
-          clientName: `${v.cliente.persona.nombres} ${v.cliente.persona.apellidos}`,
-          totalVentas: 0,
-          totalPagado: 0
-        };
-      }
-      grouped[cid].totalVentas++;
-      grouped[cid].totalPagado += v.montoTotal;
-    }
+    const result = await prisma.$queryRawUnsafe(sql);
 
-    const sorted = Object.values(grouped)
-      .sort((a, b) => b.totalPagado - a.totalPagado)
-      .slice(0, limit)
-      .map(g => ({ ...g, totalPagado: Math.round(g.totalPagado) }));
-
-    success(res, sorted);
+    success(res, result.map(g => ({
+      ...g,
+      totalPagado: Math.round(Number(g.totalPagado))
+    })));
   } catch (err) {
     next(err);
   }

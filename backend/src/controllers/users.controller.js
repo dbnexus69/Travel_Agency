@@ -9,6 +9,17 @@ exports.list = async (req, res, next) => {
     const { search, sortBy, sortOrder } = req;
     const { role, status } = req.query;
 
+    let searchCondition = '';
+    if (search) {
+      searchCondition = `AND (p.nombres ILIKE '%${search}%' OR p.apellidos ILIKE '%${search}%' OR u.email ILIKE '%${search}%')`;
+    }
+    
+    let roleCondition = '';
+    if (role) roleCondition = `AND r.nombre = '${role}'`;
+    
+    let statusCondition = '';
+    if (status) statusCondition = `AND u.status = '${status}'`;
+
     const where = {};
     if (search) {
       where.OR = [
@@ -20,45 +31,50 @@ exports.list = async (req, res, next) => {
     if (role) where.rol = { nombre: role };
     if (status) where.status = status;
 
-    const [total, usuarios] = await Promise.all([
+    // Ejecución paralela: Conteo (Prisma) y Búsqueda (SQL Puro)
+    const [total, usuariosRaw] = await Promise.all([
       prisma.usuarios.count({ where }),
-      prisma.usuarios.findMany({
-        where,
-        skip,
-        take: perPage,
-        orderBy: { [sortBy]: sortOrder },
-        include: {
-          persona: { include: { tipoDocumento: true } },
-          rol: true,
-          permisosUsuario: { include: { permiso: true }, where: { permitido: true } }
-        }
-      })
+      prisma.$queryRawUnsafe(`
+        SELECT 
+          u.id, 
+          u.email, 
+          u.status, 
+          u.ultimo_login as "ultimoLogin", 
+          u.creado_at as "creadoAt",
+          p.nombres as "firstName", 
+          p.apellidos as "lastName", 
+          p.telefono as "phone", 
+          p.documento as "docNumber", 
+          p.birth_date as "birthDate", 
+          p.avatar_url as "avatar",
+          td.abreviatura as "docType",
+          r.nombre as "role"
+        FROM usuarios u
+        JOIN personas p ON u.persona_id = p.id
+        LEFT JOIN tipos_documento td ON p.tipo_documento_id = td.id
+        JOIN roles r ON u.rol_id = r.id
+        WHERE 1=1 ${searchCondition} ${roleCondition} ${statusCondition}
+        ORDER BY u.id DESC
+        LIMIT ${perPage} OFFSET ${skip}
+      `)
     ]);
 
-    const data = usuarios.map(u => ({
+    const data = usuariosRaw.map(u => ({
       id: u.id,
-      name: `${u.persona.nombres} ${u.persona.apellidos}`,
-      firstName: u.persona.nombres,
-      lastName: u.persona.apellidos,
+      name: `${u.firstName} ${u.lastName}`,
+      firstName: u.firstName,
+      lastName: u.lastName,
       email: u.email,
-      role: u.rol.nombre,
-      phone: u.persona.telefono,
-      docType: u.persona.tipoDocumento?.abreviatura || null,
-      docNumber: u.persona.documento,
+      role: u.role,
+      phone: u.phone,
+      docType: u.docType || null,
+      docNumber: u.docNumber,
       status: u.status,
-      avatar: u.persona.avatarUrl,
-      birthDate: u.persona.birthDate,
+      avatar: u.avatar,
+      birthDate: u.birthDate,
       lastLogin: u.ultimoLogin,
       createdAt: u.creadoAt,
-      customPermissions: u.permisosUsuario.length > 0 ? u.permisosUsuario.reduce((acc, pu) => {
-        if (!acc[pu.permiso.modulo]) acc[pu.permiso.modulo] = {};
-        const val = pu.valor || 'true';
-        const isScopedView = pu.permiso.accion === 'view' && ['dashboard','sales','clients'].includes(pu.permiso.modulo);
-        acc[pu.permiso.modulo][pu.permiso.accion] = isScopedView
-          ? (val === 'own' || val === 'all' || val === 'none' ? val : 'all')
-          : (val === 'true' || val === true);
-        return acc;
-      }, {}) : undefined
+      customPermissions: undefined // Se omiten para la tabla general para maximizar la velocidad
     }));
 
     success(res, data, buildMeta(total, page, perPage));

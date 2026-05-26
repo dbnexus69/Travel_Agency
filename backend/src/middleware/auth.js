@@ -2,6 +2,10 @@ const { verifyToken } = require('../utils/tokenUtils');
 const prisma = require('../config/db');
 const { error } = require('../utils/apiResponse');
 
+// Caché en memoria para evitar golpear la Base de Datos en cada clic (TTL: 5 minutos)
+const AUTH_CACHE = new Map();
+const CACHE_TTL_MS = 5 * 60 * 1000;
+
 async function auth(req, res, next) {
   try {
     const header = req.headers.authorization;
@@ -15,6 +19,16 @@ async function auth(req, res, next) {
     const token = header.split(' ')[1];
     const decoded = verifyToken(token);
 
+    // 1. Revisar si el usuario está en RAM Cache
+    const now = Date.now();
+    const cached = AUTH_CACHE.get(decoded.userId);
+    
+    if (cached && cached.expiresAt > now) {
+      req.user = cached.user;
+      return next();
+    }
+
+    // 2. Si no está en caché, consultar a Supabase (viaje pesado)
     const usuario = await prisma.usuarios.findUnique({
       where: { id: decoded.userId },
       include: {
@@ -32,7 +46,7 @@ async function auth(req, res, next) {
       return error(res, 'Usuario no encontrado o inactivo', 401, 'USER_INACTIVE');
     }
 
-    req.user = {
+    const userData = {
       id: usuario.id,
       personaId: usuario.personaId,
       email: usuario.email,
@@ -51,6 +65,13 @@ async function auth(req, res, next) {
       }))
     };
 
+    // 3. Guardar en RAM Cache para la próxima vez
+    AUTH_CACHE.set(decoded.userId, {
+      user: userData,
+      expiresAt: now + CACHE_TTL_MS
+    });
+
+    req.user = userData;
     next();
   } catch (err) {
     if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {

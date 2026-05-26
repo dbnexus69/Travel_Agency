@@ -25,32 +25,55 @@ exports.list = async (req, res, next) => {
       where.creadoPorId = req.user.id;
     }
 
-    const sortFieldMap = { 'creadoAt': 'fechaRegistro', 'name': 'personaId', 'date': 'fechaRegistro' };
-    const effectiveSortBy = sortFieldMap[sortBy] || sortBy;
+    let searchCondition = '';
+    if (search) searchCondition = `AND (p.nombres ILIKE '%${search}%' OR p.apellidos ILIKE '%${search}%' OR p.documento ILIKE '%${search}%' OR p.email ILIKE '%${search}%')`;
+    
+    let statusCondition = '';
+    if (status) statusCondition = `AND p.status = '${status}'`;
+    
+    let ownCondition = '';
+    if (req.permissionScope === 'own') ownCondition = `AND c.creado_por_id = ${req.user.id}`;
 
-    const [total, clientes] = await Promise.all([
+    const sortFieldMapSQL = { 'creadoAt': 'c.fecha_registro', 'name': 'c.persona_id', 'date': 'c.fecha_registro' };
+    const sqlOrderBy = sortFieldMapSQL[sortBy] || 'c.fecha_registro';
+
+    const [total, clientesRaw] = await Promise.all([
       prisma.clientes.count({ where }),
-      prisma.clientes.findMany({
-        where,
-        skip,
-        take: perPage,
-        orderBy: { [effectiveSortBy]: sortOrder },
-        include: { persona: { include: { tipoDocumento: true } } }
-      })
+      prisma.$queryRawUnsafe(`
+        SELECT 
+          c.id,
+          c.fecha_registro as "fechaRegistro",
+          c.creado_por_id as "creadoPorId",
+          p.nombres as "firstName",
+          p.apellidos as "lastName",
+          p.documento as "docNumber",
+          p.telefono as "phone",
+          p.email,
+          p.birth_date as "birthDate",
+          p.status,
+          p.avatar_url as "avatar",
+          td.abreviatura as "docType"
+        FROM clientes c
+        JOIN personas p ON c.persona_id = p.id
+        LEFT JOIN tipos_documento td ON p.tipo_documento_id = td.id
+        WHERE 1=1 ${searchCondition} ${statusCondition} ${ownCondition}
+        ORDER BY ${sqlOrderBy} ${sortOrder === 'desc' ? 'DESC' : 'ASC'}
+        LIMIT ${perPage} OFFSET ${skip}
+      `)
     ]);
 
-    const data = clientes.map(c => ({
+    const data = clientesRaw.map(c => ({
       id: c.id,
-      firstName: c.persona.nombres,
-      lastName: c.persona.apellidos,
-      name: `${c.persona.nombres} ${c.persona.apellidos}`,
-      docType: c.persona.tipoDocumento?.abreviatura || null,
-      docNumber: c.persona.documento,
-      phone: c.persona.telefono,
-      email: c.persona.email,
-      birthDate: c.persona.birthDate,
-      status: c.persona.status,
-      avatar: c.persona.avatarUrl,
+      firstName: c.firstName,
+      lastName: c.lastName,
+      name: `${c.firstName} ${c.lastName}`,
+      docType: c.docType || null,
+      docNumber: c.docNumber,
+      phone: c.phone,
+      email: c.email,
+      birthDate: c.birthDate,
+      status: c.status,
+      avatar: c.avatar,
       registrationDate: c.fechaRegistro,
       createdBy: c.creadoPorId
     }));

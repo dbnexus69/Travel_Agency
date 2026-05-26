@@ -8,6 +8,22 @@ exports.list = async (req, res, next) => {
     const { search, sortBy, sortOrder } = req;
     const { status, asesorId, clientId, dateFrom, dateTo } = req.query;
 
+    let searchCondition = '';
+    if (search) searchCondition = `AND v.observaciones ILIKE '%${search}%'`;
+    let statusCondition = '';
+    if (status) statusCondition = `AND v.status = '${status}'`;
+    let asesorCondition = '';
+    if (asesorId) asesorCondition = `AND v.usuario_id = ${parseInt(asesorId)}`;
+    let clientCondition = '';
+    if (clientId) clientCondition = `AND v.cliente_id = ${parseInt(clientId)}`;
+    let dateCondition = '';
+    if (dateFrom) dateCondition += ` AND v.creado_at >= '${new Date(dateFrom).toISOString()}'`;
+    if (dateTo) dateCondition += ` AND v.creado_at <= '${new Date(dateTo).toISOString()}'`;
+    
+    if (req.permissionScope === 'own') {
+      asesorCondition += ` AND v.usuario_id = ${req.user.id}`;
+    }
+
     const where = {};
     if (search) where.observaciones = { contains: search, mode: 'insensitive' };
     if (status) where.status = status;
@@ -18,52 +34,78 @@ exports.list = async (req, res, next) => {
       if (dateFrom) where.creadoAt.gte = new Date(dateFrom);
       if (dateTo) where.creadoAt.lte = new Date(dateTo);
     }
-
     if (req.permissionScope === 'own') {
       where.usuarioId = req.user.id;
     }
 
     const sortFieldMap = { 'creadoAt': 'creadoAt', 'date': 'creadoAt', 'total': 'montoTotal', 'status': 'status', 'clientName': 'clienteId' };
     const effectiveSortBy = sortFieldMap[sortBy] || 'creadoAt';
+    const sqlOrderBy = effectiveSortBy === 'montoTotal' ? 'v.monto_total' : (effectiveSortBy === 'status' ? 'v.status' : 'v.creado_at');
 
-    const [total, ventas] = await Promise.all([
+    const [total, ventasRaw] = await Promise.all([
       prisma.ventas.count({ where }),
-      prisma.ventas.findMany({
-        where,
-        skip,
-        take: perPage,
-        orderBy: { [effectiveSortBy]: sortOrder },
-        include: {
-          cliente: { select: { persona: { select: { nombres: true, apellidos: true } } } },
-          usuario: { select: { persona: { select: { nombres: true, apellidos: true } } } },
-          comisionista: { select: { persona: { select: { nombres: true, apellidos: true } } } },
-          pagosVenta: {
-            select: { id: true, monto: true, fechaPago: true, metodoPago: { select: { nombre: true } } },
-            orderBy: { fechaPago: 'asc' }
-          },
-          detalleVentas: {
-            select: {
-              categoria: true,
-              nombreServicio: true,
-              origen: true,
-              destino: true,
-              pasajerosDetalle: {
-                select: {
-                  persona: {
-                    select: {
-                      nombres: true,
-                      apellidos: true
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      })
+      prisma.$queryRawUnsafe(`
+        SELECT 
+          v.id,
+          v.cliente_id as "clienteId",
+          v.usuario_id as "usuarioId",
+          v.creado_at as "creadoAt",
+          v.monto_total as "montoTotal",
+          v.status,
+          v.observaciones,
+          v.es_credito as "esCredito",
+          v.fecha_vence_credito as "fechaVenceCredito",
+          v.monto_pagado_credito as "montoPagadoCredito",
+          v.comisionista_id as "comisionistaId",
+          v.monto_comision_bruto as "montoComisionBruto",
+          v.monto_comision_neto as "montoComisionNeto",
+          v.costo_proveedor_total as "costoProveedorTotal",
+          v.ta_total as "taTotal",
+          v.comision_liquidada as "comisionLiquidada",
+          cp.nombres || ' ' || cp.apellidos as "clientName",
+          up.nombres || ' ' || up.apellidos as "asesorName",
+          comp.nombres || ' ' || comp.apellidos as "commissionAgentName",
+          
+          COALESCE((
+            SELECT json_agg(json_build_object(
+              'id', p.id,
+              'fechaPago', p.fecha_pago,
+              'monto', p.monto,
+              'metodoPago', (SELECT json_build_object('nombre', mp.nombre) FROM metodos_pago mp WHERE mp.id = p.metodo_pago_id)
+            ))
+            FROM pagos_venta p WHERE p.venta_id = v.id
+          ), '[]'::json) as "pagosVenta",
+
+          COALESCE((
+            SELECT json_agg(json_build_object(
+              'categoria', dv.categoria,
+              'nombreServicio', dv.nombre_servicio,
+              'origen', dv.origen,
+              'destino', dv.destino,
+              'pasajerosDetalle', COALESCE((
+                SELECT json_agg(json_build_object(
+                  'persona', (SELECT json_build_object('nombres', paxp.nombres, 'apellidos', paxp.apellidos) FROM personas paxp WHERE paxp.id = pd.persona_id)
+                ))
+                FROM pasajeros_detalle pd WHERE pd.detalle_venta_id = dv.id
+              ), '[]'::json)
+            ))
+            FROM detalle_venta dv WHERE dv.venta_id = v.id
+          ), '[]'::json) as "detalleVentas"
+
+        FROM ventas v
+        JOIN clientes c ON v.cliente_id = c.id
+        JOIN personas cp ON c.persona_id = cp.id
+        JOIN usuarios u ON v.usuario_id = u.id
+        JOIN personas up ON u.persona_id = up.id
+        LEFT JOIN comisionistas com ON v.comisionista_id = com.id
+        LEFT JOIN personas comp ON com.persona_id = comp.id
+        WHERE 1=1 ${searchCondition} ${statusCondition} ${asesorCondition} ${clientCondition} ${dateCondition}
+        ORDER BY ${sqlOrderBy} ${sortOrder === 'desc' ? 'DESC' : 'ASC'}
+        LIMIT ${perPage} OFFSET ${skip}
+      `)
     ]);
 
-    const data = ventas.map(v => {
+    const data = ventasRaw.map(v => {
       // Build a lightweight services summary from detalleVentas
       const servicesSummary = (v.detalleVentas || []).map(d => {
         const tipo = d.categoria;
@@ -115,9 +157,9 @@ exports.list = async (req, res, next) => {
       return {
         id: v.id,
         clientId: v.clienteId,
-        clientName: `${v.cliente.persona.nombres} ${v.cliente.persona.apellidos}`,
+        clientName: v.clientName,
         asesorId: v.usuarioId,
-        asesorName: `${v.usuario.persona.nombres} ${v.usuario.persona.apellidos}`,
+        asesorName: v.asesorName,
         date: v.creadoAt,
         total: v.montoTotal,
         status: v.status,
@@ -126,7 +168,7 @@ exports.list = async (req, res, next) => {
         creditDueDate: v.fechaVenceCredito,
         creditPaidAmount: v.montoPagadoCredito,
         commissionAgentId: v.comisionistaId,
-        commissionAgentName: v.comisionista ? `${v.comisionista.persona.nombres} ${v.comisionista.persona.apellidos}` : null,
+        commissionAgentName: v.commissionAgentName,
         commissionAgentAmount: v.montoComisionBruto,
         commissionAgentNetPayment: v.montoComisionNeto,
         supplierCost: v.costoProveedorTotal,

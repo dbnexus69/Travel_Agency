@@ -53,6 +53,7 @@ frontend/.vite/
 
 # Temporary & logs
 logs/
+scratch/
 *.log
 
 frontend-makeup/

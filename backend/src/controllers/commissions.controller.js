@@ -18,27 +18,48 @@ exports.listAgents = async (req, res, next) => {
       };
     }
 
-    const [total, agents] = await Promise.all([
+    let statusCondition = '';
+    if (status) statusCondition = `AND c.status = '${status}'`;
+    let searchCondition = '';
+    if (search) {
+      searchCondition = `AND (p.nombres ILIKE '%${search}%' OR p.apellidos ILIKE '%${search}%')`;
+    }
+
+    const [total, agentsRaw] = await Promise.all([
       prisma.comisionistas.count({ where }),
-      prisma.comisionistas.findMany({
-        where,
-        skip,
-        take: perPage,
-        include: { persona: { include: { tipoDocumento: true } } }
-      })
+      prisma.$queryRawUnsafe(`
+        SELECT 
+          c.id,
+          c.tipo as "type",
+          c.status,
+          c.acumulado as "accumulated",
+          c.umbral_pago as "paymentThreshold",
+          p.nombres as "firstName",
+          p.apellidos as "lastName",
+          p.telefono as "phone",
+          p.email,
+          p.documento as "docNumber",
+          td.abreviatura as "docType"
+        FROM comisionistas c
+        JOIN personas p ON c.persona_id = p.id
+        LEFT JOIN tipos_documento td ON p.tipo_documento_id = td.id
+        WHERE 1=1 ${statusCondition} ${searchCondition}
+        ORDER BY c.id DESC
+        LIMIT ${perPage} OFFSET ${skip}
+      `)
     ]);
 
-    const data = agents.map(a => ({
+    const data = agentsRaw.map(a => ({
       id: a.id,
-      name: `${a.persona.nombres} ${a.persona.apellidos}`.trim(),
-      type: a.tipo,
-      docType: a.persona.tipoDocumento?.abreviatura || '',
-      docNumber: a.persona.documento || '',
+      name: `${a.firstName} ${a.lastName}`.trim(),
+      type: a.type,
+      docType: a.docType || '',
+      docNumber: a.docNumber || '',
       status: a.status,
-      accumulated: a.acumulado,
-      paymentThreshold: a.umbralPago,
-      phone: a.persona.telefono,
-      email: a.persona.email
+      accumulated: a.accumulated,
+      paymentThreshold: a.paymentThreshold,
+      phone: a.phone,
+      email: a.email
     }));
 
     success(res, data, buildMeta(total, page, perPage));
@@ -158,35 +179,54 @@ exports.listSettlements = async (req, res, next) => {
       if (dateTo) where.fecha.lte = new Date(dateTo);
     }
 
-    const [total, settlements] = await Promise.all([
+    let agentCondition = '';
+    if (agentId) agentCondition = `AND lc.comisionista_id = ${parseInt(agentId)}`;
+    
+    let dateCondition = '';
+    if (dateFrom) dateCondition += ` AND lc.fecha >= '${new Date(dateFrom).toISOString()}'`;
+    if (dateTo) dateCondition += ` AND lc.fecha <= '${new Date(dateTo).toISOString()}'`;
+
+    const [total, settlementsRaw] = await Promise.all([
       prisma.liquidacionesComision.count({ where }),
-      prisma.liquidacionesComision.findMany({
-        where,
-        skip,
-        take: perPage,
-        include: {
-          comisionista: { include: { persona: true } },
-          metodoPago: true,
-          liquidacionVentas: { include: { venta: true } }
-        },
-        orderBy: { creadoAt: 'desc' }
-      })
+      prisma.$queryRawUnsafe(`
+        SELECT 
+          lc.id,
+          lc.comisionista_id as "agentId",
+          lc.monto as "amount",
+          lc.fecha as "date",
+          lc.referencia as "reference",
+          lc.notas as "notes",
+          p.nombres as "firstName",
+          p.apellidos as "lastName",
+          mp.nombre as "paymentMethod",
+          COALESCE((
+            SELECT json_agg(lv.venta_id)
+            FROM liquidacion_ventas lv WHERE lv.liquidacion_id = lc.id
+          ), '[]'::json) as "salesIds"
+        FROM liquidaciones_comision lc
+        JOIN comisionistas c ON lc.comisionista_id = c.id
+        JOIN personas p ON c.persona_id = p.id
+        LEFT JOIN metodos_pago mp ON lc.metodo_pago_id = mp.id
+        WHERE 1=1 ${agentCondition} ${dateCondition}
+        ORDER BY lc.creado_at DESC
+        LIMIT ${perPage} OFFSET ${skip}
+      `)
     ]);
 
-    const data = settlements.map(s => {
-      const d = s.fecha;
+    const data = settlementsRaw.map(s => {
+      const d = s.date;
       const dateStr = d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` : null;
 
       return {
         id: s.id,
-        agentId: s.comisionistaId,
-        agentName: `${s.comisionista.persona.nombres} ${s.comisionista.persona.apellidos}`.trim(),
-        amount: s.monto,
+        agentId: s.agentId,
+        agentName: `${s.firstName} ${s.lastName}`.trim(),
+        amount: s.amount,
         date: dateStr,
-        paymentMethod: s.metodoPago?.nombre || null,
-        reference: s.referencia,
-        notes: s.notas,
-        salesIds: s.liquidacionVentas.map(lv => lv.ventaId)
+        paymentMethod: s.paymentMethod || null,
+        reference: s.reference,
+        notes: s.notes,
+        salesIds: s.salesIds || []
       };
     });
 
