@@ -38,6 +38,45 @@ export function Input({ className = '', error, ...props }: InputProps) {
   );
 }
 
+export function CurrencyInput({ className = '', error, value, onChange, placeholder, ...props }: InputProps & { value?: string | number, onChange?: (val: string) => void }) {
+  const [displayValue, setDisplayValue] = useState('');
+
+  useEffect(() => {
+    if (value !== undefined && value !== null && value !== '') {
+      const num = Number(value);
+      if (!isNaN(num)) {
+        setDisplayValue(new Intl.NumberFormat('es-CO', {
+          style: 'currency',
+          currency: 'COP',
+          maximumFractionDigits: 0
+        }).format(num));
+      }
+    } else {
+      setDisplayValue('');
+    }
+  }, [value]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value.replace(/\D/g, '');
+    if (onChange) {
+      onChange(rawValue);
+    }
+  };
+
+  return (
+    <input
+      type="text"
+      value={displayValue}
+      onChange={handleChange}
+      placeholder={placeholder || "$ 0"}
+      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/50 ${
+        error ? 'border-red-500' : 'border-gray-border'
+      } ${className}`}
+      {...props}
+    />
+  );
+}
+
 interface ComboboxProps {
   value: string;
   onChange: (value: string) => void;

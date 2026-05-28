@@ -1,5 +1,5 @@
 import { LuMap } from "react-icons/lu";
-import { FormField, Input, Combobox, Textarea } from "../../ui/Form";
+import { FormField, Input, Combobox, Textarea , CurrencyInput} from "../../ui/Form";
 import { TourData } from "../../../types";
 import { ClientInfoSection, VoucherField, FinancialSection } from "./VoucherField";
 

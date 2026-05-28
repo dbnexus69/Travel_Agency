@@ -1,5 +1,5 @@
 import { Package, Plane, Users, Briefcase, Trash2, PlusCircle } from "lucide-react";
-import { FormField, Input, Combobox, Select } from "../../ui/Form";
+import { FormField, Input, Combobox, Select , CurrencyInput} from "../../ui/Form";
 import { Button } from "../../ui/Button";
 import { PlanData, GuestInfo } from "../../../types";
 
@@ -186,24 +186,21 @@ export function PlanForm({ plan, onChange, data }: PlanFormProps) {
             />
           </FormField>
           <FormField label="Costo Proveedor">
-            <Input
-              type="number"
+            <CurrencyInput
               value={plan.supplierCost === 0 ? "" : plan.supplierCost}
-              onChange={(e) =>
+              onChange={(val) =>
                 onChange({
-                  supplierCost:
-                    e.target.value === "" ? 0 : Number(e.target.value),
+                  supplierCost: val === "" ? 0 : Number(val),
                 })
               }
             />
           </FormField>
           <FormField label="Valor TA">
-            <Input
-              type="number"
+            <CurrencyInput
               value={plan.ta === 0 ? "" : plan.ta}
-              onChange={(e) =>
+              onChange={(val) =>
                 onChange({
-                  ta: e.target.value === "" ? 0 : Number(e.target.value),
+                  ta: val === "" ? 0 : Number(val),
                 })
               }
             />

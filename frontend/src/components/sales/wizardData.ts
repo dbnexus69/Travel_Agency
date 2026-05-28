@@ -93,7 +93,7 @@ export const INITIAL_TICKET = (client?: any): TicketData => ({
     name: client?.name || "",
     docType: client?.docType || "",
     docNumber: client?.docNumber || "",
-    birthDate: client?.birthDate || "",
+    birthDate: client?.birthDate ? client.birthDate.split('T')[0] : "",
   },
 });
 
@@ -183,7 +183,7 @@ export const INITIAL_CHECKIN = (client?: any): CheckInData => ({
 
 export const INITIAL_MIGRATION = (client?: any): MigrationData => ({
   passengerName: client?.name || "",
-  birthDate: client?.birthDate || "",
+  birthDate: client?.birthDate ? client.birthDate.split('T')[0] : "",
   nationality: "",
   passportNumber: "",
   passportExpiry: "",
@@ -305,7 +305,7 @@ export const INITIAL_RESTAURANT = (client?: any): RestaurantData => ({
 
 export const INITIAL_VISA = (client?: any): VisaData => ({
   fullName: client?.name || "",
-  birthDate: client?.birthDate || "",
+  birthDate: client?.birthDate ? client.birthDate.split('T')[0] : "",
   nationality: "",
   passportNumber: "",
   passportExpiration: "",
@@ -323,7 +323,7 @@ export const INITIAL_VISA = (client?: any): VisaData => ({
 export const INITIAL_PASSPORT = (client?: any): PassportData => ({
   fullName: client?.name || "",
   idNumber: client?.docNumber || "",
-  birthDate: client?.birthDate || "",
+  birthDate: client?.birthDate ? client.birthDate.split('T')[0] : "",
   residenceCity: "",
   processType: "primera vez",
   estimatedTravelDate: "",
@@ -369,7 +369,7 @@ export const INITIAL_FORM: WizardFormData = {
   total: "",
   ta: "",
   supplierCost: "",
-  status: "credito",
+  status: "",
   isCredit: false,
   creditDueDate: "",
   tickets: [],

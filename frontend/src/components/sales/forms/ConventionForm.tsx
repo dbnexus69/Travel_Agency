@@ -1,5 +1,5 @@
 import { Building2 } from "lucide-react";
-import { FormField, Input, Combobox, Textarea } from "../../ui/Form";
+import { FormField, Input, Combobox, Textarea , CurrencyInput} from "../../ui/Form";
 import { ConventionData } from "../../../types";
 import { ClientInfoSection, VoucherField, FinancialSection } from "./VoucherField";
 

@@ -1,5 +1,5 @@
 import { AlertCircle, Users, Briefcase, Trash2, PlusCircle } from "lucide-react";
-import { FormField, Input, Combobox, Select } from "../../ui/Form";
+import { FormField, Input, Combobox, Select , CurrencyInput} from "../../ui/Form";
 import { Button } from "../../ui/Button";
 import { InsuranceData, GuestInfo } from "../../../types";
 
@@ -114,24 +114,21 @@ export function InsuranceForm({ insurance, onChange, data }: InsuranceFormProps)
         </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField label="Costo Proveedor">
-            <Input
-              type="number"
+            <CurrencyInput
               value={insurance.supplierCost === 0 ? "" : insurance.supplierCost}
-              onChange={(e) =>
+              onChange={(val) =>
                 onChange({
-                  supplierCost:
-                    e.target.value === "" ? 0 : Number(e.target.value),
+                  supplierCost: val === "" ? 0 : Number(val),
                 })
               }
             />
           </FormField>
           <FormField label="Valor TA">
-            <Input
-              type="number"
+            <CurrencyInput
               value={insurance.ta === 0 ? "" : insurance.ta}
-              onChange={(e) =>
+              onChange={(val) =>
                 onChange({
-                  ta: e.target.value === "" ? 0 : Number(e.target.value),
+                  ta: val === "" ? 0 : Number(val),
                 })
               }
             />

@@ -1,5 +1,5 @@
 import { LuBookOpen } from "react-icons/lu";
-import { FormField, Input, Combobox } from "../../ui/Form";
+import { FormField, Input, Combobox , CurrencyInput} from "../../ui/Form";
 import { PassportData } from "../../../types";
 import { ClientInfoSection, VoucherField, FinancialSection } from "./VoucherField";
 

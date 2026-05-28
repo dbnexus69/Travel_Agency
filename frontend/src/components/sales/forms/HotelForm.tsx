@@ -1,6 +1,6 @@
 import { Building2, Users, Briefcase, Trash2, PlusCircle } from "lucide-react";
 import * as LuIcons from "react-icons/lu";
-import { FormField, Input, Combobox, Select } from "../../ui/Form";
+import { FormField, Input, Combobox, Select , CurrencyInput} from "../../ui/Form";
 import { Button } from "../../ui/Button";
 import { HotelData, GuestInfo } from "../../../types";
 
@@ -149,24 +149,21 @@ export function HotelForm({ hotel, onChange, data }: HotelFormProps) {
         </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField label="Costo Proveedor">
-            <Input
-              type="number"
+            <CurrencyInput
               value={hotel.supplierCost === 0 ? "" : hotel.supplierCost}
-              onChange={(e) =>
+              onChange={(val) =>
                 onChange({
-                  supplierCost:
-                    e.target.value === "" ? 0 : Number(e.target.value),
+                  supplierCost: val === "" ? 0 : Number(val),
                 })
               }
             />
           </FormField>
           <FormField label="Tarifa Administrativa (TA)">
-            <Input
-              type="number"
+            <CurrencyInput
               value={hotel.ta === 0 ? "" : hotel.ta}
-              onChange={(e) =>
+              onChange={(val) =>
                 onChange({
-                  ta: e.target.value === "" ? 0 : Number(e.target.value),
+                  ta: val === "" ? 0 : Number(val),
                 })
               }
             />

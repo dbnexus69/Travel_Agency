@@ -245,6 +245,7 @@ function mapLegs(legs) {
 const PRODUCT_TRANSFORMS = {
   tiqueteria(d, passengers, target) {
     const t = d.prodTiqueteria;
+    if (!t) return;
     target.push({
       id: t.id,
       airline: String(t.aerolineaId || ''),
@@ -262,6 +263,7 @@ const PRODUCT_TRANSFORMS = {
   },
   hoteleria(d, passengers, target) {
     const h = d.prodHoteleria;
+    if (!h) return;
     target.push({
       id: h.id,
       hotelName: h.hotelNombre,
@@ -274,8 +276,9 @@ const PRODUCT_TRANSFORMS = {
       guests: passengers.map(p => ({ name: p.nombreCompleto, docType: String(p.tipoDocumento || ''), docNumber: p.nroDocumento || '' }))
     });
   },
-  seguros(d, passengers, target) {
+  seguros_viaje(d, passengers, target) {
     const s = d.prodSeguros;
+    if (!s) return;
     target.push({
       id: s.id,
       insuranceType: s.tipoSeguro,
@@ -289,6 +292,7 @@ const PRODUCT_TRANSFORMS = {
   },
   planes(d, passengers, target) {
     const p = d.prodPlanes;
+    if (!p) return;
     target.push({
       id: p.id,
       planName: p.nombrePlan,
@@ -311,6 +315,7 @@ const PRODUCT_TRANSFORMS = {
   },
   checkin(d, passengers, target) {
     const c = d.prodCheckins;
+    if (!c) return;
     target.push({
       id: c.id,
       flightOrReservation: c.nroVueloReserva,
@@ -322,8 +327,9 @@ const PRODUCT_TRANSFORMS = {
       needsWheelchair: c.usaSillaRuedas
     });
   },
-  migracion(d, passengers, target) {
+  documentacion_migratoria(d, passengers, target) {
     const m = d.prodMigracion;
+    if (!m) return;
     target.push({
       id: m.id,
       requestedDocType: m.tipoTramiteMigratorio,
@@ -335,6 +341,7 @@ const PRODUCT_TRANSFORMS = {
   },
   simcard(d, passengers, target) {
     const s = d.prodSimcards;
+    if (!s) return;
     target.push({
       id: s.id,
       destinationCountry: s.paisDestino,
@@ -345,8 +352,9 @@ const PRODUCT_TRANSFORMS = {
       deliveryMethod: s.metodoEntrega
     });
   },
-  autos(d, passengers, target) {
+  renta_vehiculos(d, passengers, target) {
     const a = d.prodAutos;
+    if (!a) return;
     target.push({
       id: a.id,
       mainDriver: a.conductorNombre,
@@ -360,8 +368,9 @@ const PRODUCT_TRANSFORMS = {
       guaranteeCreditCard: a.tarjetaGarantiaInfo
     });
   },
-  fincas(d, passengers, target) {
+  renta_fincas(d, passengers, target) {
     const f = d.prodFincas;
+    if (!f) return;
     target.push({
       id: f.id,
       responsibleName: f.responsableNombre,
@@ -377,6 +386,7 @@ const PRODUCT_TRANSFORMS = {
   },
   tours(d, passengers, target) {
     const t = d.prodTours;
+    if (!t) return;
     target.push({
       id: t.id,
       selectedTour: t.tourNombre,
@@ -391,8 +401,9 @@ const PRODUCT_TRANSFORMS = {
       phone: t.telefonoContacto
     });
   },
-  eventos(d, passengers, target) {
+  centros_convencion(d, passengers, target) {
     const e = d.prodEventos;
+    if (!e) return;
     target.push({
       id: e.id,
       organization: e.organizacion,
@@ -410,6 +421,7 @@ const PRODUCT_TRANSFORMS = {
   },
   restaurantes(d, passengers, target) {
     const r = d.prodRestaurantes;
+    if (!r) return;
     target.push({
       id: r.id,
       reservationName: r.nombreReserva,
@@ -422,8 +434,9 @@ const PRODUCT_TRANSFORMS = {
       phone: r.telefonoContacto
     });
   },
-  visas(d, passengers, target) {
+  visa(d, passengers, target) {
     const v = d.prodVisas;
+    if (!v) return;
     target.push({
       id: v.id,
       fullName: v.nombreCompleto,
@@ -437,8 +450,9 @@ const PRODUCT_TRANSFORMS = {
       email: v.emailContacto
     });
   },
-  pasaportes(d, passengers, target) {
+  pasaporte(d, passengers, target) {
     const p = d.prodPasaportes;
+    if (!p) return;
     target.push({
       id: p.id,
       fullName: p.nombreCompleto,
@@ -450,8 +464,9 @@ const PRODUCT_TRANSFORMS = {
       phone: p.telefonoContacto
     });
   },
-  mascotas(d, passengers, target) {
+  servicio_mascotas(d, passengers, target) {
     const m = d.prodMascotas;
+    if (!m) return;
     target.push({
       id: m.id,
       ownerName: null,
@@ -564,19 +579,19 @@ exports.getById = async (req, res, next) => {
       })),
       ticketData: resultMap.tiqueteria,
       hotelData: resultMap.hoteleria,
-      insuranceData: resultMap.seguros,
+      insuranceData: resultMap.seguros_viaje,
       planData: resultMap.planes,
       checkInData: resultMap.checkin,
-      migrationData: resultMap.migracion,
+      migrationData: resultMap.documentacion_migratoria,
       simCardData: resultMap.simcard,
-      carRentalData: resultMap.autos,
-      fincaData: resultMap.fincas,
+      carRentalData: resultMap.renta_vehiculos,
+      fincaData: resultMap.renta_fincas,
       tourData: resultMap.tours,
-      conventionData: resultMap.eventos,
+      conventionData: resultMap.centros_convencion,
       restaurantData: resultMap.restaurantes,
-      visaData: resultMap.visas,
-      passportData: resultMap.pasaportes,
-      petServiceData: resultMap.mascotas
+      visaData: resultMap.visa,
+      passportData: resultMap.pasaporte,
+      petServiceData: resultMap.servicio_mascotas
     });
   } catch (err) {
     next(err);

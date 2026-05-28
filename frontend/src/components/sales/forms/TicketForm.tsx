@@ -1,5 +1,5 @@
 import { Plane, MapPin, User, Briefcase, Trash2, PlusCircle, ArrowRight, ArrowLeftRight, ArrowLeft } from "lucide-react";
-import { FormField, Input, Combobox, Select } from "../../ui/Form";
+import { FormField, Input, Combobox, Select, CurrencyInput } from "../../ui/Form";
 import { Button } from "../../ui/Button";
 import { TicketData, FlightLeg } from "../../../types";
 
@@ -500,17 +500,15 @@ export function TicketForm({
         </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField label="Valor Pagado al Proveedor">
-            <Input
-              type="number"
+            <CurrencyInput
               value={ticket.supplierCost === 0 ? "" : ticket.supplierCost}
-              onChange={(e) => onChange({ supplierCost: e.target.value === "" ? 0 : Number(e.target.value) })}
+              onChange={(val) => onChange({ supplierCost: val === "" ? 0 : Number(val) })}
             />
           </FormField>
           <FormField label="Valor TA">
-            <Input
-              type="number"
+            <CurrencyInput
               value={ticket.ta === 0 ? "" : ticket.ta}
-              onChange={(e) => onChange({ ta: e.target.value === "" ? 0 : Number(e.target.value) })}
+              onChange={(val) => onChange({ ta: val === "" ? 0 : Number(val) })}
             />
           </FormField>
           <FormField label="Método de Pago Proveedor">
@@ -524,16 +522,14 @@ export function TicketForm({
             />
           </FormField>
           <FormField label="Plan de Equipaje">
-            <Select
+            <Combobox
               value={ticket.baggagePlan}
-              onChange={(e) => onChange({ baggagePlan: e.target.value })}
-              options={[
-                { value: "", label: "Seleccionar plan..." },
-                ...baggage.map((b) => ({
-                  value: `${b.airlineName} - ${b.fareType}`,
-                  label: `${b.airlineName} - ${b.fareType}`,
-                })),
-              ]}
+              onChange={(val) => onChange({ baggagePlan: val })}
+              options={baggage.map((b) => ({
+                value: `${b.airlineName} - ${b.fareType}`,
+                label: `${b.airlineName} - ${b.fareType}`,
+              }))}
+              placeholder="Buscar plan..."
             />
           </FormField>
         </div>

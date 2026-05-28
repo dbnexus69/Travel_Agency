@@ -1,5 +1,5 @@
 import { LuFileText, LuSend, LuUser, LuUpload, LuX, LuFileCheck, LuDollarSign, LuBuilding } from "react-icons/lu";
-import { Input, Combobox } from "../../ui/Form";
+import { Input, Combobox , CurrencyInput} from "../../ui/Form";
 import { FormField } from "../../ui/Form";
 import { useRef } from "react";
 
@@ -198,12 +198,9 @@ export function FinancialSection({ supplierName, supplierCost, ta, suppliers = [
         <FormField label="Costo Proveedor">
           <div className="relative group">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">$</span>
-            <Input 
-              type="number"
-              min="0"
-              step="0.01"
+            <CurrencyInput 
               value={supplierCost || ""} 
-              onChange={(e) => handleNumericChange('supplierCost', e.target.value)} 
+              onChange={(val) => handleNumericChange('supplierCost', val)} 
               className={`pl-7 transition-all ${!supplierCost ? 'border-amber-200 bg-amber-50/30' : 'border-emerald-200 focus:border-emerald-500'}`}
               placeholder="0.00" 
             />
@@ -212,12 +209,9 @@ export function FinancialSection({ supplierName, supplierCost, ta, suppliers = [
         <FormField label="T.A (Tarifa Admin)">
           <div className="relative group">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">$</span>
-            <Input 
-              type="number"
-              min="0"
-              step="0.01"
+            <CurrencyInput 
               value={ta || ""} 
-              onChange={(e) => handleNumericChange('ta', e.target.value)} 
+              onChange={(val) => handleNumericChange('ta', val)} 
               className={`pl-7 transition-all ${!ta ? 'border-amber-200 bg-amber-50/30' : 'border-emerald-200 focus:border-emerald-500'}`}
               placeholder="0.00" 
             />

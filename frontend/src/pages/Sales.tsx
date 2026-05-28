@@ -29,7 +29,7 @@ import StatCard from "../components/ui/StatCard";
 import CreditDashboard from "../components/sales/CreditDashboard";
 
 export default function Sales() {
-  const { data, addSale, updateSale, voidSale, registerCreditPayment, deleteSalePayment, salesLoading, fetchSales } = useData();
+  const { data, addSale, updateSale, voidSale, registerCreditPayment, deleteSalePayment, salesLoading, fetchSales, fetchClients } = useData();
   const { user, isAdmin } = useAuth();
   const { canCreate, canEdit } = usePermissions();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -59,7 +59,8 @@ export default function Sales() {
   // Lazy Load Fetch
   useEffect(() => {
     fetchSales();
-  }, [fetchSales]);
+    fetchClients();
+  }, [fetchSales, fetchClients]);
 
   const totals = useMemo(() => {
     return filteredSales.reduce(

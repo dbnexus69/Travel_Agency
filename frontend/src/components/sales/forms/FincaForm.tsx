@@ -1,5 +1,5 @@
 import { Home } from "lucide-react";
-import { FormField, Input } from "../../ui/Form";
+import { FormField, Input , CurrencyInput} from "../../ui/Form";
 import { FincaData } from "../../../types";
 import { ClientInfoSection, VoucherField, FinancialSection } from "./VoucherField";
 

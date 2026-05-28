@@ -186,9 +186,13 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
         errs.products = "Debes seleccionar al menos un producto";
     }
     if (s === 3) {
-      if (!form.total) errs.total = "El valor total es obligatorio";
+      if (!form.total || Number(form.total) <= 0) errs.total = "El valor total debe ser mayor a $0";
       if (!form.paymentMethod)
         errs.paymentMethod = "La forma de pago es obligatoria";
+      if (!form.status)
+        errs.status = "El estado de la venta es obligatorio";
+      if (form.isCredit && !form.creditDueDate)
+        errs.creditDueDate = "La fecha de vencimiento es obligatoria";
     }
     setErrors(errs);
     return Object.keys(errs).length === 0;

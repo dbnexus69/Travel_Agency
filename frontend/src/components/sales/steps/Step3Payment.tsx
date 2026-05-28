@@ -1,5 +1,5 @@
 import { CreditCard, Coins } from "lucide-react";
-import { FormField, Input, Select, Textarea, Combobox } from "../../ui/Form";
+import { FormField, Input, Select, Textarea, Combobox , CurrencyInput} from "../../ui/Form";
 import { WizardFormData } from "../wizardData";
 
 export function Step3Payment({ form, set, data, errors }: any) {
@@ -30,8 +30,7 @@ export function Step3Payment({ form, set, data, errors }: any) {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField label="Valor Total *" error={errors.total}>
-            <Input
-              type="number"
+            <CurrencyInput
               value={form.total}
               readOnly
               className="bg-gray-100"
@@ -57,8 +56,7 @@ export function Step3Payment({ form, set, data, errors }: any) {
           </FormField>
 
           <FormField label="T.A. (Tarifa Administrativa)">
-            <Input
-              type="number"
+            <CurrencyInput
               value={form.ta}
               readOnly
               className="bg-gray-100"
@@ -67,8 +65,7 @@ export function Step3Payment({ form, set, data, errors }: any) {
           </FormField>
 
           <FormField label="Costo Proveedores">
-            <Input
-              type="number"
+            <CurrencyInput
               value={form.supplierCost}
               readOnly
               className="bg-gray-100"
@@ -76,20 +73,35 @@ export function Step3Payment({ form, set, data, errors }: any) {
             />
           </FormField>
 
-          <FormField label="Estado">
+          <FormField label="Estado" error={errors.status}>
             <Combobox
               value={form.status}
               onChange={(val) => {
                 set("status", val);
                 set("isCredit", val === "credito");
               }}
+              placeholder="Selecciona un estado..."
               options={[
                 { value: "credito", label: "Crédito" },
                 { value: "abonado", label: "Completado" },
                 { value: "pagado", label: "Finalizado" },
               ]}
+              error={errors.status}
             />
           </FormField>
+
+
+        {form.isCredit && (
+          <FormField label="Fecha de Vencimiento" error={errors.creditDueDate}>
+            <Input
+              type="date"
+              value={form.creditDueDate}
+              onChange={(e) => set("creditDueDate", e.target.value)}
+              min={new Date().toISOString().split("T")[0]}
+              error={errors.creditDueDate}
+            />
+          </FormField>
+        )}
         </div>
 
         {/* Sección Comisionista */}
@@ -108,14 +120,14 @@ export function Step3Payment({ form, set, data, errors }: any) {
           {form.commissionAgentId && (
             <>
               <FormField label="Comisión Bruta (monto acordado)">
-                <Input
-                  type="number"
+                <CurrencyInput
                   value={form.commissionAgentAmount}
-                  onChange={(e) => {
-                    const gross = parseFloat(e.target.value) || 0;
+                  onChange={(val) => {
+                    if (val.length > 8) return;
+                    const gross = parseFloat(val) || 0;
                     const retention = parseFloat(form.commissionAgentRetentionPercentage) || 0;
                     const net = gross * (1 - retention / 100);
-                    set("commissionAgentAmount", e.target.value);
+                    set("commissionAgentAmount", val);
                     set("commissionAgentNetPayment", net.toString());
                   }}
                   placeholder="0"
@@ -126,18 +138,24 @@ export function Step3Payment({ form, set, data, errors }: any) {
                   type="number"
                   value={form.commissionAgentRetentionPercentage}
                   onChange={(e) => {
-                    const retention = parseFloat(e.target.value) || 0;
+                    let val = e.target.value;
+                    let retention = parseFloat(val) || 0;
+                    if (retention > 100) {
+                      retention = 100;
+                      val = "100";
+                    }
                     const gross = parseFloat(form.commissionAgentAmount) || 0;
                     const net = gross * (1 - retention / 100);
-                    set("commissionAgentRetentionPercentage", e.target.value);
+                    set("commissionAgentRetentionPercentage", val);
                     set("commissionAgentNetPayment", net.toString());
                   }}
+                  min="0"
+                  max="100"
                   placeholder="Ej. 10.5"
                 />
               </FormField>
               <FormField label="Neto a Pagar al Comisionista">
-                <Input
-                  type="number"
+                <CurrencyInput
                   value={form.commissionAgentNetPayment}
                   readOnly
                   className="bg-gray-100 font-bold text-emerald-600"
@@ -147,17 +165,6 @@ export function Step3Payment({ form, set, data, errors }: any) {
             </>
           )}
         </div>
-
-        {form.isCredit && (
-          <FormField label="Fecha de Vencimiento">
-            <Input
-              type="date"
-              value={form.creditDueDate}
-              onChange={(e) => set("creditDueDate", e.target.value)}
-              min={new Date().toISOString().split("T")[0]}
-            />
-          </FormField>
-        )}
 
         {/* Summary card */}
         {Number(form.total) > 0 && (

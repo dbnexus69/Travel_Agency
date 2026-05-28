@@ -38,8 +38,22 @@ export default function Dashboard() {
 
   useEffect(() => {
     const params: Record<string, unknown> = {};
-    if (dateRange?.startDate) params.dateFrom = dateRange.startDate.toISOString();
-    if (dateRange?.endDate) params.dateTo = dateRange.endDate.toISOString();
+    if (dateRange?.startDate) {
+      const s = typeof dateRange.startDate === 'string' ? dateRange.startDate.replace(/-/g, '/') : dateRange.startDate;
+      const d = new Date(s);
+      if (!isNaN(d.getTime())) {
+        d.setHours(0, 0, 0, 0);
+        params.dateFrom = d.toISOString();
+      }
+    }
+    if (dateRange?.endDate) {
+      const s = typeof dateRange.endDate === 'string' ? dateRange.endDate.replace(/-/g, '/') : dateRange.endDate;
+      const d = new Date(s);
+      if (!isNaN(d.getTime())) {
+        d.setHours(23, 59, 59, 999);
+        params.dateTo = d.toISOString();
+      }
+    }
     
     const isBackground = isInitialMount.current && dashboardData !== null;
     fetchDashboard(params, isBackground);
