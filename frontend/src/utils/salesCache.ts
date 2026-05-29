@@ -5,9 +5,18 @@
  * Al crear/eliminar ventas, el caché se invalida automáticamente.
  */
 
-const SALES_CACHE_KEY = 'itea_sales_cache';
-const CLIENTS_CACHE_KEY = 'itea_clients_cache';
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos
+
+function getCacheKey(baseKey: string): string {
+  try {
+    const token = localStorage.getItem('itea_token');
+    if (!token) return `${baseKey}_anonymous`;
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return `${baseKey}_${payload.userId || 'unknown'}`;
+  } catch {
+    return `${baseKey}_anonymous`;
+  }
+}
 
 interface CacheEntry<T> {
   data: T;
@@ -49,22 +58,22 @@ function deleteCache(key: string): void {
 
 /** Guarda ventas y clientes en caché con timestamp actual */
 export function saveSalesAndClientsCache(sales: unknown[], clients: unknown[]): void {
-  writeCache(SALES_CACHE_KEY, sales);
-  writeCache(CLIENTS_CACHE_KEY, clients);
+  writeCache(getCacheKey('itea_sales_cache'), sales);
+  writeCache(getCacheKey('itea_clients_cache'), clients);
 }
 
 /** Retorna ventas desde caché si TTL no expiró, null si expirado */
 export function loadSalesCache(): unknown[] | null {
-  return readCache<unknown[]>(SALES_CACHE_KEY);
+  return readCache<unknown[]>(getCacheKey('itea_sales_cache'));
 }
 
 /** Retorna clientes desde caché si TTL no expiró, null si expirado */
 export function loadClientsCache(): unknown[] | null {
-  return readCache<unknown[]>(CLIENTS_CACHE_KEY);
+  return readCache<unknown[]>(getCacheKey('itea_clients_cache'));
 }
 
 /** Invalida ambos cachés (ventas + clientes). Usar al crear/eliminar ventas. */
 export function invalidateSalesCache(): void {
-  deleteCache(SALES_CACHE_KEY);
-  deleteCache(CLIENTS_CACHE_KEY);
+  deleteCache(getCacheKey('itea_sales_cache'));
+  deleteCache(getCacheKey('itea_clients_cache'));
 }

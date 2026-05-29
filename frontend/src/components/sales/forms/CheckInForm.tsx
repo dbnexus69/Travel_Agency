@@ -43,7 +43,7 @@ export function CheckInForm({ checkIn, client, suppliers, onChange }: CheckInFor
             <Input value={checkIn.flightOrReservation} onChange={(e) => onChange({ flightOrReservation: e.target.value })} placeholder="Ej: AV123 o XYZ789" />
           </FormField>
           <FormField label="Fecha de Viaje">
-            <Input type="datetime-local" value={checkIn.travelDate} onChange={(e) => onChange({ travelDate: e.target.value })} />
+            <Input type="datetime-local" required min={new Date().toISOString().slice(0, 16)} value={checkIn.travelDate} onChange={(e) => onChange({ travelDate: e.target.value })} />
           </FormField>
           <FormField label="Silla Preferida">
             <Input value={checkIn.seat} onChange={(e) => onChange({ seat: e.target.value })} placeholder="Ej: 12A o Pasillo" />

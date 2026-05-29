@@ -27,7 +27,7 @@ export function TourForm({ tour, client, suppliers, onChange }: TourFormProps) {
             <Input value={tour.selectedTour} onChange={(e) => onChange({ selectedTour: e.target.value })} placeholder="Nombre del tour" />
           </FormField>
           <FormField label="Fecha y Hora Preferida">
-            <Input type="datetime-local" value={tour.preferredDate} onChange={(e) => onChange({ preferredDate: e.target.value })} />
+            <Input type="datetime-local" required min={new Date().toISOString().slice(0, 16)} value={tour.preferredDate} onChange={(e) => onChange({ preferredDate: e.target.value })} />
           </FormField>
           <FormField label="Número de Adultos">
             <Input type="number" value={tour.adultsCount} onChange={(e) => onChange({ adultsCount: parseInt(e.target.value) || 2 })} />

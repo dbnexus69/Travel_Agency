@@ -5,8 +5,18 @@
  * Al crear/editar/eliminar usuarios, el caché se invalida automáticamente.
  */
 
-const USERS_CACHE_KEY = 'itea_users_cache';
 const CACHE_TTL_MS = 3 * 60 * 1000; // 3 minutos
+
+function getCacheKey(baseKey: string): string {
+  try {
+    const token = localStorage.getItem('itea_token');
+    if (!token) return `${baseKey}_anonymous`;
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return `${baseKey}_${payload.userId || 'unknown'}`;
+  } catch {
+    return `${baseKey}_anonymous`;
+  }
+}
 
 interface CacheEntry<T> {
   data: T;
@@ -47,16 +57,17 @@ function deleteCache(key: string): void {
 // ---------- API pública ----------
 
 /** Guarda la lista de usuarios en caché */
+/** Guarda la lista de usuarios en caché */
 export function saveUsersCache(users: unknown[]): void {
-  writeCache(USERS_CACHE_KEY, users);
+  writeCache(getCacheKey('itea_users_cache'), users);
 }
 
 /** Retorna usuarios desde caché si TTL no expiró, null si expirado */
 export function loadUsersCache(): unknown[] | null {
-  return readCache<unknown[]>(USERS_CACHE_KEY);
+  return readCache<unknown[]>(getCacheKey('itea_users_cache'));
 }
 
 /** Invalida el caché de usuarios. Usar al crear/editar/eliminar. */
 export function invalidateUsersCache(): void {
-  deleteCache(USERS_CACHE_KEY);
+  deleteCache(getCacheKey('itea_users_cache'));
 }

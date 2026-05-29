@@ -27,7 +27,7 @@ export function PassportForm({ passport, client, suppliers, onChange }: Passport
             <Input value={passport.idNumber} onChange={(e) => onChange({ idNumber: e.target.value })} placeholder="Número de documento" />
           </FormField>
           <FormField label="Fecha de Nacimiento">
-            <Input type="datetime-local" value={passport.birthDate} onChange={(e) => onChange({ birthDate: e.target.value })} />
+            <Input type="datetime-local" required value={passport.birthDate} onChange={(e) => onChange({ birthDate: e.target.value })} />
           </FormField>
           <FormField label="Ciudad de Residencia">
             <Input value={passport.residenceCity} onChange={(e) => onChange({ residenceCity: e.target.value })} placeholder="Ciudad actual" />
@@ -45,7 +45,7 @@ export function PassportForm({ passport, client, suppliers, onChange }: Passport
             />
           </FormField>
           <FormField label="Fecha Estimada de Viaje">
-            <Input type="datetime-local" value={passport.estimatedTravelDate} onChange={(e) => onChange({ estimatedTravelDate: e.target.value })} />
+            <Input type="datetime-local" required value={passport.estimatedTravelDate} onChange={(e) => onChange({ estimatedTravelDate: e.target.value })} />
           </FormField>
           <FormField label="Teléfono de Contacto" className="md:col-span-2">
             <Input value={passport.phone} onChange={(e) => onChange({ phone: e.target.value })} placeholder="+57 300 123 4567" />

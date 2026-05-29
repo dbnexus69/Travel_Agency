@@ -24,7 +24,7 @@ export function MigrationForm({ migration, client, suppliers, onChange }: Migrat
             <Input value={migration.passengerName} onChange={(e) => onChange({ passengerName: e.target.value })} placeholder="Nombre completo" />
           </FormField>
           <FormField label="Fecha de Nacimiento">
-            <Input type="datetime-local" value={migration.birthDate} onChange={(e) => onChange({ birthDate: e.target.value })} />
+            <Input type="datetime-local" required value={migration.birthDate} onChange={(e) => onChange({ birthDate: e.target.value })} />
           </FormField>
           <FormField label="Nacionalidad">
             <Input value={migration.nationality} onChange={(e) => onChange({ nationality: e.target.value })} placeholder="Ej: Colombiana" />
@@ -33,7 +33,7 @@ export function MigrationForm({ migration, client, suppliers, onChange }: Migrat
             <Input value={migration.passportNumber} onChange={(e) => onChange({ passportNumber: e.target.value })} placeholder="Número de pasaporte" />
           </FormField>
           <FormField label="Vencimiento Pasaporte">
-            <Input type="datetime-local" value={migration.passportExpiry} onChange={(e) => onChange({ passportExpiry: e.target.value })} />
+            <Input type="datetime-local" required value={migration.passportExpiry} onChange={(e) => onChange({ passportExpiry: e.target.value })} />
           </FormField>
           <FormField label="País de Destino">
             <Input value={migration.destinationCountry} onChange={(e) => onChange({ destinationCountry: e.target.value })} placeholder="Ej: México, España" />

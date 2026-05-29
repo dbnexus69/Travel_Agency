@@ -342,7 +342,26 @@ export default function Users() {
     if (!selectedUserForPermissions) return;
     setIsSaving(true);
     try {
-      await updateUserPermissions(selectedUserForPermissions.id, editingUserPermissions);
+      const defaultPerms =
+        selectedUserForPermissions.role === "admin"
+          ? ADMIN_PERMISSIONS
+          : selectedUserForPermissions.role === "freelancer"
+            ? data.config.rolePermissions.freelancer
+            : data.config.rolePermissions.asesor;
+
+      const diffPermissions: any = {};
+      for (const mod in editingUserPermissions) {
+        for (const act in (editingUserPermissions as any)[mod]) {
+          const editedVal = (editingUserPermissions as any)[mod][act];
+          const defaultVal = (defaultPerms as any)[mod][act];
+          if (editedVal !== defaultVal) {
+            if (!diffPermissions[mod]) diffPermissions[mod] = {};
+            diffPermissions[mod][act] = editedVal;
+          }
+        }
+      }
+
+      await updateUserPermissions(selectedUserForPermissions.id, diffPermissions);
       setSuccessMessage(`Permisos de ${selectedUserForPermissions.name} actualizados`);
       setShowSuccess(true);
       setIsPermissionsModalOpen(false);

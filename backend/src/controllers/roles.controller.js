@@ -1,5 +1,6 @@
 const prisma = require('../config/db');
 const { success, error } = require('../utils/apiResponse');
+const { AUTH_CACHE } = require('../middleware/auth');
 
 const MODULE_ACTIONS = {
   dashboard: ['view'],
@@ -28,11 +29,19 @@ const DEFAULT_ROLE_VALUES = {
   },
 };
 
-function parseValor(accion, modulo, valor) {
+function parseValor(accion, modulo, valor, role) {
   if (accion === 'view' && SCOPED_VIEW_MODULES.includes(modulo)) {
-    // scope value: 'all', 'own', or 'none'
-    if (valor === 'all' || valor === 'own') return valor;
-    if (valor === 'true') return 'all';
+    // El dashboard NUNCA puede ser 'all' para no-admins.
+    // Clientes y ventas sí pueden ser configurados como 'all'.
+    if (valor === 'all') {
+      if (modulo === 'dashboard' && role !== 'admin') return 'own';
+      return 'all';
+    }
+    if (valor === 'own') return 'own';
+    if (valor === 'true') {
+      // Para dashboard, 'true' = 'own'; para otros módulos, 'true' = 'all'
+      return modulo === 'dashboard' ? 'own' : 'all';
+    }
     return 'none';
   }
   // boolean value
@@ -70,7 +79,7 @@ exports.getPermissions = async (req, res, next) => {
       const actions = MODULE_ACTIONS[mod] || [];
       for (const act of actions) {
         const defVal = defaults[mod]?.[act];
-        grouped[mod][act] = parseValor(act, mod, defVal ?? 'false');
+        grouped[mod][act] = parseValor(act, mod, defVal ?? 'false', role);
       }
     }
 
@@ -80,7 +89,7 @@ exports.getPermissions = async (req, res, next) => {
       const a = pr.permiso.accion;
       const v = pr.valor != null ? pr.valor : 'true';
       if (!grouped[m]) grouped[m] = {};
-      grouped[m][a] = parseValor(a, m, v);
+      grouped[m][a] = parseValor(a, m, v, role);
     }
 
     success(res, grouped);
@@ -116,6 +125,10 @@ exports.updatePermissions = async (req, res, next) => {
         });
       }
     }
+
+    // Limpiar toda la caché de autenticación en RAM para que todos los usuarios
+    // del rol recarguen sus permisos en la próxima petición
+    AUTH_CACHE.clear();
 
     success(res, { message: 'Permisos de rol actualizados' });
   } catch (err) {

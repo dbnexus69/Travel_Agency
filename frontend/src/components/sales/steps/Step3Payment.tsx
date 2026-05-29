@@ -119,18 +119,30 @@ export function Step3Payment({ form, set, data, errors }: any) {
 
           {form.commissionAgentId && (
             <>
-              <FormField label="Comisión Bruta (monto acordado)">
-                <CurrencyInput
-                  value={form.commissionAgentAmount}
-                  onChange={(val) => {
-                    if (val.length > 8) return;
-                    const gross = parseFloat(val) || 0;
+              <FormField label="% Comisión Bruta (sobre T.A.)">
+                <Input
+                  type="number"
+                  value={form.commissionAgentPercentage}
+                  onChange={(e) => {
+                    let val = e.target.value;
+                    let percentage = parseFloat(val) || 0;
+                    if (percentage < 0) percentage = 0;
+                    if (percentage > 100) { percentage = 100; val = "100"; }
+                    
+                    const ta = parseFloat(form.ta) || 0;
+                    const gross = ta * (percentage / 100);
+                    
                     const retention = parseFloat(form.commissionAgentRetentionPercentage) || 0;
                     const net = gross * (1 - retention / 100);
-                    set("commissionAgentAmount", val);
+                    
+                    set("commissionAgentPercentage", val);
+                    set("commissionAgentAmount", gross.toString());
                     set("commissionAgentNetPayment", net.toString());
                   }}
-                  placeholder="0"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  placeholder="Ej. 10"
                 />
               </FormField>
               <FormField label="% Retención para Oficina">

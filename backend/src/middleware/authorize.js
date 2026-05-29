@@ -17,6 +17,8 @@ const ROLE_DEFAULT_PERMISSIONS = {
     clients: { view: 'own', create: true, edit: true },
     itineraries: { view: true, edit: false },
     commissions: { view: false, create: false, edit: false, delete: false },
+    users: { view: true },
+    config: { view: true },
   },
   freelancer: {
     dashboard: { view: 'own' },
@@ -24,6 +26,8 @@ const ROLE_DEFAULT_PERMISSIONS = {
     clients: { view: 'own', create: true, edit: true },
     itineraries: { view: true, edit: false },
     commissions: { view: false, create: false, edit: false, delete: false },
+    users: { view: true },
+    config: { view: true },
   },
 };
 
@@ -63,6 +67,12 @@ function getEffectivePermissions(user) {
     }
   }
 
+  // Regla de negocio: los no-admin nunca pueden tener scope 'all' en el dashboard.
+  // Los módulos de ventas y clientes SÍ son configurables por rol.
+  if (permissions['dashboard'] && permissions['dashboard'].view === 'all') {
+    permissions['dashboard'].view = 'own';
+  }
+
   return { permissions, scope: 'own' };
 }
 
@@ -77,9 +87,21 @@ function getActionScope(permissions, modulo, accion) {
 
 function authorize(modulo, accion) {
   return (req, res, next) => {
-    // BYPASS temporal activado para pruebas
-    req.permissionScope = 'all';
-    return next();
+    if (!req.user) {
+      return error(res, 'No autenticado', 401);
+    }
+
+    const { permissions } = getEffectivePermissions(req.user);
+    const actionScope = getActionScope(permissions, modulo, accion);
+
+    if (actionScope === false) {
+      return error(res, 'No tienes permiso para realizar esta acción', 403);
+    }
+
+    // Usar directamente el scope de la acción (ya corregido en getEffectivePermissions)
+    req.permissionScope = actionScope;
+
+    next();
   };
 }
 

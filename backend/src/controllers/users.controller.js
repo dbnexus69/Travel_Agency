@@ -3,6 +3,7 @@ const prisma = require('../config/db');
 const { success, error } = require('../utils/apiResponse');
 const { buildMeta } = require('../utils/paginationHelper');
 const emailService = require('../utils/emailService');
+const { AUTH_CACHE } = require('../middleware/auth');
 
 exports.list = async (req, res, next) => {
   try {
@@ -168,11 +169,11 @@ exports.create = async (req, res, next) => {
     try {
       await emailService.sendEmail({
         to: data.email,
-        subject: '¡Bienvenido a Curinoupel - Cuenta Creada!',
+        subject: '¡Bienvenido a iTea Travel - Cuenta Creada!',
         html: `
           <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eaeaec; border-radius: 8px; overflow: hidden;">
             <div style="background-color: #0f172a; padding: 20px; text-align: center;">
-              <h1 style="color: #ffffff; margin: 0; font-size: 24px;">¡Bienvenido a Curinoupel!</h1>
+              <h1 style="color: #ffffff; margin: 0; font-size: 24px;">¡Bienvenido a iTea Travel!</h1>
             </div>
             <div style="padding: 30px;">
               <p style="font-size: 16px;">Hola <strong>${persona.nombres}</strong>,</p>
@@ -333,6 +334,10 @@ exports.updatePermissions = async (req, res, next) => {
         });
       }
     }
+
+    // Invalidar caché de autenticación del usuario para que en la próxima petición
+    // se recarguen sus permisos actualizados desde la BD
+    AUTH_CACHE.delete(id);
 
     success(res, { message: 'Permisos actualizados' });
   } catch (err) {

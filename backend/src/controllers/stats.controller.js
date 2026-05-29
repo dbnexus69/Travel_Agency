@@ -45,20 +45,22 @@ exports.dashboard = async (req, res, next) => {
       WHERE deleted_at IS NULL ${dateCondition} ${userCondition}
     `;
 
+    let clientsWhere = { deletedAt: null };
+    if (req.permissionScope === 'own') {
+      clientsWhere.creadoPorId = req.user.id;
+    }
+
     // Run all DB queries in parallel
-    const [aggregatesRaw, monthlyTrend, categoryStats, [totalClients, activeClients], recentSales, supplierCount] = await Promise.all([
+    const [aggregatesRaw, categoryStats, totalClients, activeClients, recentSales, supplierCount] = await Promise.all([
       prisma.$queryRawUnsafe(aggregatesSql),
-      prisma.ventasMensuales.findMany({ orderBy: [{ year: 'asc' }, { month: 'asc' }], take: 24 }),
       prisma.detalleVenta.groupBy({
         by: ['categoria'],
         _sum: { subtotal: true },
         _count: true,
         where: { venta: { ...where, deletedAt: null } }
       }),
-      Promise.all([
-        prisma.clientes.count({ where: { deletedAt: null } }),
-        prisma.clientes.count({ where: { deletedAt: null, persona: { status: 'active' } } }),
-      ]),
+      prisma.clientes.count({ where: clientsWhere }),
+      prisma.clientes.count({ where: { ...clientsWhere, persona: { status: 'active' } } }),
       prisma.ventas.findMany({
         where: { ...where, deletedAt: null },
         orderBy: { creadoAt: 'desc' },
@@ -68,8 +70,27 @@ exports.dashboard = async (req, res, next) => {
           usuario: { select: { persona: { select: { nombres: true, apellidos: true } } } },
         }
       }),
-      prisma.proveedores.count(),
+      req.permissionScope === 'own' ? Promise.resolve(0) : prisma.proveedores.count(),
     ]);
+
+    // Calcular monthly trend para el usuario actual o global
+    let monthlyTrend = [];
+    if (req.permissionScope === 'own') {
+      const trendSql = `
+        SELECT 
+          EXTRACT(YEAR FROM creado_at)::int as year,
+          EXTRACT(MONTH FROM creado_at)::int as month,
+          COALESCE(SUM(monto_total), 0) as total
+        FROM ventas
+        WHERE deleted_at IS NULL AND usuario_id = ${req.user.id}
+          AND EXTRACT(YEAR FROM creado_at) IN (${currentYear}, ${currentYear - 1})
+        GROUP BY 1, 2
+        ORDER BY 1 ASC, 2 ASC
+      `;
+      monthlyTrend = await prisma.$queryRawUnsafe(trendSql);
+    } else {
+      monthlyTrend = await prisma.ventasMensuales.findMany({ orderBy: [{ year: 'asc' }, { month: 'asc' }], take: 24 });
+    }
 
     // O(1) properties assignment
     const agg = aggregatesRaw[0];
@@ -174,10 +195,32 @@ exports.dashboard = async (req, res, next) => {
 exports.salesHistory = async (req, res, next) => {
   try {
     const year = parseInt(req.query.year) || new Date().getFullYear();
-    const data = await prisma.ventasMensuales.findMany({
-      where: { year },
-      orderBy: { month: 'asc' }
-    });
+    let data = [];
+    if (req.permissionScope === 'own') {
+      const sql = `
+        SELECT 
+          EXTRACT(MONTH FROM v.creado_at)::int as month,
+          COUNT(v.id)::int as count,
+          COALESCE(SUM(v.monto_total), 0) as total,
+          COALESCE(SUM(CASE WHEN d.categoria = 'hoteleria' THEN d.subtotal ELSE 0 END), 0) as hoteles,
+          COALESCE(SUM(CASE WHEN d.categoria = 'tiqueteria' THEN d.subtotal ELSE 0 END), 0) as vuelos,
+          COALESCE(SUM(CASE WHEN d.categoria = 'planes' THEN d.subtotal ELSE 0 END), 0) as paquetes,
+          COALESCE(SUM(CASE WHEN d.categoria = 'seguros_viaje' THEN d.subtotal ELSE 0 END), 0) as seguros,
+          COALESCE(SUM(CASE WHEN d.categoria = 'renta_vehiculos' THEN d.subtotal ELSE 0 END), 0) as transferencias
+        FROM ventas v
+        LEFT JOIN detalle_venta d ON v.id = d.venta_id
+        WHERE v.deleted_at IS NULL AND v.usuario_id = ${req.user.id} AND EXTRACT(YEAR FROM v.creado_at) = ${year}
+        GROUP BY 1
+        ORDER BY 1 ASC
+      `;
+      const result = await prisma.$queryRawUnsafe(sql);
+      data = result.map(d => ({ ...d, year }));
+    } else {
+      data = await prisma.ventasMensuales.findMany({
+        where: { year },
+        orderBy: { month: 'asc' }
+      });
+    }
     success(res, data.map(d => ({
       id: d.id,
       year: d.year,
@@ -209,6 +252,11 @@ exports.asesorPerformance = async (req, res, next) => {
       dateCondition = `AND v.creado_at <= '${new Date(dateTo).toISOString()}'`;
     }
 
+    let userCondition = '';
+    if (req.permissionScope === 'own') {
+      userCondition = `AND v.usuario_id = '${req.user.id}'`;
+    }
+
     const sql = `
       SELECT 
         v.usuario_id as "asesorId",
@@ -219,7 +267,7 @@ exports.asesorPerformance = async (req, res, next) => {
       FROM ventas v
       JOIN usuarios u ON v.usuario_id = u.id
       JOIN personas p ON u.persona_id = p.id
-      WHERE v.deleted_at IS NULL ${dateCondition}
+      WHERE v.deleted_at IS NULL ${dateCondition} ${userCondition}
       GROUP BY v.usuario_id, p.nombres, p.apellidos
     `;
 
@@ -248,6 +296,11 @@ exports.topClients = async (req, res, next) => {
       dateCondition = `AND v.creado_at <= '${new Date(dateTo).toISOString()}'`;
     }
 
+    let userCondition = '';
+    if (req.permissionScope === 'own') {
+      userCondition = `AND v.usuario_id = '${req.user.id}'`;
+    }
+
     const sql = `
       SELECT 
         c.id as "clienteId",
@@ -257,7 +310,7 @@ exports.topClients = async (req, res, next) => {
       FROM ventas v
       JOIN clientes c ON v.cliente_id = c.id
       JOIN personas p ON c.persona_id = p.id
-      WHERE v.deleted_at IS NULL ${dateCondition}
+      WHERE v.deleted_at IS NULL ${dateCondition} ${userCondition}
       GROUP BY c.id, p.nombres, p.apellidos
       ORDER BY "totalPagado" DESC
       LIMIT ${limit}
@@ -282,6 +335,10 @@ exports.categoryDistribution = async (req, res, next) => {
       where.venta = { deletedAt: null, creadoAt: {} };
       if (dateFrom) where.venta.creadoAt.gte = new Date(dateFrom);
       if (dateTo) where.venta.creadoAt.lte = new Date(dateTo);
+    }
+
+    if (req.permissionScope === 'own') {
+      where.venta.usuarioId = req.user.id;
     }
 
     const detalles = await prisma.detalleVenta.groupBy({

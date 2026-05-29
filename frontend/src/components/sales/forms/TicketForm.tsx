@@ -202,7 +202,7 @@ export function TicketForm({
                 
                 <FormField label="Fecha y Hora">
                   <Input
-                    type="datetime-local"
+                    type="datetime-local" required min={new Date().toISOString().slice(0, 16)}
                     value={stop.date || ""}
                     onChange={(e) => updateStop(type, sIdx, { date: e.target.value })}
                     className="text-xs"
@@ -362,7 +362,7 @@ export function TicketForm({
                   <Input value={leg.seat} onChange={(e) => updateLeg(lIdx, { seat: e.target.value })} placeholder="12A" className="text-xs" />
                 </FormField>
                 <FormField label="Fecha y Hora">
-                  <Input type="datetime-local" value={leg.date} onChange={(e) => updateLeg(lIdx, { date: e.target.value })} className="text-xs" />
+                  <Input type="datetime-local" required min={new Date().toISOString().slice(0, 16)} value={leg.date} onChange={(e) => updateLeg(lIdx, { date: e.target.value })} className="text-xs" />
                 </FormField>
               </div>
             </div>
@@ -450,7 +450,7 @@ export function TicketForm({
                 </FormField>
                 <FormField label="Fecha y Hora Vuelta">
                   <Input
-                    type="datetime-local"
+                    type="datetime-local" required min={new Date().toISOString().slice(0, 16)}
                     value={ticket.returnLeg?.date || ""}
                     onChange={(e) => onChange({ returnLeg: { ...ticket.returnLeg!, date: e.target.value } })}
                     className="text-xs"
@@ -485,7 +485,7 @@ export function TicketForm({
             </div>
           </FormField>
           <FormField label="Fecha de Nacimiento">
-            <Input type="date" value={ticket.passengerInfo.birthDate} disabled className="bg-gray-100 cursor-not-allowed" />
+            <Input type="date" required value={ticket.passengerInfo.birthDate} disabled className="bg-gray-100 cursor-not-allowed" />
           </FormField>
           <FormField label="N° de Tiquete">
             <Input value={ticket.ticketNumber} onChange={(e) => onChange({ ticketNumber: e.target.value })} />

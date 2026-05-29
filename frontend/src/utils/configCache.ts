@@ -5,8 +5,18 @@
  * Al crear, modificar o eliminar elementos de los catálogos, el caché se invalida o se actualiza automáticamente.
  */
 
-const CONFIG_CACHE_KEY = 'itea_config_cache';
 const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutos
+
+function getCacheKey(baseKey: string): string {
+  try {
+    const token = localStorage.getItem('itea_token');
+    if (!token) return `${baseKey}_anonymous`;
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return `${baseKey}_${payload.userId || 'unknown'}`;
+  } catch {
+    return `${baseKey}_anonymous`;
+  }
+}
 
 interface CacheEntry<T> {
   data: T;
@@ -50,13 +60,13 @@ export function saveConfigCache(config: Record<string, any>): void {
   // Guardamos solo las listas de catálogos, excluyendo permisos de rol si estuviesen presentes
   const cacheData = { ...config };
   delete cacheData.rolePermissions; // Los permisos de roles siempre deben consultarse frescos
-  writeCache(CONFIG_CACHE_KEY, cacheData);
+  writeCache(getCacheKey('itea_config_cache'), cacheData);
 }
 
 export function loadConfigCache(): Record<string, any[]> | null {
-  return readCache<Record<string, any[]>>(CONFIG_CACHE_KEY);
+  return readCache<Record<string, any[]>>(getCacheKey('itea_config_cache'));
 }
 
 export function invalidateConfigCache(): void {
-  deleteCache(CONFIG_CACHE_KEY);
+  deleteCache(getCacheKey('itea_config_cache'));
 }

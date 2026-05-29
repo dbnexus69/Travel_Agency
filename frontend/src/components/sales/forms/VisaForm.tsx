@@ -24,7 +24,7 @@ export function VisaForm({ visa, client, suppliers, onChange }: VisaFormProps) {
             <Input value={visa.fullName} onChange={(e) => onChange({ fullName: e.target.value })} placeholder="Como aparece en el pasaporte" />
           </FormField>
           <FormField label="Fecha de Nacimiento">
-            <Input type="datetime-local" value={visa.birthDate} onChange={(e) => onChange({ birthDate: e.target.value })} />
+            <Input type="datetime-local" required value={visa.birthDate} onChange={(e) => onChange({ birthDate: e.target.value })} />
           </FormField>
           <FormField label="Nacionalidad">
             <Input value={visa.nationality} onChange={(e) => onChange({ nationality: e.target.value })} placeholder="Ej: Colombiana" />
@@ -33,7 +33,7 @@ export function VisaForm({ visa, client, suppliers, onChange }: VisaFormProps) {
             <Input value={visa.passportNumber} onChange={(e) => onChange({ passportNumber: e.target.value })} placeholder="Número de pasaporte" />
           </FormField>
           <FormField label="Vencimiento Pasaporte">
-            <Input type="datetime-local" value={visa.passportExpiration} onChange={(e) => onChange({ passportExpiration: e.target.value })} />
+            <Input type="datetime-local" required value={visa.passportExpiration} onChange={(e) => onChange({ passportExpiration: e.target.value })} />
           </FormField>
           <FormField label="País al que aplica">
             <Input value={visa.countryApplying} onChange={(e) => onChange({ countryApplying: e.target.value })} placeholder="Ej: USA, Canadá, China" />
@@ -52,7 +52,7 @@ export function VisaForm({ visa, client, suppliers, onChange }: VisaFormProps) {
             />
           </FormField>
           <FormField label="Fecha Estimada Viaje">
-            <Input type="datetime-local" value={visa.estimatedTravelDate} onChange={(e) => onChange({ estimatedTravelDate: e.target.value })} />
+            <Input type="datetime-local" required min={new Date().toISOString().slice(0, 16)} value={visa.estimatedTravelDate} onChange={(e) => onChange({ estimatedTravelDate: e.target.value })} />
           </FormField>
           <FormField label="Correo de Contacto" className="md:col-span-2">
             <Input type="email" value={visa.email} onChange={(e) => onChange({ email: e.target.value })} placeholder="ejemplo@correo.com" />

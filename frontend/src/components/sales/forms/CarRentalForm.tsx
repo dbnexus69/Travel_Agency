@@ -36,14 +36,14 @@ export function CarRentalForm({ car, client, suppliers, onChange }: CarRentalFor
           </FormField>
           <FormField label="Recogida (Fecha y Hora)">
             <Input
-              type="datetime-local"
+              type="datetime-local" required min={new Date().toISOString().slice(0, 16)}
               value={car.pickupDate}
               onChange={(e) => onChange({ pickupDate: e.target.value })}
             />
           </FormField>
           <FormField label="Devolución (Fecha y Hora)">
             <Input
-              type="datetime-local"
+              type="datetime-local" required min={new Date().toISOString().slice(0, 16)}
               value={car.returnDate}
               onChange={(e) => onChange({ returnDate: e.target.value })}
             />

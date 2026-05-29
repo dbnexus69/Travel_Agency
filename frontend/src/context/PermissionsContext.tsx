@@ -62,13 +62,13 @@ export function PermissionsProvider({
       return buildPermissionsFromApiPermisos(apiPermisos);
     }
 
-    if (user.customPermissions) return normalizeRolePermissions(user.customPermissions);
+    const defaultPerms = user.role === 'freelancer' 
+      ? (data.config.rolePermissions?.freelancer || DEFAULT_FREELANCER_PERMISSIONS)
+      : (data.config.rolePermissions?.asesor || DEFAULT_ASESOR_PERMISSIONS);
 
-    if (user.role === 'freelancer') {
-      return data.config.rolePermissions?.freelancer || DEFAULT_FREELANCER_PERMISSIONS;
-    }
+    if (user.customPermissions) return normalizeRolePermissions(user.customPermissions, defaultPerms);
 
-    return data.config.rolePermissions?.asesor || DEFAULT_ASESOR_PERMISSIONS;
+    return defaultPerms;
   }, [user, data.config.rolePermissions]);
 
   const can = (module: keyof RolePermissions, action: string): boolean => {

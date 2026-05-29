@@ -30,7 +30,7 @@ export function RestaurantForm({ restaurant, client, suppliers, onChange }: Rest
             <Input value={restaurant.reservationName} onChange={(e) => onChange({ reservationName: e.target.value })} placeholder="A nombre de..." />
           </FormField>
           <FormField label="Fecha y Hora *">
-            <Input type="datetime-local" value={restaurant.dateTime} onChange={(e) => onChange({ dateTime: e.target.value })} />
+            <Input type="datetime-local" required min={new Date().toISOString().slice(0, 16)} value={restaurant.dateTime} onChange={(e) => onChange({ dateTime: e.target.value })} />
           </FormField>
           <FormField label="Nº de Personas *">
             <Input type="number" min={1} value={restaurant.peopleCount} onChange={(e) => onChange({ peopleCount: parseInt(e.target.value) || 1 })} />

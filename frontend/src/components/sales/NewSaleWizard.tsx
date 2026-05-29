@@ -146,12 +146,21 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
       form.ta !== calcTa.toString() ||
       form.total !== calcTotal.toString()
     ) {
-      setForm(prev => ({
-        ...prev,
-        supplierCost: calcSupplierCost.toString(),
-        ta: calcTa.toString(),
-        total: calcTotal.toString()
-      }));
+      setForm(prev => {
+        const commPercentage = parseFloat(prev.commissionAgentPercentage || "0");
+        const newCommAmount = calcTa * (commPercentage / 100);
+        const retention = parseFloat(prev.commissionAgentRetentionPercentage || "0");
+        const newCommNet = newCommAmount * (1 - retention / 100);
+
+        return {
+          ...prev,
+          supplierCost: calcSupplierCost.toString(),
+          ta: calcTa.toString(),
+          total: calcTotal.toString(),
+          commissionAgentAmount: newCommAmount.toString(),
+          commissionAgentNetPayment: newCommNet.toString()
+        };
+      });
     }
   }, [
     form.tickets, form.hotels, form.insurances, form.plans, form.checkIns,
@@ -254,11 +263,15 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
     const client = data.clients.find((c: any) => c.name === form.clientId);
 
     return (
-      <div className="flex flex-col h-full bg-white animate-fade-in">
+      <form 
+        className="flex flex-col h-full bg-white animate-fade-in"
+        onSubmit={(e) => { e.preventDefault(); closeActiveForm(); }}
+      >
         {/* Sub-form Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b bg-gray-50/50">
           <div className="flex items-center gap-3">
             <button
+              type="button"
               onClick={closeActiveForm}
               className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-600"
             >
@@ -277,8 +290,8 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
             </div>
           </div>
           <Button 
+            type="submit"
             size="sm" 
-            onClick={closeActiveForm}
             className="bg-primary hover:bg-primary/90 text-white"
           >
             Listo
@@ -492,7 +505,7 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
         })()}
           </div>
         </div>
-      </div>
+      </form>
     );
   };
 
