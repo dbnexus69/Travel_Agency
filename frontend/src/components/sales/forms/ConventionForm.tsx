@@ -33,10 +33,10 @@ export function ConventionForm({ convention, client, suppliers, onChange }: Conv
             <Input value={convention.contactName} onChange={(e) => onChange({ contactName: e.target.value })} placeholder="Persona de contacto" />
           </FormField>
           <FormField label="Fecha Inicio">
-            <Input type="datetime-local" value={convention.startDate} onChange={(e) => onChange({ startDate: e.target.value })} />
+            <Input type="datetime-local" required min={new Date().toISOString().slice(0, 16)} value={convention.startDate} onChange={(e) => onChange({ startDate: e.target.value })} />
           </FormField>
           <FormField label="Fecha Fin">
-            <Input type="datetime-local" value={convention.endDate} onChange={(e) => onChange({ endDate: e.target.value })} />
+            <Input type="datetime-local" required min={new Date().toISOString().slice(0, 16)} value={convention.endDate} onChange={(e) => onChange({ endDate: e.target.value })} />
           </FormField>
           <FormField label="Asistencia Estimada">
             <Input type="number" value={convention.estimatedAttendance} onChange={(e) => onChange({ estimatedAttendance: parseInt(e.target.value) || 0 })} />

@@ -59,9 +59,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(checkExpiry);
   }, [sessionExpiry]);
 
+  useEffect(() => {
+    if (!user) return;
+    
+    const handleActivity = () => {
+      const isRemember = localStorage.getItem('itea_remember') === 'true';
+      if (isRemember) return; 
+
+      const newExpiry = Date.now() + SESSION_DURATION;
+      if (sessionExpiry && newExpiry - sessionExpiry > 60000) {
+        setSessionExpiry(newExpiry);
+        localStorage.setItem('itea_session_expiry', String(newExpiry));
+      }
+    };
+
+    window.addEventListener('mousemove', handleActivity);
+    window.addEventListener('keydown', handleActivity);
+    window.addEventListener('click', handleActivity);
+    window.addEventListener('scroll', handleActivity);
+
+    return () => {
+      window.removeEventListener('mousemove', handleActivity);
+      window.removeEventListener('keydown', handleActivity);
+      window.removeEventListener('click', handleActivity);
+      window.removeEventListener('scroll', handleActivity);
+    };
+  }, [user, sessionExpiry]);
+
   const login = async (email: string, password: string, remember = false): Promise<{ success: boolean; error?: string }> => {
     try {
       const data = await apiLogin(email, password, remember);
+
+      // Limpiar caché vieja antes de guardar el nuevo token (para que getCacheKey funcione con el nuevo usuario)
+      localStorage.removeItem('itea_dashboard_cache'); // limpiar caché genérica anterior
 
       setUser(data.user);
 
@@ -70,6 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       localStorage.setItem('itea_token', data.token);
       localStorage.setItem('itea_session_expiry', String(expiryTime));
+      localStorage.setItem('itea_remember', String(remember));
       setSessionExpiry(expiryTime);
 
       return { success: true };
@@ -86,6 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('itea_token');
     localStorage.removeItem('itea_user');
     localStorage.removeItem('itea_session_expiry');
+    localStorage.removeItem('itea_remember');
   };
 
   return (

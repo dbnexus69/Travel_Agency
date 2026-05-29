@@ -1,11 +1,23 @@
 /**
  * dashboardCache.ts
  * Módulo de caché en localStorage para el Dashboard.
- * TTL: 5 minutos.
+ * TTL: 5 minutos. La caché es por usuario para evitar fugas de datos.
  */
 
-const DASHBOARD_CACHE_KEY = 'itea_dashboard_cache';
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos
+
+function getCacheKey(): string {
+  try {
+    // Obtener el userId del token guardado en localStorage
+    const token = localStorage.getItem('itea_token');
+    if (!token) return 'itea_dashboard_cache_anonymous';
+    // Decodificar el payload del JWT (sin verificar firma, solo para obtener userId)
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return `itea_dashboard_cache_${payload.userId || 'unknown'}`;
+  } catch {
+    return 'itea_dashboard_cache_anonymous';
+  }
+}
 
 interface CacheEntry<T> {
   data: T;
@@ -15,7 +27,7 @@ interface CacheEntry<T> {
 export function saveDashboardCache(data: any): void {
   try {
     const entry: CacheEntry<any> = { data, timestamp: Date.now() };
-    localStorage.setItem(DASHBOARD_CACHE_KEY, JSON.stringify(entry));
+    localStorage.setItem(getCacheKey(), JSON.stringify(entry));
   } catch {
     // Ignorar si localStorage está lleno
   }
@@ -23,12 +35,12 @@ export function saveDashboardCache(data: any): void {
 
 export function loadDashboardCache(): any | null {
   try {
-    const raw = localStorage.getItem(DASHBOARD_CACHE_KEY);
+    const raw = localStorage.getItem(getCacheKey());
     if (!raw) return null;
     const entry: CacheEntry<any> = JSON.parse(raw);
     const age = Date.now() - entry.timestamp;
     if (age > CACHE_TTL_MS) {
-      localStorage.removeItem(DASHBOARD_CACHE_KEY);
+      localStorage.removeItem(getCacheKey());
       return null;
     }
     return entry.data;
@@ -39,6 +51,6 @@ export function loadDashboardCache(): any | null {
 
 export function invalidateDashboardCache(): void {
   try {
-    localStorage.removeItem(DASHBOARD_CACHE_KEY);
+    localStorage.removeItem(getCacheKey());
   } catch {}
 }

@@ -64,6 +64,8 @@ exports.list = async (req, res, next) => {
           v.ta_total as "taTotal",
           v.comision_liquidada as "comisionLiquidada",
           cp.nombres || ' ' || cp.apellidos as "clientName",
+          cp.email as "clientEmail",
+          cp.avatar_url as "clientAvatar",
           up.nombres || ' ' || up.apellidos as "asesorName",
           comp.nombres || ' ' || comp.apellidos as "commissionAgentName",
           
@@ -159,6 +161,8 @@ exports.list = async (req, res, next) => {
         id: v.id,
         clientId: v.clienteId,
         clientName: v.clientName,
+        clientEmail: v.clientEmail,
+        clientAvatar: v.clientAvatar,
         asesorId: v.usuarioId,
         asesorName: v.asesorName,
         date: v.creadoAt,

@@ -41,8 +41,17 @@ export function getDaysUntil(dateStr: string): number {
 export function getCurrentMonth(): { start: string; end: string } {
   const today = new Date();
   const start = new Date(today.getFullYear(), today.getMonth(), 1);
+  const end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  
+  const formatLocal = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}/${m}/${day}`;
+  };
+
   return {
-    start: formatDateInput(start),
-    end: formatDateInput(today)
+    start: formatLocal(start),
+    end: formatLocal(end)
   };
 }

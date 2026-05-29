@@ -269,17 +269,35 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!user) return;
-    // Ya no disparamos la carga global que colapsaba la app.
-    // Solo pediremos configuración básica si no hay caché.
-    if (!loadConfigCache()) {
+    if (!user) {
+      setData(emptyData);
+      setDashboardData(null);
+      return;
+    }
+
+    // Al iniciar sesión o cambiar de usuario, cargar inmediatamente su caché específico
+    // Esto evita mostrar datos del usuario anterior (ej: admin a asesor)
+    const cachedConfig = loadConfigCache();
+    setData(prev => ({
+      ...emptyData,
+      sales: (loadSalesCache() as Sale[]) || [],
+      clients: (loadClientsCache() as Client[]) || [],
+      users: (loadUsersCache() as User[]) || [],
+      config: { ...emptyData.config, ...(cachedConfig || {}) },
+    }));
+    setDashboardData(loadDashboardCache());
+    setDashboardLoading(!loadDashboardCache());
+    setSalesLoading(!loadSalesCache());
+
+    if (!cachedConfig) {
        fetchConfig();
     }
-  }, [user, fetchConfig]);
+  }, [user?.id, fetchConfig]);
 
   const refreshData = () => { 
     // Compatibilidad para el botón refrescar del usuario
-    fetchDashboard({}, true);
+    setDashboardData(null);
+    invalidateDashboardCache();
     fetchSales();
     fetchClients();
   };
@@ -350,6 +368,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       invalidateDashboardCache();
       return { ...prev, sales: updatedSales };
     });
+    setDashboardData(null);
     return created;
   };
 
@@ -360,6 +379,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
       ...prev,
       sales: prev.sales.map(s => s.id === id ? { ...s, ...updated, ...saleUpdate } : s)
     }));
+    invalidateSalesCache();
+    invalidateDashboardCache();
+    setDashboardData(null);
   };
 
   const deleteSale = async (id: number) => {
@@ -370,6 +392,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       invalidateDashboardCache();
       return { ...prev, sales: updatedSales };
     });
+    setDashboardData(null);
+    invalidateDashboardCache();
   };
 
   const voidSale = async (id: number, reason: string) => {
@@ -381,6 +405,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }));
     invalidateSalesCache();
     invalidateDashboardCache();
+    setDashboardData(null);
   };
 
   const registerCreditPayment = async (saleId: number, amount: number, method?: string, isTotal: boolean = false) => {
@@ -402,6 +427,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
         payments: [...(s.payments || []), result.payment]
       } : s)
     }));
+    setDashboardData(null);
+    invalidateDashboardCache();
     return result;
   };
 
@@ -421,6 +448,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
         payments: (s.payments || []).filter((p: any) => p.id !== paymentId)
       } : s)
     }));
+    setDashboardData(null);
+    invalidateDashboardCache();
   };
 
 

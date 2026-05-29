@@ -68,14 +68,14 @@ export function HotelForm({ hotel, onChange, data }: HotelFormProps) {
           </FormField>
           <FormField label="Check-in (Fecha y Hora)">
             <Input
-              type="datetime-local"
+              type="datetime-local" required min={new Date().toISOString().slice(0, 16)}
               value={hotel.startDate}
               onChange={(e) => onChange({ startDate: e.target.value })}
             />
           </FormField>
           <FormField label="Check-out (Fecha y Hora)">
             <Input
-              type="datetime-local"
+              type="datetime-local" required min={new Date().toISOString().slice(0, 16)}
               value={hotel.endDate}
               onChange={(e) => onChange({ endDate: e.target.value })}
             />

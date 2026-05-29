@@ -470,6 +470,8 @@ export interface Sale {
   id: number;
   clientId: number;
   clientName: string;
+  clientEmail?: string;
+  clientAvatar?: string;
   asesorId: number;
   asesorName: string;
   date: string;

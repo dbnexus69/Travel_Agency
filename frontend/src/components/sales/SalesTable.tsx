@@ -67,9 +67,9 @@ export default function SalesTable({
             <TableCell>{sale.id}</TableCell>
             <TableCell>
               <div className="flex items-center gap-3">
-                {client?.avatar ? (
+                {sale.clientAvatar ? (
                   <img
-                    src={client.avatar}
+                    src={sale.clientAvatar}
                     className="w-8 h-8 rounded-full border border-gray-200"
                     alt={sale.clientName}
                   />
@@ -83,7 +83,7 @@ export default function SalesTable({
                     {sale.clientName}
                   </span>
                   <span className="text-[10px] text-gray-500">
-                    {client?.email || "Sin correo"}
+                    {sale.clientEmail || "Sin correo"}
                   </span>
                 </div>
               </div>

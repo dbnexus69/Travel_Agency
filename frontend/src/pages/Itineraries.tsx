@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { 
   ChevronLeft, ChevronRight, Plane, X, Calendar as CalendarIcon, 
   UserCheck, PlaneTakeoff, PlaneLanding, Search, Filter, AlertCircle,
-  Clock, CheckCircle2, UploadCloud
+  Clock, CheckCircle2, UploadCloud, ExternalLink
 } from 'lucide-react';
 import { Card, CardHeader, CardBody } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -521,7 +521,27 @@ export default function Itineraries() {
             </div>
             <div className="p-3 bg-gray-50 border border-gray-border rounded-lg">
               <p className="text-xs text-gray-500 font-medium mb-1">Aerolínea:</p>
-              <p className="text-sm font-bold text-primary">{selectedFlightForCheckin?.airline}</p>
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-bold text-primary">{selectedFlightForCheckin?.airline}</p>
+                {(() => {
+                  const airlineInfo = data.config?.airlines?.find((a: any) => a.name === selectedFlightForCheckin?.airline);
+                  if (airlineInfo && airlineInfo.website) {
+                    const url = airlineInfo.website.startsWith('http') ? airlineInfo.website : `https://${airlineInfo.website}`;
+                    return (
+                      <a 
+                        href={url} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="text-[10px] text-blue-600 hover:text-blue-800 hover:underline bg-blue-50 px-2 py-0.5 rounded border border-blue-200 flex items-center gap-1 font-bold transition-colors"
+                        title="Ir al sitio web de la aerolínea para Check-in"
+                      >
+                        <ExternalLink size={10} /> Link Check-in
+                      </a>
+                    );
+                  }
+                  return null;
+                })()}
+              </div>
             </div>
             <div className="p-3 bg-gray-50 border border-gray-border rounded-lg">
               <p className="text-xs text-gray-500 font-medium mb-1">Enviar a:</p>

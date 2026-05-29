@@ -18,10 +18,10 @@ import {
   GuestInfo,
 } from "../../types";
 
-import imgTiqueteria from "../../assets/tiqueteria.png";
-import imgHoteleria from "../../assets/hoteleria.png";
-import imgSeguros from "../../assets/seguros.png";
-import imgPlanes from "../../assets/planes.png";
+import imgTiqueteria from "../../assets/tiqueteria.jpg";
+import imgHoteleria from "../../assets/hoteleria.jpg";
+import imgSeguros from "../../assets/seguros.jpg";
+import imgPlanes from "../../assets/planes.jpg";
 
 export const PRODUCT_IMAGES: Record<string, string> = {
   tiqueteria: imgTiqueteria,
@@ -34,6 +34,7 @@ export interface WizardFormData {
   clientId: string;
   commissionAgentId: string;
   commissionAgentName: string;
+  commissionAgentPercentage: string;
   commissionAgentAmount: string;
   commissionAgentRetentionPercentage: string;
   commissionAgentNetPayment: string;
@@ -358,6 +359,7 @@ export const INITIAL_FORM: WizardFormData = {
   clientId: "",
   commissionAgentId: "",
   commissionAgentName: "",
+  commissionAgentPercentage: "",
   commissionAgentAmount: "",
   commissionAgentRetentionPercentage: "0",
   commissionAgentNetPayment: "0",

@@ -137,7 +137,7 @@ export function PlanForm({ plan, onChange, data }: PlanFormProps) {
           </FormField>
           <FormField label="Fecha Ida (Vuelo)">
             <Input
-              type="datetime-local"
+              type="datetime-local" required min={new Date().toISOString().slice(0, 16)}
               value={plan.flightDepartureDate}
               onChange={(e) => {
                 const val = e.target.value;
@@ -147,7 +147,7 @@ export function PlanForm({ plan, onChange, data }: PlanFormProps) {
           </FormField>
           <FormField label="Fecha Vuelta (Vuelo)">
             <Input
-              type="datetime-local"
+              type="datetime-local" required min={new Date().toISOString().slice(0, 16)}
               value={plan.flightReturnDate}
               onChange={(e) => {
                 const val = e.target.value;
@@ -157,14 +157,14 @@ export function PlanForm({ plan, onChange, data }: PlanFormProps) {
           </FormField>
           <FormField label="Ingreso Hotel">
             <Input
-              type="datetime-local"
+              type="datetime-local" required min={new Date().toISOString().slice(0, 16)}
               value={plan.hotelCheckIn}
               onChange={(e) => onChange({ hotelCheckIn: e.target.value })}
             />
           </FormField>
           <FormField label="Salida Hotel">
             <Input
-              type="datetime-local"
+              type="datetime-local" required min={new Date().toISOString().slice(0, 16)}
               value={plan.hotelCheckOut}
               onChange={(e) => onChange({ hotelCheckOut: e.target.value })}
             />
