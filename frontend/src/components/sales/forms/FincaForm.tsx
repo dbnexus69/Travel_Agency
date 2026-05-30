@@ -33,10 +33,26 @@ export function FincaForm({ finca, client, suppliers, onChange }: FincaFormProps
             <Input type="datetime-local" required min={new Date().toISOString().slice(0, 16)} value={finca.checkOutDate} onChange={(e) => onChange({ checkOutDate: e.target.value })} />
           </FormField>
           <FormField label="Número de Adultos">
-            <Input type="number" value={finca.adultsCount} onChange={(e) => onChange({ adultsCount: parseInt(e.target.value) || 2 })} />
+            <Input 
+              type="text" 
+              value={finca.adultsCount} 
+              onChange={(e) => {
+                let cleaned = e.target.value.replace(/[^0-9]/g, "");
+                if (cleaned.length > 3) cleaned = cleaned.slice(0, 3);
+                onChange({ adultsCount: cleaned === "" ? ("" as any) : parseInt(cleaned) });
+              }} 
+            />
           </FormField>
           <FormField label="Número de Niños">
-            <Input type="number" value={finca.childrenCount} onChange={(e) => onChange({ childrenCount: parseInt(e.target.value) || 0 })} />
+            <Input 
+              type="text" 
+              value={finca.childrenCount} 
+              onChange={(e) => {
+                let cleaned = e.target.value.replace(/[^0-9]/g, "");
+                if (cleaned.length > 3) cleaned = cleaned.slice(0, 3);
+                onChange({ childrenCount: cleaned === "" ? ("" as any) : parseInt(cleaned) });
+              }} 
+            />
           </FormField>
           <div className="flex items-center gap-3">
             <input

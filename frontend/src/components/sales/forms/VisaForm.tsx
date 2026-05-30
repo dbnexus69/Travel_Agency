@@ -24,19 +24,61 @@ export function VisaForm({ visa, client, suppliers, onChange }: VisaFormProps) {
             <Input value={visa.fullName} onChange={(e) => onChange({ fullName: e.target.value })} placeholder="Como aparece en el pasaporte" />
           </FormField>
           <FormField label="Fecha de Nacimiento">
-            <Input type="datetime-local" required value={visa.birthDate} onChange={(e) => onChange({ birthDate: e.target.value })} />
+            <Input 
+              type="date" 
+              required 
+              max={new Date().toISOString().slice(0, 10)} 
+              value={visa.birthDate} 
+              onChange={(e) => onChange({ birthDate: e.target.value })} 
+            />
           </FormField>
           <FormField label="Nacionalidad">
-            <Input value={visa.nationality} onChange={(e) => onChange({ nationality: e.target.value })} placeholder="Ej: Colombiana" />
+            <Input 
+              value={visa.nationality} 
+              onChange={(e) => {
+                let cleaned = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, "");
+                if (cleaned.length > 0) {
+                  cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+                }
+                onChange({ nationality: cleaned });
+              }} 
+              placeholder="Ej: Colombiana" 
+              maxLength={30}
+            />
           </FormField>
           <FormField label="Número de Pasaporte">
-            <Input value={visa.passportNumber} onChange={(e) => onChange({ passportNumber: e.target.value })} placeholder="Número de pasaporte" />
+            <Input 
+              value={visa.passportNumber} 
+              onChange={(e) => {
+                const cleaned = e.target.value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+                onChange({ passportNumber: cleaned });
+              }} 
+              placeholder="Número de pasaporte" 
+              maxLength={20}
+            />
           </FormField>
           <FormField label="Vencimiento Pasaporte">
-            <Input type="datetime-local" required value={visa.passportExpiration} onChange={(e) => onChange({ passportExpiration: e.target.value })} />
+            <Input 
+              type="date" 
+              required 
+              min={new Date().toISOString().slice(0, 10)} 
+              value={visa.passportExpiration} 
+              onChange={(e) => onChange({ passportExpiration: e.target.value })} 
+            />
           </FormField>
           <FormField label="País al que aplica">
-            <Input value={visa.countryApplying} onChange={(e) => onChange({ countryApplying: e.target.value })} placeholder="Ej: USA, Canadá, China" />
+            <Input 
+              value={visa.countryApplying} 
+              onChange={(e) => {
+                let cleaned = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, "");
+                if (cleaned.length > 0) {
+                  cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+                }
+                onChange({ countryApplying: cleaned });
+              }} 
+              placeholder="Ej: USA, Canadá, China" 
+              maxLength={30}
+            />
           </FormField>
           <FormField label="Tipo de Visa">
             <Combobox
@@ -52,10 +94,27 @@ export function VisaForm({ visa, client, suppliers, onChange }: VisaFormProps) {
             />
           </FormField>
           <FormField label="Fecha Estimada Viaje">
-            <Input type="datetime-local" required min={new Date().toISOString().slice(0, 16)} value={visa.estimatedTravelDate} onChange={(e) => onChange({ estimatedTravelDate: e.target.value })} />
+            <Input 
+              type="date" 
+              required 
+              min={new Date().toISOString().slice(0, 10)} 
+              value={visa.estimatedTravelDate} 
+              onChange={(e) => onChange({ estimatedTravelDate: e.target.value })} 
+            />
           </FormField>
           <FormField label="Correo de Contacto" className="md:col-span-2">
-            <Input type="email" value={visa.email} onChange={(e) => onChange({ email: e.target.value })} placeholder="ejemplo@correo.com" />
+            <Input 
+              type="email" 
+              value={visa.email} 
+              onChange={(e) => {
+                let val = e.target.value;
+                if (val.includes(".com")) {
+                  val = val.substring(0, val.indexOf(".com") + 4);
+                }
+                onChange({ email: val.trim() });
+              }} 
+              placeholder="ejemplo@correo.com" 
+            />
           </FormField>
         </div>
       </div>

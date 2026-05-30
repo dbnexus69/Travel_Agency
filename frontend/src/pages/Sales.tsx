@@ -321,6 +321,12 @@ export default function Sales() {
                   </div>
                 ))}
               </div>
+            ) : filteredSales.length === 0 ? (
+              <div className="flex flex-col items-center justify-center p-12 text-gray-500 bg-white rounded-b-2xl border-t border-gray-100">
+                <Ban size={48} className="text-gray-200 mb-4 animate-bounce" />
+                <p className="text-lg font-bold text-gray-700">Venta no encontrada</p>
+                <p className="text-sm text-gray-400 mt-1">Prueba ajustando los términos de búsqueda o los filtros de fecha.</p>
+              </div>
             ) : (
               <SalesTable
                 sales={filteredSales}

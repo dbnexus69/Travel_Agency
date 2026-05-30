@@ -30,12 +30,14 @@ export function PlanForm({ plan, onChange, data }: PlanFormProps) {
     const pkg = packages.find((p: any) => p.name === packageName);
     if (pkg) {
       onChange({
+        packageId: pkg.id,
+        packageName: pkg.name,
         planName: pkg.name,
         hotelName: pkg.accommodation?.hotel || "",
         supplier: pkg.accommodation?.supplier || "",
         airline: pkg.flight?.airline || "",
         flightNumber: pkg.flight?.legs?.[0]?.flightNumber || "",
-        // observations: `Incluye: ${pkg.includedServices}\nNo Incluye: ${pkg.notIncluded}`
+        observations: `Incluye: ${pkg.includedServices || 'N/A'}\nNo Incluye: ${pkg.notIncluded || 'N/A'}`,
         adultsCount: 2,
         childrenCount: 0,
       });
@@ -70,14 +72,16 @@ export function PlanForm({ plan, onChange, data }: PlanFormProps) {
             <Input
               value={plan.planName}
               onChange={(e) => onChange({ planName: e.target.value })}
-              placeholder="Ej: Plan Cancún Todo Incluido"
+              placeholder="Ej: Plan Cancún Todo Incluido (Máx 50)"
+              maxLength={50}
             />
           </FormField>
           <FormField label="Nombre del Hotel">
             <Input
               value={plan.hotelName}
               onChange={(e) => onChange({ hotelName: e.target.value })}
-              placeholder="Ej: Riu Palace"
+              placeholder="Ej: Riu Palace (Máx 50)"
+              maxLength={50}
             />
           </FormField>
 
@@ -91,18 +95,24 @@ export function PlanForm({ plan, onChange, data }: PlanFormProps) {
           </FormField>
           <FormField label="Adultos">
             <Input
-              type="number"
-              min="0"
+              type="text"
               value={plan.adultsCount !== undefined ? plan.adultsCount : ""}
-              onChange={(e) => onChange({ adultsCount: e.target.value === "" ? undefined : Number(e.target.value) })}
+              onChange={(e) => {
+                const cleaned = e.target.value.replace(/\D/g, "").slice(0, 3);
+                onChange({ adultsCount: cleaned === "" ? undefined : Number(cleaned) });
+              }}
+              placeholder="Solo números, máx 999"
             />
           </FormField>
           <FormField label="Menores">
             <Input
-              type="number"
-              min="0"
+              type="text"
               value={plan.childrenCount !== undefined ? plan.childrenCount : ""}
-              onChange={(e) => onChange({ childrenCount: e.target.value === "" ? undefined : Number(e.target.value) })}
+              onChange={(e) => {
+                const cleaned = e.target.value.replace(/\D/g, "").slice(0, 3);
+                onChange({ childrenCount: cleaned === "" ? undefined : Number(cleaned) });
+              }}
+              placeholder="Solo números, máx 999"
             />
           </FormField>
         </div>
@@ -114,59 +124,104 @@ export function PlanForm({ plan, onChange, data }: PlanFormProps) {
           Reservación y Transporte
         </h4>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <FormField label="Número de Reservación">
+          <FormField label={<span>Número de Reservación <span className="text-red-500">*</span></span>}>
             <Input
+              required
               value={plan.reservationNumber}
-              onChange={(e) => onChange({ reservationNumber: e.target.value })}
-              placeholder="Código de hotel"
+              onChange={(e) => {
+                const cleaned = e.target.value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+                onChange({ reservationNumber: cleaned });
+              }}
+              placeholder="Código de hotel (Máx 20)"
+              maxLength={20}
             />
           </FormField>
-          <FormField label="Número de Vuelo">
+          <FormField label={<span>Número de Vuelo <span className="text-red-500">*</span></span>}>
             <Input
+              required
               value={plan.flightNumber}
-              onChange={(e) => onChange({ flightNumber: e.target.value })}
+              onChange={(e) => {
+                const cleaned = e.target.value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+                onChange({ flightNumber: cleaned });
+              }}
               placeholder="Ej: AV9301"
             />
           </FormField>
-          <FormField label="Número de Tiquete">
+          <FormField label={<span>Número de Tiquete <span className="text-red-500">*</span></span>}>
             <Input
+              required
               value={plan.ticketNumber}
-              onChange={(e) => onChange({ ticketNumber: e.target.value })}
+              onChange={(e) => {
+                const cleaned = e.target.value.replace(/[^a-zA-Z0-9]/g, "");
+                onChange({ ticketNumber: cleaned });
+              }}
               placeholder="Número de 13 dígitos"
+              maxLength={13}
+            />
+          </FormField>
+          <FormField label="Confirmación">
+            <Input
+              value={plan.confirmationNumber || ""}
+              onChange={(e) => {
+                const cleaned = e.target.value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+                onChange({ confirmationNumber: cleaned });
+              }}
+              placeholder="Número de confirmación"
+              maxLength={20}
             />
           </FormField>
           <FormField label="Fecha Ida (Vuelo)">
             <Input
               type="datetime-local" required min={new Date().toISOString().slice(0, 16)}
-              value={plan.flightDepartureDate}
+              value={plan.flightDepartureDate || ""}
               onChange={(e) => {
                 const val = e.target.value;
-                onChange({ flightDepartureDate: val, startDate: val });
+                onChange({ flightDepartureDate: val });
+              }}
+            />
+          </FormField>
+          <FormField label="Llegada Ida (Vuelo)">
+            <Input
+              type="datetime-local" required min={new Date().toISOString().slice(0, 16)}
+              value={plan.flightDepartureArrivalDate || ""}
+              onChange={(e) => {
+                const val = e.target.value;
+                onChange({ flightDepartureArrivalDate: val });
               }}
             />
           </FormField>
           <FormField label="Fecha Vuelta (Vuelo)">
             <Input
               type="datetime-local" required min={new Date().toISOString().slice(0, 16)}
-              value={plan.flightReturnDate}
+              value={plan.flightReturnDate || ""}
               onChange={(e) => {
                 const val = e.target.value;
-                onChange({ flightReturnDate: val, endDate: val });
+                onChange({ flightReturnDate: val });
+              }}
+            />
+          </FormField>
+          <FormField label="Llegada Vuelta (Vuelo)">
+            <Input
+              type="datetime-local" required min={new Date().toISOString().slice(0, 16)}
+              value={plan.flightReturnArrivalDate || ""}
+              onChange={(e) => {
+                const val = e.target.value;
+                onChange({ flightReturnArrivalDate: val });
               }}
             />
           </FormField>
           <FormField label="Ingreso Hotel">
             <Input
               type="datetime-local" required min={new Date().toISOString().slice(0, 16)}
-              value={plan.hotelCheckIn}
-              onChange={(e) => onChange({ hotelCheckIn: e.target.value })}
+              value={plan.startDate || ""}
+              onChange={(e) => onChange({ startDate: e.target.value })}
             />
           </FormField>
           <FormField label="Salida Hotel">
             <Input
               type="datetime-local" required min={new Date().toISOString().slice(0, 16)}
-              value={plan.hotelCheckOut}
-              onChange={(e) => onChange({ hotelCheckOut: e.target.value })}
+              value={plan.endDate || ""}
+              onChange={(e) => onChange({ endDate: e.target.value })}
             />
           </FormField>
         </div>
@@ -187,6 +242,7 @@ export function PlanForm({ plan, onChange, data }: PlanFormProps) {
           </FormField>
           <FormField label="Costo Proveedor">
             <CurrencyInput
+              required
               value={plan.supplierCost === 0 ? "" : plan.supplierCost}
               onChange={(val) =>
                 onChange({
@@ -197,6 +253,7 @@ export function PlanForm({ plan, onChange, data }: PlanFormProps) {
           </FormField>
           <FormField label="Valor TA">
             <CurrencyInput
+              required
               value={plan.ta === 0 ? "" : plan.ta}
               onChange={(val) =>
                 onChange({
@@ -259,6 +316,17 @@ export function PlanForm({ plan, onChange, data }: PlanFormProps) {
               )}
             </div>
           ))}
+        </div>
+        <div className="mt-4">
+          <FormField label="Observaciones">
+            <textarea
+              className="w-full text-sm p-3 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none"
+              rows={3}
+              value={plan.observations || ""}
+              onChange={(e) => onChange({ observations: e.target.value })}
+              placeholder="Notas, inclusiones, excepciones..."
+            />
+          </FormField>
         </div>
       </div>
     </div>

@@ -244,26 +244,37 @@ export default function ProductDetailsModal({ product, onClose }: ProductDetails
         ));
 
       case "Planes":
-        return product.data.map((plan, idx) => (
-          <div key={idx} className="bg-white border border-gray-200 rounded-xl p-4 mb-4 shadow-sm">
-            <h4 className="font-bold text-primary flex items-center gap-2 mb-3 pb-2 border-b">
-              <Package size={16} className="text-accent" /> Paquete #{idx + 1} - {plan.planName || "Sin Nombre"}
-            </h4>
-            {renderGrid([
-              ...(plan.packageName ? [{ label: "Paquete Base", value: plan.packageName }] : []),
-              { label: "Aerolínea", value: plan.airlineName || plan.airline },
-              { label: "Reserva", value: plan.reservationNumber },
-              { label: "Fechas", value: plan.startDate && plan.endDate ? `${formatDate(plan.startDate)} al ${formatDate(plan.endDate)}` : (plan.startDate ? formatDate(plan.startDate) : (plan.endDate ? formatDate(plan.endDate) : "-")) },
-              { label: "Adultos", value: plan.adultsCount },
-              { label: "Menores", value: plan.childrenCount },
-              { label: "Confirmación", value: plan.ticketNumber },
-            ])}
-            {renderPassengers(plan.guests || plan.passengers)}
-            {plan.observations && (
-              <p className="text-xs text-gray-500 mt-2 italic">{plan.observations}</p>
-            )}
-          </div>
-        ));
+        return product.data.map((plan, idx) => {
+          const formatDateTime = (dStr: string) => dStr ? `${formatDate(dStr)} ${new Date(dStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : "-";
+          return (
+            <div key={idx} className="bg-white border border-gray-200 rounded-xl p-4 mb-4 shadow-sm">
+              <h4 className="font-bold text-primary flex items-center gap-2 mb-3 pb-2 border-b">
+                <Package size={16} className="text-accent" /> Paquete #{idx + 1} - {plan.planName || "Sin Nombre"}
+              </h4>
+              {renderGrid([
+                ...(plan.packageName ? [{ label: "Paquete Base", value: plan.packageName }] : []),
+                { label: "Hotel", value: plan.hotelName },
+                { label: "Aerolínea", value: plan.airlineName || plan.airline },
+                { label: "Reserva", value: plan.reservationNumber },
+                { label: "Nro Tiquete", value: plan.ticketNumber },
+                { label: "Confirmación", value: plan.confirmationNumber },
+                { label: "Check-in Hotel", value: plan.startDate ? formatDateTime(plan.startDate) : "-" },
+                { label: "Check-out Hotel", value: plan.endDate ? formatDateTime(plan.endDate) : "-" },
+                { label: "Nro Vuelo", value: plan.flightNumber },
+                { label: "Salida Ida", value: plan.flightDepartureDate ? formatDateTime(plan.flightDepartureDate) : "-" },
+                { label: "Llegada Ida", value: plan.flightDepartureArrivalDate ? formatDateTime(plan.flightDepartureArrivalDate) : "-" },
+                { label: "Salida Regreso", value: plan.flightReturnDate ? formatDateTime(plan.flightReturnDate) : "-" },
+                { label: "Llegada Regreso", value: plan.flightReturnArrivalDate ? formatDateTime(plan.flightReturnArrivalDate) : "-" },
+                { label: "Adultos", value: plan.adultsCount },
+                { label: "Menores", value: plan.childrenCount !== undefined && plan.childrenCount !== null ? plan.childrenCount : 0 },
+              ])}
+              {renderPassengers(plan.guests || plan.passengers || plan.members)}
+              {plan.observations && (
+                <p className="text-xs text-gray-500 mt-2 italic">{plan.observations}</p>
+              )}
+            </div>
+          );
+        });
 
       case "CheckIn":
         return product.data.map((item, idx) => (

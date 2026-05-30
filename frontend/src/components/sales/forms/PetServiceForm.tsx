@@ -20,11 +20,33 @@ export function PetServiceForm({ pet, client, suppliers, onChange }: PetServiceF
           <LuDog size={14} /> Transporte de Mascotas
         </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField label="Nombre del Dueño">
-            <Input value={pet.ownerName} onChange={(e) => onChange({ ownerName: e.target.value })} placeholder="Nombre completo" />
+           <FormField label="Nombre del Dueño">
+            <Input 
+              value={pet.ownerName} 
+              onChange={(e) => {
+                let cleaned = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, "");
+                if (cleaned.length > 0) {
+                  cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+                }
+                onChange({ ownerName: cleaned });
+              }} 
+              placeholder="Nombre completo" 
+              maxLength={50}
+            />
           </FormField>
           <FormField label="Nombre de la Mascota">
-            <Input value={pet.petName} onChange={(e) => onChange({ petName: e.target.value })} placeholder="Nombre de la mascota" />
+            <Input 
+              value={pet.petName} 
+              onChange={(e) => {
+                let cleaned = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, "");
+                if (cleaned.length > 0) {
+                  cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+                }
+                onChange({ petName: cleaned });
+              }} 
+              placeholder="Nombre de la mascota" 
+              maxLength={30}
+            />
           </FormField>
           <FormField label="Especie">
             <Combobox
@@ -39,10 +61,35 @@ export function PetServiceForm({ pet, client, suppliers, onChange }: PetServiceF
             />
           </FormField>
           <FormField label="Raza">
-            <Input value={pet.breed} onChange={(e) => onChange({ breed: e.target.value })} placeholder="Ej: Labrador, Persa" />
+            <Input 
+              value={pet.breed} 
+              onChange={(e) => {
+                let cleaned = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, "");
+                if (cleaned.length > 0) {
+                  cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+                }
+                onChange({ breed: cleaned });
+              }} 
+              placeholder="Ej: Labrador, Persa" 
+              maxLength={30}
+            />
           </FormField>
           <FormField label="Peso (kg)">
-            <Input type="number" value={pet.weight} onChange={(e) => onChange({ weight: parseFloat(e.target.value) || 0 })} placeholder="0.0" />
+            <Input 
+              type="number" 
+              value={pet.weight || ""} 
+              onChange={(e) => {
+                const val = parseFloat(e.target.value);
+                if (!isNaN(val) && val >= 0 && val <= 999.9) {
+                  onChange({ weight: val });
+                } else if (e.target.value === "") {
+                  onChange({ weight: 0 });
+                }
+              }} 
+              placeholder="0.0" 
+              min={0}
+              max={999}
+            />
           </FormField>
           <FormField label="Tamaño">
             <Combobox
@@ -68,16 +115,47 @@ export function PetServiceForm({ pet, client, suppliers, onChange }: PetServiceF
             />
           </FormField>
           <FormField label="Fecha de Viaje">
-            <Input type="datetime-local" required min={new Date().toISOString().slice(0, 16)} value={pet.travelDate} onChange={(e) => onChange({ travelDate: e.target.value })} />
+            <Input 
+              type="date" 
+              required 
+              min={new Date().toISOString().slice(0, 10)} 
+              value={pet.travelDate} 
+              onChange={(e) => onChange({ travelDate: e.target.value })} 
+            />
           </FormField>
           <FormField label="País Destino">
-            <Input value={pet.destinationCountry} onChange={(e) => onChange({ destinationCountry: e.target.value })} placeholder="País de destino" />
+            <Input 
+              value={pet.destinationCountry} 
+              onChange={(e) => {
+                let cleaned = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, "");
+                if (cleaned.length > 0) {
+                  cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+                }
+                onChange({ destinationCountry: cleaned });
+              }} 
+              placeholder="País de destino" 
+              maxLength={30}
+            />
           </FormField>
           <FormField label="Teléfono">
-            <Input value={pet.phone} onChange={(e) => onChange({ phone: e.target.value })} placeholder="+57 300 123 4567" />
+            <Input 
+              value={pet.phone} 
+              onChange={(e) => {
+                const cleaned = e.target.value.replace(/[a-zA-Z]/g, "");
+                onChange({ phone: cleaned });
+              }} 
+              placeholder="+57 300 123 4567" 
+              maxLength={15}
+            />
           </FormField>
           <FormField label="Condiciones Médicas" className="md:col-span-2">
-            <Textarea value={pet.medicalConditions} onChange={(e) => onChange({ medicalConditions: e.target.value })} placeholder="Alergias, medicamentos, etc." rows={2} />
+            <Textarea 
+              value={pet.medicalConditions} 
+              onChange={(e) => onChange({ medicalConditions: e.target.value })} 
+              placeholder="Alergias, medicamentos, etc." 
+              rows={2} 
+              maxLength={100}
+            />
           </FormField>
         </div>
       </div>

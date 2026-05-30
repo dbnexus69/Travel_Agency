@@ -27,13 +27,31 @@ export function SimCardForm({ sim, client, suppliers, onChange }: SimCardFormPro
             <Input value={sim.docNumber} onChange={(e) => onChange({ docNumber: e.target.value })} placeholder="C.C. o Pasaporte" />
           </FormField>
           <FormField label="País de Destino">
-            <Input value={sim.destinationCountry} onChange={(e) => onChange({ destinationCountry: e.target.value })} placeholder="Ej: España, USA" />
+            <Input 
+              value={sim.destinationCountry} 
+              onChange={(e) => {
+                let cleaned = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, "");
+                if (cleaned.length > 0) {
+                  cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+                }
+                onChange({ destinationCountry: cleaned });
+              }} 
+              placeholder="Ej: España, USA" 
+            />
           </FormField>
           <FormField label="Fecha y Hora de Llegada">
             <Input type="datetime-local" required min={new Date().toISOString().slice(0, 16)} value={sim.arrivalDate} onChange={(e) => onChange({ arrivalDate: e.target.value })} />
           </FormField>
           <FormField label="Duración del Viaje (Días)">
-            <Input type="number" value={sim.tripDuration} onChange={(e) => onChange({ tripDuration: e.target.value })} placeholder="Ej: 15" />
+            <Input 
+              type="text" 
+              value={sim.tripDuration} 
+              onChange={(e) => {
+                const cleaned = e.target.value.replace(/[^0-9]/g, "");
+                onChange({ tripDuration: cleaned });
+              }} 
+              placeholder="Ej: 15" 
+            />
           </FormField>
           <FormField label="Plan de Datos">
             <Input value={sim.dataPlan} onChange={(e) => onChange({ dataPlan: e.target.value })} placeholder="Ej: 10GB, Ilimitado" />
@@ -63,7 +81,18 @@ export function SimCardForm({ sim, client, suppliers, onChange }: SimCardFormPro
             />
           </FormField>
           <FormField label="Correo Electrónico" className="md:col-span-2">
-            <Input type="email" value={sim.email} onChange={(e) => onChange({ email: e.target.value })} placeholder="ejemplo@correo.com" />
+            <Input 
+              type="email" 
+              value={sim.email} 
+              onChange={(e) => {
+                let val = e.target.value;
+                if (val.includes(".com")) {
+                  val = val.substring(0, val.indexOf(".com") + 4);
+                }
+                onChange({ email: val.trim() });
+              }} 
+              placeholder="ejemplo@correo.com" 
+            />
           </FormField>
         </div>
       </div>

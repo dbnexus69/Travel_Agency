@@ -24,19 +24,48 @@ export function TourForm({ tour, client, suppliers, onChange }: TourFormProps) {
             <Input value={tour.passengerName} onChange={(e) => onChange({ passengerName: e.target.value })} placeholder="Nombre completo" />
           </FormField>
           <FormField label="Tour Seleccionado">
-            <Input value={tour.selectedTour} onChange={(e) => onChange({ selectedTour: e.target.value })} placeholder="Nombre del tour" />
+            <Input 
+              value={tour.selectedTour} 
+              onChange={(e) => {
+                const cleaned = e.target.value.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]/g, "");
+                onChange({ selectedTour: cleaned });
+              }} 
+              placeholder="Nombre del tour" 
+              maxLength={50}
+            />
           </FormField>
           <FormField label="Fecha y Hora Preferida">
             <Input type="datetime-local" required min={new Date().toISOString().slice(0, 16)} value={tour.preferredDate} onChange={(e) => onChange({ preferredDate: e.target.value })} />
           </FormField>
           <FormField label="Número de Adultos">
-            <Input type="number" value={tour.adultsCount} onChange={(e) => onChange({ adultsCount: parseInt(e.target.value) || 2 })} />
+            <Input 
+              type="text" 
+              value={tour.adultsCount} 
+              onChange={(e) => {
+                let cleaned = e.target.value.replace(/[^0-9]/g, "");
+                if (cleaned.length > 3) cleaned = cleaned.slice(0, 3);
+                onChange({ adultsCount: cleaned === "" ? ("" as any) : parseInt(cleaned) });
+              }} 
+            />
           </FormField>
           <FormField label="Número de Niños">
-            <Input type="number" value={tour.childrenCount} onChange={(e) => onChange({ childrenCount: parseInt(e.target.value) || 0 })} />
+            <Input 
+              type="text" 
+              value={tour.childrenCount} 
+              onChange={(e) => {
+                let cleaned = e.target.value.replace(/[^0-9]/g, "");
+                if (cleaned.length > 3) cleaned = cleaned.slice(0, 3);
+                onChange({ childrenCount: cleaned === "" ? ("" as any) : parseInt(cleaned) });
+              }} 
+            />
           </FormField>
-          <FormField label="Edades de Niños">
-            <Input value={tour.childrenAges} onChange={(e) => onChange({ childrenAges: e.target.value })} placeholder="Ej: 5, 8, 12" />
+          <FormField label="Edades de Niños (Opcional)">
+            <Input 
+              value={tour.childrenAges} 
+              onChange={(e) => onChange({ childrenAges: e.target.value })} 
+              placeholder="Ej: 5, 8, 12" 
+              maxLength={40}
+            />
           </FormField>
           <FormField label="Idioma del Guía">
             <Combobox
@@ -66,7 +95,15 @@ export function TourForm({ tour, client, suppliers, onChange }: TourFormProps) {
             </label>
           </div>
           <FormField label="Punto de Recogida">
-            <Input value={tour.pickupPoint} onChange={(e) => onChange({ pickupPoint: e.target.value })} placeholder="Hotel, Aeropuerto, etc." />
+            <Input 
+              value={tour.pickupPoint} 
+              onChange={(e) => {
+                const cleaned = e.target.value.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]/g, "");
+                onChange({ pickupPoint: cleaned });
+              }} 
+              placeholder="Hotel, Aeropuerto, etc." 
+              maxLength={30}
+            />
           </FormField>
           <FormField label="Condiciones Médicas" className="md:col-span-2">
             <Textarea value={tour.medicalConditions} onChange={(e) => onChange({ medicalConditions: e.target.value })} placeholder="Alergias, enfermedades, etc." rows={2} />

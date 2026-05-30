@@ -30,8 +30,11 @@ export function CarRentalForm({ car, client, suppliers, onChange }: CarRentalFor
           <FormField label="Número de Licencia">
             <Input
               value={car.licenseNumber}
-              onChange={(e) => onChange({ licenseNumber: e.target.value })}
-              placeholder="Número de licencia"
+              onChange={(e) => {
+                const cleaned = e.target.value.replace(/[^a-zA-Z0-9\-\s]/g, "").toUpperCase();
+                onChange({ licenseNumber: cleaned });
+              }}
+              placeholder="Ej: A123-4567"
             />
           </FormField>
           <FormField label="Recogida (Fecha y Hora)">
@@ -75,11 +78,14 @@ export function CarRentalForm({ car, client, suppliers, onChange }: CarRentalFor
           </FormField>
           <FormField label="Conductores Adicionales">
             <Input
-              type="number"
+              type="text"
               value={car.additionalDrivers}
-              onChange={(e) =>
-                onChange({ additionalDrivers: parseInt(e.target.value) || 0 })
-              }
+              onChange={(e) => {
+                let cleaned = e.target.value.replace(/[^0-9]/g, "");
+                if (cleaned !== "" && Number(cleaned) > 10) cleaned = "10";
+                onChange({ additionalDrivers: cleaned === "" ? ("" as any) : parseInt(cleaned) });
+              }}
+              placeholder="0 a 10"
             />
           </FormField>
           <FormField label="Tipo de Seguro">
@@ -97,10 +103,12 @@ export function CarRentalForm({ car, client, suppliers, onChange }: CarRentalFor
           <FormField label="Tarjeta de Garantía">
             <Input
               value={car.guaranteeCreditCard}
-              onChange={(e) =>
-                onChange({ guaranteeCreditCard: e.target.value })
-              }
+              onChange={(e) => {
+                const cleaned = e.target.value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+                onChange({ guaranteeCreditCard: cleaned });
+              }}
               placeholder="Últimos 4 dígitos"
+              maxLength={4}
             />
           </FormField>
         </div>

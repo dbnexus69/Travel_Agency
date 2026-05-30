@@ -37,7 +37,8 @@ export function HotelForm({ hotel, onChange, data }: HotelFormProps) {
             <Input
               value={hotel.hotelName}
               onChange={(e) => onChange({ hotelName: e.target.value })}
-              placeholder="Ej: Hilton Berlin"
+              placeholder="Ej: Hilton Berlin (Mín 2, Máx 50)"
+              maxLength={50}
             />
           </FormField>
           <FormField label="Destino">
@@ -62,20 +63,34 @@ export function HotelForm({ hotel, onChange, data }: HotelFormProps) {
           <FormField label="Número de Reserva">
             <Input
               value={hotel.reservationNumber}
-              onChange={(e) => onChange({ reservationNumber: e.target.value })}
-              placeholder="Ej: 123456789"
+              onChange={(e) => {
+                const cleaned = e.target.value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+                onChange({ reservationNumber: cleaned });
+              }}
+              placeholder="Máx 20 caracteres (sin especiales)"
+              maxLength={20}
             />
           </FormField>
           <FormField label="Check-in (Fecha y Hora)">
             <Input
-              type="datetime-local" required min={new Date().toISOString().slice(0, 16)}
+              type="datetime-local" required
+              min={(() => {
+                const now = new Date();
+                const tzOffset = now.getTimezoneOffset() * 60000;
+                return new Date(now.getTime() - tzOffset).toISOString().slice(0, 16);
+              })()}
               value={hotel.startDate}
               onChange={(e) => onChange({ startDate: e.target.value })}
             />
           </FormField>
           <FormField label="Check-out (Fecha y Hora)">
             <Input
-              type="datetime-local" required min={new Date().toISOString().slice(0, 16)}
+              type="datetime-local" required
+              min={(() => {
+                const now = new Date();
+                const tzOffset = now.getTimezoneOffset() * 60000;
+                return new Date(now.getTime() - tzOffset).toISOString().slice(0, 16);
+              })()}
               value={hotel.endDate}
               onChange={(e) => onChange({ endDate: e.target.value })}
             />
@@ -150,22 +165,24 @@ export function HotelForm({ hotel, onChange, data }: HotelFormProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField label="Costo Proveedor">
             <CurrencyInput
+              required
               value={hotel.supplierCost === 0 ? "" : hotel.supplierCost}
-              onChange={(val) =>
+              onChange={(val) => {
                 onChange({
                   supplierCost: val === "" ? 0 : Number(val),
-                })
-              }
+                });
+              }}
             />
           </FormField>
           <FormField label="Tarifa Administrativa (TA)">
             <CurrencyInput
+              required
               value={hotel.ta === 0 ? "" : hotel.ta}
-              onChange={(val) =>
+              onChange={(val) => {
                 onChange({
                   ta: val === "" ? 0 : Number(val),
-                })
-              }
+                });
+              }}
             />
           </FormField>
           <FormField label="Método de Pago">

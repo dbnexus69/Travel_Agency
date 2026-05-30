@@ -4,6 +4,7 @@ const { success, error } = require('../utils/apiResponse');
 const { buildMeta } = require('../utils/paginationHelper');
 const emailService = require('../utils/emailService');
 const { AUTH_CACHE } = require('../middleware/auth');
+const { formatName } = require('../utils/stringUtils');
 
 exports.list = async (req, res, next) => {
   try {
@@ -140,8 +141,8 @@ exports.create = async (req, res, next) => {
 
     const persona = await prisma.personas.create({
       data: {
-        nombres: data.firstName || data.name?.split(' ')[0] || '',
-        apellidos: data.lastName || data.name?.split(' ').slice(1).join(' ') || '',
+        nombres: formatName(data.firstName || data.name?.split(' ')[0] || ''),
+        apellidos: formatName(data.lastName || data.name?.split(' ').slice(1).join(' ') || ''),
         tipoDocumentoId,
         documento: data.docNumber,
         email: data.email,
@@ -228,8 +229,8 @@ exports.update = async (req, res, next) => {
     }
 
     const personaUpdate = {};
-    if (data.firstName) personaUpdate.nombres = data.firstName;
-    if (data.lastName) personaUpdate.apellidos = data.lastName;
+    if (data.firstName) personaUpdate.nombres = formatName(data.firstName);
+    if (data.lastName) personaUpdate.apellidos = formatName(data.lastName);
     if (data.phone !== undefined) personaUpdate.telefono = data.phone;
     if (data.docNumber !== undefined) personaUpdate.documento = data.docNumber;
     if (data.birthDate) personaUpdate.birthDate = new Date(data.birthDate);

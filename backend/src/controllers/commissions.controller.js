@@ -1,6 +1,7 @@
 const prisma = require('../config/db');
 const { success, error } = require('../utils/apiResponse');
 const { buildMeta } = require('../utils/paginationHelper');
+const { formatName } = require('../utils/stringUtils');
 
 exports.listAgents = async (req, res, next) => {
   try {
@@ -80,7 +81,7 @@ exports.createAgent = async (req, res, next) => {
 
     const persona = await prisma.personas.create({
       data: {
-        nombres: data.name || '',
+        nombres: formatName(data.name) || '',
         apellidos: '',
         tipoDocumentoId,
         documento: data.docNumber || null,
@@ -126,7 +127,7 @@ exports.updateAgent = async (req, res, next) => {
     if (!agent) return error(res, 'Comisionista no encontrado', 404);
 
     const personaUpdate = {};
-    if (data.name) personaUpdate.nombres = data.name;
+    if (data.name) personaUpdate.nombres = formatName(data.name);
     if (data.docNumber !== undefined) personaUpdate.documento = data.docNumber;
     if (data.phone !== undefined) personaUpdate.telefono = data.phone;
     if (data.email !== undefined) personaUpdate.email = data.email;

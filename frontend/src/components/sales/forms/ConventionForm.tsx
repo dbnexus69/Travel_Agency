@@ -27,7 +27,14 @@ export function ConventionForm({ convention, client, suppliers, onChange }: Conv
         </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField label="Organización">
-            <Input value={convention.organization} onChange={(e) => onChange({ organization: e.target.value })} placeholder="Nombre de la empresa" />
+            <Input 
+              value={convention.organization} 
+              onChange={(e) => {
+                const cleaned = e.target.value.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]/g, "");
+                onChange({ organization: cleaned });
+              }} 
+              placeholder="Nombre de la empresa" 
+            />
           </FormField>
           <FormField label="Nombre de Contacto">
             <Input value={convention.contactName} onChange={(e) => onChange({ contactName: e.target.value })} placeholder="Persona de contacto" />
@@ -39,7 +46,15 @@ export function ConventionForm({ convention, client, suppliers, onChange }: Conv
             <Input type="datetime-local" required min={new Date().toISOString().slice(0, 16)} value={convention.endDate} onChange={(e) => onChange({ endDate: e.target.value })} />
           </FormField>
           <FormField label="Asistencia Estimada">
-            <Input type="number" value={convention.estimatedAttendance} onChange={(e) => onChange({ estimatedAttendance: parseInt(e.target.value) || 0 })} />
+            <Input 
+              type="text" 
+              value={convention.estimatedAttendance} 
+              onChange={(e) => {
+                let cleaned = e.target.value.replace(/[^0-9]/g, "");
+                if (cleaned.length > 3) cleaned = cleaned.slice(0, 3);
+                onChange({ estimatedAttendance: cleaned === "" ? ("" as any) : parseInt(cleaned) });
+              }} 
+            />
           </FormField>
           <FormField label="Espacio Requerido">
             <Combobox
@@ -66,7 +81,18 @@ export function ConventionForm({ convention, client, suppliers, onChange }: Conv
             />
           </FormField>
           <FormField label="Correo Electrónico">
-            <Input type="email" value={convention.email} onChange={(e) => onChange({ email: e.target.value })} placeholder="correo@empresa.com" />
+            <Input 
+              type="email" 
+              value={convention.email} 
+              onChange={(e) => {
+                let val = e.target.value;
+                if (val.includes(".com")) {
+                  val = val.substring(0, val.indexOf(".com") + 4);
+                }
+                onChange({ email: val.trim() });
+              }} 
+              placeholder="correo@empresa.com" 
+            />
           </FormField>
           <div className="md:col-span-2 space-y-3">
             <label className="text-sm font-medium text-gray-700">Equipos A/V Requeridos</label>

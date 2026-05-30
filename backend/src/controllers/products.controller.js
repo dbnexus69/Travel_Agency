@@ -411,7 +411,7 @@ exports.createPetService = H(CATEGORIES.petService, 'prodMascotas', (d, detalleI
   especie: d.species || null,
   raza: d.breed || null,
   pesoKg: d.weight || 0,
-  tamanoMascota: d.size || null,
+  tamanoMascota: d.size === "pequeño" ? "pequeno" : (d.size || null),
   transporteTipo: d.travelType || null,
   fechaViaje: d.travelDate ? new Date(d.travelDate) : null,
   paisDestino: d.destinationCountry || null,

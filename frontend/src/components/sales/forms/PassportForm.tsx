@@ -27,10 +27,24 @@ export function PassportForm({ passport, client, suppliers, onChange }: Passport
             <Input value={passport.idNumber} onChange={(e) => onChange({ idNumber: e.target.value })} placeholder="Número de documento" />
           </FormField>
           <FormField label="Fecha de Nacimiento">
-            <Input type="datetime-local" required value={passport.birthDate} onChange={(e) => onChange({ birthDate: e.target.value })} />
+            <Input 
+              type="date" 
+              required 
+              max={new Date().toISOString().slice(0, 10)} 
+              value={passport.birthDate} 
+              onChange={(e) => onChange({ birthDate: e.target.value })} 
+            />
           </FormField>
           <FormField label="Ciudad de Residencia">
-            <Input value={passport.residenceCity} onChange={(e) => onChange({ residenceCity: e.target.value })} placeholder="Ciudad actual" />
+            <Input 
+              value={passport.residenceCity} 
+              onChange={(e) => {
+                const cleaned = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, "");
+                onChange({ residenceCity: cleaned });
+              }} 
+              placeholder="Ciudad actual" 
+              maxLength={85}
+            />
           </FormField>
           <FormField label="Tipo de Trámite">
             <Combobox
@@ -45,10 +59,24 @@ export function PassportForm({ passport, client, suppliers, onChange }: Passport
             />
           </FormField>
           <FormField label="Fecha Estimada de Viaje">
-            <Input type="datetime-local" required value={passport.estimatedTravelDate} onChange={(e) => onChange({ estimatedTravelDate: e.target.value })} />
+            <Input 
+              type="date" 
+              required 
+              min={new Date().toISOString().slice(0, 10)} 
+              value={passport.estimatedTravelDate} 
+              onChange={(e) => onChange({ estimatedTravelDate: e.target.value })} 
+            />
           </FormField>
           <FormField label="Teléfono de Contacto" className="md:col-span-2">
-            <Input value={passport.phone} onChange={(e) => onChange({ phone: e.target.value })} placeholder="+57 300 123 4567" />
+            <Input 
+              value={passport.phone} 
+              onChange={(e) => {
+                const cleaned = e.target.value.replace(/[a-zA-Z]/g, "");
+                onChange({ phone: cleaned });
+              }} 
+              placeholder="+57 300 123 4567" 
+              maxLength={15}
+            />
           </FormField>
         </div>
       </div>

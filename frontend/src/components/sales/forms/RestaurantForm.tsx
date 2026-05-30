@@ -33,29 +33,36 @@ export function RestaurantForm({ restaurant, client, suppliers, onChange }: Rest
             <Input type="datetime-local" required min={new Date().toISOString().slice(0, 16)} value={restaurant.dateTime} onChange={(e) => onChange({ dateTime: e.target.value })} />
           </FormField>
           <FormField label="Nº de Personas *">
-            <Input type="number" min={1} value={restaurant.peopleCount} onChange={(e) => onChange({ peopleCount: parseInt(e.target.value) || 1 })} />
+            <Input 
+              type="text" 
+              value={restaurant.peopleCount} 
+              onChange={(e) => {
+                let cleaned = e.target.value.replace(/[^0-9]/g, "");
+                if (cleaned.length > 3) cleaned = cleaned.slice(0, 3);
+                onChange({ peopleCount: cleaned === "" ? ("" as any) : parseInt(cleaned) });
+              }} 
+            />
           </FormField>
           <FormField label="Preferencia de Mesa">
-            <Combobox
-              value={restaurant.tablePreference}
-              onChange={(val) => onChange({ tablePreference: val })}
-              options={[
-                { value: "interior", label: "Interior" },
-                { value: "terraza", label: "Terraza" },
-                { value: "privado", label: "Privado" },
-                { value: "barra", label: "Barra" },
-              ]}
+            <Input 
+              value={restaurant.tablePreference} 
+              onChange={(e) => {
+                const cleaned = e.target.value.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]/g, "");
+                onChange({ tablePreference: cleaned });
+              }} 
+              placeholder="Ej: Terraza, Ventana" 
+              maxLength={30}
             />
           </FormField>
           <FormField label="Tipo de Menú">
-            <Combobox
-              value={restaurant.menuType}
-              onChange={(val) => onChange({ menuType: val })}
-              options={[
-                { value: "à la carte", label: "À la carte" },
-                { value: "menú fijo", label: "Menú Fijo" },
-                { value: "maridaje", label: "Maridaje" },
-              ]}
+            <Input 
+              value={restaurant.menuType} 
+              onChange={(e) => {
+                const cleaned = e.target.value.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]/g, "");
+                onChange({ menuType: cleaned });
+              }} 
+              placeholder="Ej: A la carta, Menú fijo" 
+              maxLength={30}
             />
           </FormField>
           <FormField label="Ocasión Especial">

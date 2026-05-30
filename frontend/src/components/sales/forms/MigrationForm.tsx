@@ -24,19 +24,45 @@ export function MigrationForm({ migration, client, suppliers, onChange }: Migrat
             <Input value={migration.passengerName} onChange={(e) => onChange({ passengerName: e.target.value })} placeholder="Nombre completo" />
           </FormField>
           <FormField label="Fecha de Nacimiento">
-            <Input type="datetime-local" required value={migration.birthDate} onChange={(e) => onChange({ birthDate: e.target.value })} />
+            <Input type="date" required max={new Date().toISOString().slice(0, 10)} value={migration.birthDate} onChange={(e) => onChange({ birthDate: e.target.value })} />
           </FormField>
           <FormField label="Nacionalidad">
-            <Input value={migration.nationality} onChange={(e) => onChange({ nationality: e.target.value })} placeholder="Ej: Colombiana" />
+            <Input 
+              value={migration.nationality} 
+              onChange={(e) => {
+                const cleaned = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, "");
+                onChange({ nationality: cleaned });
+              }} 
+              placeholder="Ej: Colombiana" 
+              maxLength={30}
+            />
           </FormField>
           <FormField label="Número de Pasaporte">
-            <Input value={migration.passportNumber} onChange={(e) => onChange({ passportNumber: e.target.value })} placeholder="Número de pasaporte" />
+            <Input 
+              value={migration.passportNumber} 
+              onChange={(e) => {
+                const cleaned = e.target.value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+                onChange({ passportNumber: cleaned });
+              }} 
+              placeholder="Número de pasaporte" 
+              maxLength={20}
+            />
           </FormField>
           <FormField label="Vencimiento Pasaporte">
-            <Input type="datetime-local" required value={migration.passportExpiry} onChange={(e) => onChange({ passportExpiry: e.target.value })} />
+            <Input type="date" required min={new Date().toISOString().slice(0, 10)} value={migration.passportExpiry} onChange={(e) => onChange({ passportExpiry: e.target.value })} />
           </FormField>
           <FormField label="País de Destino">
-            <Input value={migration.destinationCountry} onChange={(e) => onChange({ destinationCountry: e.target.value })} placeholder="Ej: México, España" />
+            <Input 
+              value={migration.destinationCountry} 
+              onChange={(e) => {
+                let cleaned = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, "");
+                if (cleaned.length > 0) {
+                  cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+                }
+                onChange({ destinationCountry: cleaned });
+              }} 
+              placeholder="Ej: México" 
+            />
           </FormField>
           <FormField label="Trámite Solicitado">
             <Combobox
@@ -52,7 +78,18 @@ export function MigrationForm({ migration, client, suppliers, onChange }: Migrat
             />
           </FormField>
           <FormField label="Correo Electrónico">
-            <Input type="email" value={migration.email} onChange={(e) => onChange({ email: e.target.value })} placeholder="ejemplo@correo.com" />
+            <Input 
+              type="email" 
+              value={migration.email} 
+              onChange={(e) => {
+                let val = e.target.value;
+                if (val.includes(".com")) {
+                  val = val.substring(0, val.indexOf(".com") + 4);
+                }
+                onChange({ email: val.trim() });
+              }} 
+              placeholder="ejemplo@correo.com" 
+            />
           </FormField>
         </div>
       </div>

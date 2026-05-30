@@ -35,22 +35,36 @@ export function InsuranceForm({ insurance, onChange, data }: InsuranceFormProps)
           <FormField label="Nombre del Contacto">
             <Input
               value={insurance.contactName}
-              onChange={(e) => onChange({ contactName: e.target.value })}
-              placeholder="Nombre completo"
+              onChange={(e) => {
+                const cleaned = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, "");
+                onChange({ contactName: cleaned });
+              }}
+              placeholder="Nombre completo (Mín 3, Máx 70)"
+              maxLength={70}
             />
           </FormField>
           <FormField label="Teléfono">
             <Input
               value={insurance.contactNumber}
-              onChange={(e) => onChange({ contactNumber: e.target.value })}
+              onChange={(e) => {
+                // Allow letters, numbers, spaces, plus, minus, and parentheses visually
+                const cleaned = e.target.value.replace(/[^0-9a-zA-Z\s+\-()]/g, "");
+                onChange({ contactNumber: cleaned });
+              }}
               placeholder="Ej: +57 300 123 4567"
+              maxLength={20}
             />
           </FormField>
           <FormField label="Dirección">
             <Input
               value={insurance.address}
-              onChange={(e) => onChange({ address: e.target.value })}
-              placeholder="Dirección de residencia"
+              onChange={(e) => {
+                // Alphanumeric characters, common signs like #, - and spaces
+                const cleaned = e.target.value.replace(/[^a-zA-Z0-9\s#\-.]/g, "");
+                onChange({ address: cleaned });
+              }}
+              placeholder="Dirección de residencia (Mín 3, Máx 40)"
+              maxLength={40}
             />
           </FormField>
           <FormField label="Proveedor">
@@ -115,6 +129,7 @@ export function InsuranceForm({ insurance, onChange, data }: InsuranceFormProps)
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField label="Costo Proveedor">
             <CurrencyInput
+              required
               value={insurance.supplierCost === 0 ? "" : insurance.supplierCost}
               onChange={(val) =>
                 onChange({
@@ -125,6 +140,7 @@ export function InsuranceForm({ insurance, onChange, data }: InsuranceFormProps)
           </FormField>
           <FormField label="Valor TA">
             <CurrencyInput
+              required
               value={insurance.ta === 0 ? "" : insurance.ta}
               onChange={(val) =>
                 onChange({
