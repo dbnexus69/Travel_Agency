@@ -118,7 +118,10 @@ function FlightBlock({ ticket, idx, airportMap }: { ticket: TicketData; idx: num
 }
 
 export const VoucherPDF = forwardRef<HTMLDivElement, VoucherPDFProps>(({ sale, airportMap }, ref) => {
-  if (!sale) return null;
+  if (!sale) {
+    // El wrapper siempre existe para que el ref quede adjunto
+    return <div className="itea-voucher"><div ref={ref} /></div>;
+  }
 
   const currentDate = new Date().toLocaleDateString('es-CO', {
     day: '2-digit', month: '2-digit', year: 'numeric',

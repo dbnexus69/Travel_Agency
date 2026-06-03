@@ -56,6 +56,7 @@ export default function Sales() {
   const [voucherSale, setVoucherSale] = useState<Sale | null>(null);
   const [voucherFullSale, setVoucherFullSale] = useState<Sale | null>(null);
   const [isPdfGenerating, setIsPdfGenerating] = useState(false);
+  const [isSendingVoucher, setIsSendingVoucher] = useState(false);
   const voucherRef = useRef<HTMLDivElement>(null);
   const airportMap = useMemo(() => buildAirportMap(data.config.airports || []), [data.config.airports]);
 
@@ -149,69 +150,96 @@ export default function Sales() {
     setVoucherFullSale(null); // will be fetched on demand
   };
 
+  /** Carga la venta completa, renderiza el VoucherPDF y devuelve canvas + doc jsPDF listos */
+  const buildVoucherPdf = async (sale: Sale) => {
+    // 1. Traer venta completa
+    let fullSale: Sale = sale;
+    try {
+      fullSale = await api.getSale(sale.id);
+    } catch { /* fallback */ }
+
+    // 2. Inyectar en el componente oculto y esperar render
+    setVoucherFullSale(fullSale);
+    await new Promise(resolve => setTimeout(resolve, 800));
+
+    if (!voucherRef.current) throw new Error('Contenedor del PDF no disponible');
+
+    // 3. Capturar canvas
+    const html2canvas = (await import('html2canvas')).default;
+    const canvas = await html2canvas(voucherRef.current, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      logging: false,
+      backgroundColor: '#ffffff',
+    });
+
+    // 4. Armar el jsPDF
+    const { jsPDF } = await import('jspdf');
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const imgWidth = 210;
+    const pageHeight = 297;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    let pos = 0;
+    const pages = Math.ceil(imgHeight / pageHeight);
+    for (let i = 0; i < pages; i++) {
+      if (i > 0) doc.addPage();
+      doc.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, pos, imgWidth, imgHeight);
+      pos -= pageHeight;
+    }
+
+    return { doc, fullSale };
+  };
+
   const executeDownloadPDF = async () => {
     if (!voucherSale) return;
     setIsPdfGenerating(true);
-
     try {
-      setSuccessMessage(`Cargando datos de la venta #${voucherSale.id}...`);
+      setSuccessMessage(`Generando voucher #${voucherSale.id}...`);
       setShowSuccess(true);
 
-      // Step 1: Always fetch the FULL sale from API (list only has summary)
-      let fullSale: Sale = voucherSale;
-      try {
-        fullSale = await api.getSale(voucherSale.id);
-      } catch {
-        // fallback to what we have
-      }
-      setVoucherFullSale(fullSale);
-
-      // Step 2: Wait for React to render the VoucherPDF component with fresh data
-      await new Promise(resolve => setTimeout(resolve, 600));
-
-      if (!voucherRef.current) {
-        throw new Error('El contenedor del PDF no está listo');
-      }
-
-      setSuccessMessage(`Generando PDF...`);
-
-      const { jsPDF } = await import('jspdf');
-      const html2canvas = (await import('html2canvas')).default;
-
-      const canvas = await html2canvas(voucherRef.current, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-      });
-
-      const doc = new jsPDF('p', 'mm', 'a4');
-      const imgWidth = 210;
-      const pageHeight = 297;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-      let position = 0;
-      const totalPages = Math.ceil(imgHeight / pageHeight);
-
-      for (let i = 0; i < totalPages; i++) {
-        if (i > 0) doc.addPage();
-        doc.addImage(canvas.toDataURL('image/jpeg', 0.98), 'JPEG', 0, position, imgWidth, imgHeight);
-        position -= pageHeight;
-      }
-
+      const { doc } = await buildVoucherPdf(voucherSale);
       doc.save(`Voucher_iTea_#${voucherSale.id}_${voucherSale.clientName.replace(/\s+/g, '_')}.pdf`);
 
       setSuccessMessage(`✅ Voucher descargado correctamente`);
       setTimeout(() => setShowSuccess(false), 3000);
       setVoucherSale(null);
       setVoucherFullSale(null);
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
       setSuccessMessage(`❌ Error al generar el PDF`);
       setTimeout(() => setShowSuccess(false), 3000);
     } finally {
       setIsPdfGenerating(false);
+    }
+  };
+
+  const executeSendVoucher = async () => {
+    if (!voucherSale) return;
+    setIsSendingVoucher(true);
+    try {
+      setSuccessMessage(`Generando voucher #${voucherSale.id}...`);
+      setShowSuccess(true);
+
+      const { doc } = await buildVoucherPdf(voucherSale);
+
+      // Extraer base64 limpio (sin prefijo data URI)
+      const pdfBase64 = doc.output('datauristring').split(',')[1];
+
+      setSuccessMessage(`Enviando al cliente...`);
+      const result = await api.sendVoucher(voucherSale.id, pdfBase64);
+
+      setSuccessMessage(`✅ Voucher enviado a ${result.email}`);
+      setTimeout(() => setShowSuccess(false), 4000);
+      setVoucherSale(null);
+      setVoucherFullSale(null);
+    } catch (err: any) {
+      console.error(err);
+      const msg = err?.response?.data?.error?.message || 'Error al enviar el voucher';
+      setSuccessMessage(`❌ ${msg}`);
+      setTimeout(() => setShowSuccess(false), 4000);
+    } finally {
+      setIsSendingVoucher(false);
     }
   };
 
@@ -524,7 +552,7 @@ export default function Sales() {
       {/* ===== VOUCHER MODAL (Opciones de Voucher) ===== */}
       <Modal
         isOpen={!!voucherSale}
-        onClose={() => setVoucherSale(null)}
+        onClose={() => { if (!isPdfGenerating && !isSendingVoucher) { setVoucherSale(null); setVoucherFullSale(null); } }}
         title="Opciones de Voucher"
         size="sm"
       >
@@ -534,21 +562,21 @@ export default function Sales() {
           </p>
           <div className="flex flex-col gap-3 mt-4">
             <Button
-              className="w-full bg-green-600 hover:bg-green-700 text-white flex justify-center items-center"
-              onClick={() => {
-                setSuccessMessage(`Voucher enviado al cliente exitosamente`);
-                setShowSuccess(true);
-                setTimeout(() => setShowSuccess(false), 3000);
-                setVoucherSale(null);
-              }}
+              className="w-full bg-primary hover:bg-primary/90 text-white flex justify-center items-center gap-2"
+              onClick={executeSendVoucher}
+              disabled={isSendingVoucher || isPdfGenerating}
             >
-              Enviar al Cliente
+              {isSendingVoucher ? (
+                <><Loader2 size={16} className="animate-spin" /> Enviando...</>
+              ) : (
+                <>✉ Enviar al Cliente</>
+              )}
             </Button>
             <Button
               variant="outline"
               className="w-full flex justify-center items-center gap-2"
               onClick={executeDownloadPDF}
-              disabled={isPdfGenerating}
+              disabled={isPdfGenerating || isSendingVoucher}
             >
               {isPdfGenerating ? (
                 <><Loader2 size={16} className="animate-spin" /> Generando PDF...</>
@@ -559,7 +587,8 @@ export default function Sales() {
             <Button
               variant="outline"
               className="w-full text-gray-500 mt-2 border-none"
-              onClick={() => setVoucherSale(null)}
+              onClick={() => { setVoucherSale(null); setVoucherFullSale(null); }}
+              disabled={isSendingVoucher || isPdfGenerating}
             >
               Cancelar
             </Button>

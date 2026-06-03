@@ -18,6 +18,7 @@ router.delete('/:id', authorize('sales', 'delete'), salesController.remove);
 router.post('/:id/payments', authorize('sales', 'edit'), salesController.registerPayment);
 router.delete('/:saleId/payments/:paymentId', authorize('sales', 'edit'), salesController.deletePayment);
 router.get('/:id/payments', authorize('sales', 'view'), salesController.listPayments);
+router.post('/:id/send-voucher', authorize('sales', 'view'), salesController.sendVoucher);
 
 // 15 endpoints de productos
 router.post('/:saleId/products/ticket', authorize('sales', 'create'), productsController.createTicket);

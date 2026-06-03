@@ -58,3 +58,8 @@ export async function updateProduct(saleId: number, category: string, id: string
 export async function deleteProduct(saleId: number, category: string, id: string) {
   await api.delete(`/sales/${saleId}/products/${category}/${id}`);
 }
+
+export async function sendVoucher(saleId: number, pdfBase64: string) {
+  const res = await api.post(`/sales/${saleId}/send-voucher`, { pdfBase64 });
+  return res.data.data;
+}

@@ -1790,3 +1790,235 @@ exports.listPayments = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.sendVoucher = async (req, res, next) => {
+  try {
+    const saleId = parseInt(req.params.id);
+    const { pdfBase64 } = req.body;
+
+    if (!pdfBase64) {
+      return error(res, 'El PDF es requerido (base64)', 400);
+    }
+
+    // Obtener datos de la venta con cliente y asesor
+    const venta = await prisma.ventas.findUnique({
+      where: { id: saleId },
+      include: {
+        cliente: {
+          include: { persona: true }
+        },
+        usuario: {
+          include: { persona: true }
+        },
+        detalleVentas: true
+      }
+    });
+
+    if (!venta) {
+      return error(res, 'Venta no encontrada', 404);
+    }
+
+    const clientEmail = venta.cliente.persona.email;
+    if (!clientEmail) {
+      return error(res, 'El cliente no tiene correo electrónico registrado', 400);
+    }
+
+    const clientName = `${venta.cliente.persona.nombres} ${venta.cliente.persona.apellidos}`;
+    const asesorName = `${venta.usuario.persona.nombres} ${venta.usuario.persona.apellidos}`;
+
+    // Construir lista de servicios para el cuerpo del correo
+    const serviciosMap = {
+      tiqueteria: 'Tiquetería Aérea',
+      hoteleria: 'Hotelería',
+      seguros_viaje: 'Seguro de Viaje',
+      planes: 'Paquete Turístico',
+      checkin: 'Servicio de Check-in',
+      documentacion_migratoria: 'Documentación Migratoria',
+      simcard: 'SIM Card Internacional',
+      renta_vehiculos: 'Renta de Vehículo',
+      renta_fincas: 'Renta de Finca',
+      tours: 'Tour',
+      centros_convencion: 'Centro de Convención',
+      restaurantes: 'Reserva en Restaurante',
+      visa: 'Trámite de Visa',
+      pasaporte: 'Trámite de Pasaporte',
+      servicio_mascotas: 'Transporte de Mascotas'
+    };
+
+    const serviciosIncluidos = [...new Set(venta.detalleVentas.map(d => serviciosMap[d.categoria] || d.categoria))];
+    const serviciosHtml = serviciosIncluidos.length > 0
+      ? serviciosIncluidos.map(s => `<li style="margin-bottom:6px;">✅ ${s}</li>`).join('')
+      : '<li>Servicio de viaje contratado</li>';
+
+    const fechaEmision = new Date().toLocaleDateString('es-CO', {
+      day: '2-digit', month: 'long', year: 'numeric'
+    });
+
+    const html = `
+      <!DOCTYPE html>
+      <html lang="es">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Voucher de Viaje - iTea Travel Agency</title>
+      </head>
+      <body style="margin:0;padding:0;background:#f4f7fb;font-family:'Segoe UI',Arial,sans-serif;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f7fb;padding:32px 0;">
+          <tr>
+            <td align="center">
+              <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+
+                <!-- HEADER -->
+                <tr>
+                  <td style="background:linear-gradient(135deg,#032650 0%,#0b396b 60%,#021a36 100%);padding:32px 40px;text-align:center;">
+                    <div style="font-size:32px;font-weight:900;color:#ffffff;letter-spacing:3px;font-family:'Montserrat',sans-serif;">
+                      i<span style="color:#07818e;">T</span>ea
+                    </div>
+                    <div style="font-size:11px;color:rgba(255,255,255,0.55);letter-spacing:4px;text-transform:uppercase;margin-top:4px;">
+                      Travel Agency
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- GREETING -->
+                <tr>
+                  <td style="padding:36px 40px 24px;">
+                    <h1 style="margin:0 0 8px;font-size:22px;font-weight:800;color:#032650;">
+                      ¡Hola, ${clientName}! 👋
+                    </h1>
+                    <p style="margin:0;font-size:15px;color:#475569;line-height:1.7;">
+                      Nos complace confirmar tu reserva. Adjunto a este correo encontrarás tu 
+                      <strong style="color:#032650;">voucher oficial de viaje</strong> correspondiente a la 
+                      <strong style="color:#07818e;">Orden #${saleId}</strong>.
+                    </p>
+                  </td>
+                </tr>
+
+                <!-- DIVIDER -->
+                <tr>
+                  <td style="padding:0 40px;">
+                    <hr style="border:none;border-top:2px solid #e2e8f0;margin:0;">
+                  </td>
+                </tr>
+
+                <!-- SERVICES SECTION -->
+                <tr>
+                  <td style="padding:28px 40px;">
+                    <h2 style="margin:0 0 16px;font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:#032650;border-left:4px solid #07818e;padding-left:12px;">
+                      Servicios Incluidos en tu Orden
+                    </h2>
+                    <ul style="margin:0;padding-left:20px;color:#334155;font-size:14px;line-height:1.9;">
+                      ${serviciosHtml}
+                    </ul>
+                  </td>
+                </tr>
+
+                <!-- INFO BOX -->
+                <tr>
+                  <td style="padding:0 40px 28px;">
+                    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:20px;">
+                      <tr>
+                        <td style="padding:16px 20px;">
+                          <p style="margin:0 0 10px;font-size:13px;color:#0369a1;font-weight:700;text-transform:uppercase;letter-spacing:1px;">
+                            📋 Detalle de tu Reserva
+                          </p>
+                          <table width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td style="padding:5px 0;font-size:13px;color:#64748b;width:140px;">Orden N°:</td>
+                              <td style="padding:5px 0;font-size:13px;font-weight:700;color:#032650;">#${saleId}</td>
+                            </tr>
+                            <tr>
+                              <td style="padding:5px 0;font-size:13px;color:#64748b;">Pasajero:</td>
+                              <td style="padding:5px 0;font-size:13px;font-weight:700;color:#032650;">${clientName}</td>
+                            </tr>
+                            <tr>
+                              <td style="padding:5px 0;font-size:13px;color:#64748b;">Asesor:</td>
+                              <td style="padding:5px 0;font-size:13px;font-weight:600;color:#032650;">${asesorName}</td>
+                            </tr>
+                            <tr>
+                              <td style="padding:5px 0;font-size:13px;color:#64748b;">Fecha de emisión:</td>
+                              <td style="padding:5px 0;font-size:13px;color:#032650;">${fechaEmision}</td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- NOTE -->
+                <tr>
+                  <td style="padding:0 40px 28px;">
+                    <p style="margin:0;font-size:13px;color:#64748b;line-height:1.7;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:14px 18px;">
+                      ⚠️ <strong style="color:#92400e;">Importante:</strong> Recuerda reconfirmar el horario de tus vuelos y servicios 
+                      entre <strong>24 y 48 horas antes</strong> de la salida. Verifica que cuentes con todos los 
+                      documentos necesarios para viajar.
+                    </p>
+                  </td>
+                </tr>
+
+                <!-- DIVIDER -->
+                <tr>
+                  <td style="padding:0 40px;">
+                    <hr style="border:none;border-top:2px solid #e2e8f0;margin:0;">
+                  </td>
+                </tr>
+
+                <!-- CLOSING -->
+                <tr>
+                  <td style="padding:28px 40px 36px;">
+                    <p style="margin:0 0 16px;font-size:14px;color:#475569;line-height:1.7;">
+                      El voucher completo con todos los detalles de tu reserva se encuentra adjunto en este correo en formato PDF.
+                    </p>
+                    <p style="margin:0;font-size:14px;color:#475569;line-height:1.7;">
+                      Gracias por confiar en <strong style="color:#032650;">iTea Travel Agency</strong>. 
+                      ¡Te deseamos un excelente viaje! ✈️
+                    </p>
+                  </td>
+                </tr>
+
+                <!-- FOOTER -->
+                <tr>
+                  <td style="background:linear-gradient(135deg,#021a36 0%,#032650 50%,#0b396b 100%);border-top:4px solid #07818e;padding:20px 40px;text-align:center;">
+                    <p style="margin:0 0 6px;font-size:11px;color:rgba(255,255,255,0.55);letter-spacing:1px;">
+                      iTea Travel Agency &nbsp;|&nbsp; Carrera 65A 13-157, Aeropuerto Olaya Herrera, Medellín
+                    </p>
+                    <p style="margin:0;font-size:11px;color:rgba(255,255,255,0.45);">
+                      info@itea.com.co &nbsp;|&nbsp; +57 (312) 875 15 89
+                    </p>
+                  </td>
+                </tr>
+
+              </table>
+            </td>
+          </tr>
+        </table>
+      </body>
+      </html>
+    `;
+
+    // Convertir base64 a Buffer para adjuntar
+    const pdfBuffer = Buffer.from(pdfBase64, 'base64');
+    const fileName = `Voucher_iTea_Orden_${saleId}_${clientName.replace(/\s+/g, '_')}.pdf`;
+
+    const emailResult = await emailService.sendEmail({
+      to: clientEmail,
+      subject: `✈ Tu Voucher de Viaje - Orden #${saleId} | iTea Travel Agency`,
+      html,
+      attachments: [
+        {
+          filename: fileName,
+          content: pdfBuffer
+        }
+      ]
+    });
+
+    if (!emailResult.success) {
+      return error(res, 'Error al enviar el correo. Intenta de nuevo.', 500);
+    }
+
+    success(res, { message: `Voucher enviado a ${clientEmail}`, email: clientEmail });
+  } catch (err) {
+    next(err);
+  }
+};
