@@ -164,29 +164,113 @@ export default function Sales() {
 
     if (!voucherRef.current) throw new Error('Contenedor del PDF no disponible');
 
-    // 3. Capturar canvas
-    const html2canvas = (await import('html2canvas')).default;
-    const canvas = await html2canvas(voucherRef.current, {
-      scale: 2,
-      useCORS: true,
-      allowTaint: true,
-      logging: false,
-      backgroundColor: '#ffffff',
+    // Helper to calculate element height with margins
+    const getElementHeightWithMargins = (el: HTMLElement) => {
+      const rect = el.getBoundingClientRect();
+      const style = window.getComputedStyle(el);
+      const marginTop = parseFloat(style.marginTop) || 0;
+      const marginBottom = parseFloat(style.marginBottom) || 0;
+      return rect.height + marginTop + marginBottom;
+    };
+
+    // 3. Distribución dinámica de elementos en páginas
+    const originalChildren = Array.from(voucherRef.current.children) as HTMLElement[];
+    const footerElement = originalChildren.find(el => el.classList.contains('v-footer'));
+    const childrenToDistribute = originalChildren.filter(el => !el.classList.contains('v-footer'));
+
+    const pagesData: HTMLElement[][] = [];
+    let currentPageContent: HTMLElement[] = [];
+    let currentPageHeight = 0;
+
+    // Altura máxima del contenido por página A4 (820px de ancho -> 1160px de alto. Restando pie de página ~75px y margen de seguridad)
+    const maxContentHeight = 1070;
+
+    for (const child of childrenToDistribute) {
+      const childHeight = getElementHeightWithMargins(child);
+      
+      if (currentPageHeight + childHeight > maxContentHeight && currentPageContent.length > 0) {
+        pagesData.push(currentPageContent);
+        currentPageContent = [child];
+        currentPageHeight = childHeight;
+      } else {
+        currentPageContent.push(child);
+        currentPageHeight += childHeight;
+      }
+    }
+    if (currentPageContent.length > 0) {
+      pagesData.push(currentPageContent);
+    }
+
+    const totalPages = pagesData.length;
+    const currentDate = new Date().toLocaleDateString('es-CO', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
     });
 
-    // 4. Armar el jsPDF
+    // 4. Crear contenedor temporal para renderizar las páginas paginadas
+    const tempContainer = document.createElement('div');
+    tempContainer.className = 'itea-voucher';
+    tempContainer.style.position = 'absolute';
+    tempContainer.style.left = '-9999px';
+    tempContainer.style.top = '-9999px';
+    tempContainer.style.width = '820px';
+    document.body.appendChild(tempContainer);
+
+    const pageElements: HTMLDivElement[] = [];
+
+    // Construir cada página
+    for (let i = 0; i < totalPages; i++) {
+      const pageDiv = document.createElement('div');
+      pageDiv.className = 'v-page v-page-temp';
+      
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'v-page-content-temp';
+      
+      pagesData[i].forEach(child => {
+        contentDiv.appendChild(child.cloneNode(true));
+      });
+      
+      pageDiv.appendChild(contentDiv);
+
+      // Agregar el footer personalizado con paginación
+      if (footerElement) {
+        const clonedFooter = footerElement.cloneNode(true) as HTMLElement;
+        const footerRight = clonedFooter.querySelector('.v-footer-right');
+        if (footerRight) {
+          footerRight.innerHTML = `Voucher Electrónico — Orden #${fullSale.id}<br />www.itea.com.co &nbsp;|&nbsp; info@itea.com.co<br />Impreso el ${currentDate}<br />Página ${i + 1} de ${totalPages}`;
+        }
+        pageDiv.appendChild(clonedFooter);
+      }
+
+      tempContainer.appendChild(pageDiv);
+      pageElements.push(pageDiv);
+    }
+
+    // Esperar un instante para que el navegador termine de renderizar el contenedor temporal
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // 5. Capturar canvas por cada página y armar el jsPDF
+    const html2canvas = (await import('html2canvas')).default;
     const { jsPDF } = await import('jspdf');
     const doc = new jsPDF('p', 'mm', 'a4');
     const imgWidth = 210;
-    const pageHeight = 297;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    let pos = 0;
-    const pages = Math.ceil(imgHeight / pageHeight);
-    for (let i = 0; i < pages; i++) {
+    const imgHeight = 297; // exact A4 height in mm
+
+    for (let i = 0; i < totalPages; i++) {
       if (i > 0) doc.addPage();
-      doc.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, pos, imgWidth, imgHeight);
-      pos -= pageHeight;
+      
+      const canvas = await html2canvas(pageElements[i], {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+      });
+      
+      doc.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, imgWidth, imgHeight);
     }
+
+    // Limpiar contenedor temporal
+    document.body.removeChild(tempContainer);
 
     return { doc, fullSale };
   };

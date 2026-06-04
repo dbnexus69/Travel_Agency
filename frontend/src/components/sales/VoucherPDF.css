@@ -612,3 +612,19 @@
 .itea-voucher .text-center { text-align: center !important; }
 .itea-voucher .text-left   { text-align: left !important; }
 .itea-voucher .text-right  { text-align: right !important; }
+
+/* PAGINATION CLASSES */
+.itea-voucher .v-page-temp {
+  height: 1160px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.itea-voucher .v-page-content-temp {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+}
+
