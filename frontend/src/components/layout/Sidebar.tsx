@@ -47,7 +47,7 @@ export function Sidebar({ isMobileOpen = false, onClose }: SidebarProps) {
 
   const adminLinks = [
     { to: "/users", icon: UserCog, label: "Usuarios", permission: 'users' as const },
-    { to: "/config", icon: Database, label: "Catálogos", permission: 'config' as const },
+    { to: "/config", icon: Database, label: "Gestión Interna", permission: 'config' as const },
   ];
 
   const filteredMainLinks = mainLinks.filter(link => canView(link.permission));

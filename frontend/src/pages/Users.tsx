@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   Plus,
   Search,
@@ -15,7 +16,7 @@ import {
   Key,
   Trash2,
   AlertTriangle,
-  Edit,
+  Pencil,
   X,
   ChevronLeft,
   ChevronRight,
@@ -37,11 +38,13 @@ import {
 } from "../types";
 import StatCard from "../components/ui/StatCard";
 import PermissionsGrid from "../components/users/PermissionsGrid";
+import UserDetailModal from "../components/users/UserDetailModal";
 import Avatar from "../components/ui/Avatar";
 import SortIcon from "../components/ui/SortIcon";
 
 import AvatarPicker, { AVATARS } from "../components/ui/AvatarPicker";
 import { capitalizeName } from "../utils/formatters";
+import { DatePicker } from "../components/sales/forms/TicketForm";
 
 const ROLE_LABELS: Record<string, string> = {
   admin: "Administrador",
@@ -61,6 +64,7 @@ export default function Users() {
     updateRolePermissions,
     updateUserPermissions,
     fetchUsers,
+    fetchSales,
   } = useData();
   const { user: currentUser } = useAuth();
 
@@ -77,9 +81,127 @@ export default function Users() {
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
+  const triggerError = (msg: string) => {
+    setErrorMessage(msg);
+    setShowError(true);
+    setTimeout(() => setShowError(false), 5000);
+  };
+
+  const validateField = (name: string, value: string) => {
+    let errorMsg = '';
+    switch (name) {
+      case "firstName":
+        if (!value.trim()) errorMsg = "El nombre es obligatorio";
+        else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(value))
+          errorMsg = "El nombre solo debe contener letras";
+        else if (value.length > 40)
+          errorMsg = "El nombre no puede exceder 40 caracteres";
+        break;
+      case "lastName":
+        if (!value.trim()) errorMsg = "El apellido es obligatorio";
+        else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(value))
+          errorMsg = "El apellido solo debe contener letras";
+        else if (value.length > 40)
+          errorMsg = "El apellido no puede exceder 40 caracteres";
+        break;
+      case "email":
+        if (!value.trim()) errorMsg = "El correo es obligatorio";
+        else if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value))
+          errorMsg = "El correo no es valido";
+        else if (value.length > 40)
+          errorMsg = "El correo no puede exceder 40 caracteres";
+        
+        if (!errorMsg) {
+          const isDuplicateEmail = data.users.some(
+            (u) =>
+              u.email.toLowerCase() === value.toLowerCase() &&
+              (!editingUser || u.id !== editingUser.id),
+          );
+          if (isDuplicateEmail) errorMsg = "Este correo ya esta registrado";
+        }
+        break;
+      case "password":
+        if (!editingUser && !value.trim()) {
+          errorMsg = "La contraseña es obligatoria";
+        }
+        break;
+      case "docType":
+        if (!value) errorMsg = "Seleccione un tipo de documento";
+        break;
+      case "docNumber":
+        if (!value.trim()) {
+          errorMsg = "El número de documento es obligatorio";
+        } else {
+          const typeUpper = formData.docType ? formData.docType.toUpperCase() : "";
+          if (typeUpper === "PASAPORTE" || typeUpper === "PP" || typeUpper === "PAS") {
+            if (value.length < 9 || value.length > 12) {
+              errorMsg = "El pasaporte debe tener entre 9 y 12 caracteres";
+            } else if (!/^[a-zA-Z0-9]+$/.test(value)) {
+              errorMsg = "El pasaporte solo debe contener caracteres alfanuméricos";
+            }
+          } else if (typeUpper === "NIT" || typeUpper === "RUT") {
+            if (value.length !== 11) {
+              errorMsg = "El NIT/RUT debe tener exactamente 11 caracteres (9 dígitos + guion + 1 dígito)";
+            } else if (!/^\d{9}-\d{1}$/.test(value)) {
+              errorMsg = "El NIT/RUT debe tener formato 9 dígitos - guion - 1 dígito de verificación (ej: 123456789-0)";
+            }
+          } else if (typeUpper === "CC") {
+            if (value.length < 8 || value.length > 10) {
+              errorMsg = "La cédula de ciudadanía debe tener entre 8 y 10 dígitos";
+            } else if (!/^\d+$/.test(value)) {
+              errorMsg = "La cédula de ciudadanía solo debe contener números";
+            }
+          } else if (value.length > 15) {
+            errorMsg = "El documento no puede exceder 15 caracteres";
+          }
+        }
+
+        if (!errorMsg) {
+          const isDuplicateDoc = data.users.some(
+            (u) =>
+              u.docNumber === value &&
+              (!editingUser || u.id !== editingUser.id),
+          );
+          if (isDuplicateDoc) errorMsg = "Este numero de documento ya esta registrado";
+        }
+        break;
+      case "phone":
+        if (!value.trim()) errorMsg = "El telefono es obligatorio";
+        else if (!/^\d+$/.test(value))
+          errorMsg = "El telefono solo debe contener numeros";
+        else if (value.length > 15)
+          errorMsg = "El telefono no puede exceder 15 caracteres";
+        break;
+      case "birthDate":
+        if (!value) {
+          errorMsg = "La fecha de nacimiento es obligatoria";
+        } else {
+          const selectedDate = new Date(value);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          if (selectedDate > today) {
+            errorMsg = "La fecha de nacimiento no puede ser superior a la fecha actual";
+          }
+        }
+        break;
+    }
+
+    setErrors(prev => ({ ...prev, [name]: errorMsg }));
+    if (errorMsg) {
+      triggerError(errorMsg);
+    }
+  };
+
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [selectedUserForDetail, setSelectedUserForDetail] =
     useState<User | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+
+  const handleViewDetail = (user: User) => {
+    setSelectedUserForDetail(user);
+    setIsDetailOpen(true);
+  };
+
   const [selectedUserForPermissions, setSelectedUserForPermissions] =
     useState<User | null>(null);
   const [editingUserPermissions, setEditingUserPermissions] =
@@ -105,7 +227,8 @@ export default function Users() {
   // Lazy Load Fetch
   useEffect(() => {
     fetchUsers();
-  }, [fetchUsers]);
+    fetchSales();
+  }, [fetchUsers, fetchSales]);
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -220,10 +343,36 @@ export default function Users() {
     if (!editingUser && !formData.password.trim())
       newErrors.password = "La contraseña es obligatoria";
 
-    if (!formData.docNumber.trim())
-      newErrors.docNumber = "El numero de documento es obligatorio";
-    else if (formData.docNumber.length > 15)
-      newErrors.docNumber = "El documento no puede exceder 15 caracteres";
+    if (!formData.docType) {
+      newErrors.docType = "Seleccione un tipo de documento";
+    }
+
+    if (!formData.docNumber.trim()) {
+      newErrors.docNumber = "El número de documento es obligatorio";
+    } else {
+      const typeUpper = formData.docType ? formData.docType.toUpperCase() : "";
+      if (typeUpper === "PASAPORTE" || typeUpper === "PP" || typeUpper === "PAS") {
+        if (formData.docNumber.length < 9 || formData.docNumber.length > 12) {
+          newErrors.docNumber = "El pasaporte debe tener entre 9 y 12 caracteres";
+        } else if (!/^[a-zA-Z0-9]+$/.test(formData.docNumber)) {
+          newErrors.docNumber = "El pasaporte solo debe contener caracteres alfanuméricos";
+        }
+      } else if (typeUpper === "NIT" || typeUpper === "RUT") {
+        if (formData.docNumber.length !== 11) {
+          newErrors.docNumber = "El NIT/RUT debe tener exactamente 11 caracteres (9 dígitos + guion + 1 dígito)";
+        } else if (!/^\d{9}-\d{1}$/.test(formData.docNumber)) {
+          newErrors.docNumber = "El NIT/RUT debe tener formato 9 dígitos - guion - 1 dígito de verificación (ej: 123456789-0)";
+        }
+      } else if (typeUpper === "CC") {
+        if (formData.docNumber.length < 8 || formData.docNumber.length > 10) {
+          newErrors.docNumber = "La cédula de ciudadanía debe tener entre 8 y 10 dígitos";
+        } else if (!/^\d+$/.test(formData.docNumber)) {
+          newErrors.docNumber = "La cédula de ciudadanía solo debe contener números";
+        }
+      } else if (formData.docNumber.length > 15) {
+        newErrors.docNumber = "El documento no puede exceder 15 caracteres";
+      }
+    }
 
     if (!formData.phone.trim()) newErrors.phone = "El telefono es obligatorio";
     else if (!/^\d+$/.test(formData.phone))
@@ -251,6 +400,8 @@ export default function Users() {
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
+      const firstError = Object.values(newErrors)[0];
+      triggerError(firstError);
       return;
     }
 
@@ -438,7 +589,7 @@ export default function Users() {
         </div>
       )}
 
-      {showSuccess && (
+      {showSuccess && createPortal(
         <div className="fixed top-20 right-6 z-[200] bg-green-50 border border-green-200 text-green-700 px-6 py-4 rounded-xl shadow-xl flex items-center gap-3 animate-slide-in-right">
           <div className="bg-green-500 text-white rounded-full p-1">
             <CheckCircle size={18} />
@@ -447,9 +598,10 @@ export default function Users() {
             <p className="font-bold text-sm">Operación Exitosa</p>
             <p className="text-xs opacity-90">{successMessage}</p>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
-      {showError && (
+      {showError && createPortal(
         <div className="fixed top-32 right-6 z-[200] bg-rose-50 border border-rose-200 text-rose-700 px-6 py-4 rounded-xl shadow-xl flex items-center gap-3 animate-slide-in-right">
           <div className="bg-rose-500 text-white rounded-full p-1">
             <AlertCircle size={18} />
@@ -458,7 +610,8 @@ export default function Users() {
             <p className="font-bold text-sm">Error</p>
             <p className="text-xs opacity-90">{errorMessage}</p>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Header de Sección */}
@@ -612,10 +765,18 @@ export default function Users() {
                     <Button
                       variant="outline"
                       size="sm"
+                      onClick={() => handleViewDetail(user)}
+                      title="Ver detalle"
+                    >
+                      <Eye size={14} />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => handleOpenModal(user)}
                       title="Editar"
                     >
-                      <Edit size={14} />
+                      <Pencil size={14} />
                     </Button>
                     <Button
                       variant="outline"
@@ -775,10 +936,12 @@ export default function Users() {
               maxLength={40}
               value={formData.firstName}
               onChange={(e) => {
-                setFormData({ ...formData, firstName: e.target.value });
+                const cleaned = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+                setFormData({ ...formData, firstName: cleaned });
                 if (errors.firstName)
                   setErrors((p) => ({ ...p, firstName: "" }));
               }}
+              onBlur={(e) => validateField("firstName", e.target.value)}
             />
           </FormField>
           <FormField label="Apellidos" error={errors.lastName}>
@@ -786,9 +949,11 @@ export default function Users() {
               maxLength={40}
               value={formData.lastName}
               onChange={(e) => {
-                setFormData({ ...formData, lastName: e.target.value });
+                const cleaned = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+                setFormData({ ...formData, lastName: cleaned });
                 if (errors.lastName) setErrors((p) => ({ ...p, lastName: "" }));
               }}
+              onBlur={(e) => validateField("lastName", e.target.value)}
             />
           </FormField>
           <FormField label="Correo" error={errors.email}>
@@ -797,9 +962,11 @@ export default function Users() {
               type="email"
               value={formData.email}
               onChange={(e) => {
-                setFormData({ ...formData, email: e.target.value });
+                const cleaned = e.target.value.replace(/\s/g, '');
+                setFormData({ ...formData, email: cleaned });
                 if (errors.email) setErrors((p) => ({ ...p, email: "" }));
               }}
+              onBlur={(e) => validateField("email", e.target.value)}
             />
           </FormField>
           <FormField label="Contraseña" error={errors.password}>
@@ -812,6 +979,7 @@ export default function Users() {
                   if (errors.password)
                     setErrors((p) => ({ ...p, password: "" }));
                 }}
+                onBlur={(e) => validateField("password", e.target.value)}
               />
               <button
                 onClick={() => setShowPassword(!showPassword)}
@@ -837,12 +1005,14 @@ export default function Users() {
               ]}
             />
           </FormField>
-          <FormField label="Tipo Doc">
+          <FormField label="Tipo Doc" error={errors.docType}>
             <Select
               value={formData.docType}
-              onChange={(e) =>
-                setFormData({ ...formData, docType: e.target.value })
-              }
+              onChange={(e) => {
+                setFormData({ ...formData, docType: e.target.value });
+                if (errors.docType) setErrors((p) => ({ ...p, docType: "" }));
+                validateField("docType", e.target.value);
+              }}
               options={[
                 { value: "", label: "Seleccione" },
                 ...(data.config.documentTypes || []).map((d: any) => ({
@@ -850,17 +1020,37 @@ export default function Users() {
                   label: d.abreviatura,
                 })),
               ]}
+              error={errors.docType}
             />
           </FormField>
           <FormField label="Documento" error={errors.docNumber}>
             <Input
-              maxLength={15}
               value={formData.docNumber}
               onChange={(e) => {
-                setFormData({ ...formData, docNumber: e.target.value });
+                let val = e.target.value;
+                const typeUpper = formData.docType ? formData.docType.toUpperCase() : "";
+                if (typeUpper === "CC") {
+                  val = val.replace(/\D/g, "");
+                } else if (typeUpper === "PASAPORTE" || typeUpper === "PP" || typeUpper === "PAS") {
+                  val = val.replace(/[^a-zA-Z0-9]/g, "");
+                } else if (typeUpper === "NIT" || typeUpper === "RUT") {
+                  val = val.replace(/[^0-9-]/g, "");
+                } else {
+                  val = val.replace(/[^\w-]/gi, "");
+                }
+                setFormData({ ...formData, docNumber: val });
                 if (errors.docNumber)
                   setErrors((p) => ({ ...p, docNumber: "" }));
               }}
+              onBlur={(e) => validateField("docNumber", e.target.value)}
+              maxLength={
+                formData.docType ? (
+                  formData.docType.toUpperCase() === "CC" ? 10 :
+                  ["PASAPORTE", "PP", "PAS"].includes(formData.docType.toUpperCase()) ? 12 :
+                  ["NIT", "RUT"].includes(formData.docType.toUpperCase()) ? 11 : 15
+                ) : 15
+              }
+              error={errors.docNumber}
             />
           </FormField>
           <FormField label="Teléfono" error={errors.phone}>
@@ -868,20 +1058,26 @@ export default function Users() {
               maxLength={15}
               value={formData.phone}
               onChange={(e) => {
-                setFormData({ ...formData, phone: e.target.value });
+                const cleaned = e.target.value.replace(/\D/g, '').slice(0, 15);
+                setFormData({ ...formData, phone: cleaned });
                 if (errors.phone) setErrors((p) => ({ ...p, phone: "" }));
               }}
+              onBlur={(e) => validateField("phone", e.target.value)}
             />
           </FormField>
           <FormField label="Fecha Nacimiento" error={errors.birthDate}>
-            <Input
-              type="date"
+            <DatePicker
               value={formData.birthDate}
-              onChange={(e) => {
-                setFormData({ ...formData, birthDate: e.target.value });
+              onChange={(val) => {
+                setFormData({ ...formData, birthDate: val });
                 if (errors.birthDate)
                   setErrors((p) => ({ ...p, birthDate: "" }));
+                validateField("birthDate", val);
               }}
+              max={new Date().toISOString().slice(0, 10)}
+              fieldName="Nacimiento del usuario"
+              popoverDirection="up"
+              triggerError={triggerError}
             />
           </FormField>
           <FormField label="Estado">
@@ -971,6 +1167,13 @@ export default function Users() {
           </p>
         </div>
       </Modal>
+
+      <UserDetailModal
+        isOpen={isDetailOpen}
+        onClose={() => setIsDetailOpen(false)}
+        user={selectedUserForDetail}
+        userSales={data.sales.filter(s => Number((s as any).asesorId || (s as any).usuarioId || (s as any).usuario_id) === Number(selectedUserForDetail?.id))}
+      />
     </div>
   );
 }

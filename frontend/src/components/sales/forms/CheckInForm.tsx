@@ -2,6 +2,7 @@ import { LuPlane } from "react-icons/lu";
 import { FormField, Input, Combobox , CurrencyInput} from "../../ui/Form";
 import { CheckInData } from "../../../types";
 import { ClientInfoSection, VoucherField, FinancialSection } from "./VoucherField";
+import { DateTimePicker } from "./TicketForm";
 
 interface CheckInFormProps {
   checkIn: CheckInData;
@@ -9,9 +10,15 @@ interface CheckInFormProps {
   suppliers?: any[];
   baggage?: any[];
   onChange: (updates: Partial<CheckInData>) => void;
+  triggerError?: (msg: string) => void;
 }
 
-export function CheckInForm({ checkIn, client, suppliers, baggage, onChange }: CheckInFormProps) {
+export function CheckInForm({ checkIn, client, suppliers, baggage, onChange, triggerError }: CheckInFormProps) {
+  const minDateTime = (() => {
+    const now = new Date();
+    const tzOffset = now.getTimezoneOffset() * 60000;
+    return new Date(now.getTime() - tzOffset).toISOString().slice(0, 16);
+  })();
   return (
     <div className="space-y-6 animate-fade-in">
       {client && <ClientInfoSection client={client} />}
@@ -52,7 +59,13 @@ export function CheckInForm({ checkIn, client, suppliers, baggage, onChange }: C
             />
           </FormField>
           <FormField label="Fecha de Viaje">
-            <Input type="datetime-local" required min={new Date().toISOString().slice(0, 16)} value={checkIn.travelDate} onChange={(e) => onChange({ travelDate: e.target.value })} />
+            <DateTimePicker
+              value={checkIn.travelDate}
+              onChange={(val) => onChange({ travelDate: val })}
+              min={minDateTime}
+              triggerError={triggerError}
+              fieldName="Viaje del check-in"
+            />
           </FormField>
           <FormField label="Silla Preferida">
             <Input 

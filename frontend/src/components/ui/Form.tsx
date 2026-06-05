@@ -38,7 +38,7 @@ export function Input({ className = '', error, onBlur, ...props }: InputProps) {
       if (!isNaN(minDate.getTime()) && !isNaN(inputDate.getTime())) {
         if (inputDate < minDate) {
           // Coerce to minimum allowed value
-          e.target.value = props.min;
+          e.target.value = String(props.min);
           
           // Dispatch change event to update React parent states
           if (props.onChange) {

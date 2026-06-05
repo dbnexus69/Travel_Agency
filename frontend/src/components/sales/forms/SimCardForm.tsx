@@ -2,15 +2,22 @@ import { LuSmartphone } from "react-icons/lu";
 import { FormField, Input, Combobox , CurrencyInput} from "../../ui/Form";
 import { SimCardData } from "../../../types";
 import { ClientInfoSection, VoucherField, FinancialSection } from "./VoucherField";
+import { DateTimePicker } from "./TicketForm";
 
 interface SimCardFormProps {
   sim: SimCardData;
   client: any;
   suppliers?: any[];
   onChange: (updates: Partial<SimCardData>) => void;
+  triggerError?: (msg: string) => void;
 }
 
-export function SimCardForm({ sim, client, suppliers, onChange }: SimCardFormProps) {
+export function SimCardForm({ sim, client, suppliers, onChange, triggerError }: SimCardFormProps) {
+  const minDateTime = (() => {
+    const now = new Date();
+    const tzOffset = now.getTimezoneOffset() * 60000;
+    return new Date(now.getTime() - tzOffset).toISOString().slice(0, 16);
+  })();
   return (
     <div className="space-y-6 animate-fade-in">
       {client && <ClientInfoSection client={client} />}
@@ -40,7 +47,13 @@ export function SimCardForm({ sim, client, suppliers, onChange }: SimCardFormPro
             />
           </FormField>
           <FormField label="Fecha y Hora de Llegada">
-            <Input type="datetime-local" required min={new Date().toISOString().slice(0, 16)} value={sim.arrivalDate} onChange={(e) => onChange({ arrivalDate: e.target.value })} />
+            <DateTimePicker
+              value={sim.arrivalDate}
+              onChange={(val) => onChange({ arrivalDate: val })}
+              min={minDateTime}
+              triggerError={triggerError}
+              fieldName="Llegada de la SIM card"
+            />
           </FormField>
           <FormField label="Duración del Viaje (Días)">
             <Input 

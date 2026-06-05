@@ -1,4 +1,7 @@
-import { Plane, MapPin, User, Briefcase, Trash2, PlusCircle, ArrowRight, ArrowLeftRight, ArrowLeft } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import Datepicker from "react-tailwindcss-datepicker";
+import dayjs from "dayjs";
+import { Plane, MapPin, User, Briefcase, Trash2, PlusCircle, ArrowRight, ArrowLeftRight, ArrowLeft, Calendar } from "lucide-react";
 import { FormField, Input, Combobox, Select, CurrencyInput } from "../../ui/Form";
 import { Button } from "../../ui/Button";
 import { TicketData, FlightLeg } from "../../../types";
@@ -41,6 +44,478 @@ const STOP_TYPE_PILLS = [
   { id: false, label: "Directo", desc: "Sin escalas intermedias" },
   { id: true,  label: "Con Escalas", desc: "Paradas en aeropuertos intermedios" },
 ];
+
+interface DateTimePickerProps {
+  value: string;
+  onChange: (val: string) => void;
+  min: string;
+  triggerError?: (msg: string) => void;
+  fieldName: string;
+  className?: string;
+  popoverDirection?: "up" | "down";
+}
+
+export function DateTimePicker({
+  value,
+  onChange,
+  min,
+  triggerError,
+  fieldName,
+  className = "",
+  popoverDirection,
+}: DateTimePickerProps) {
+  const [displayValue, setDisplayValue] = useState("");
+  const [showTimePopover, setShowTimePopover] = useState(false);
+  const [tempHour, setTempHour] = useState("12");
+  const [tempMin, setTempMin] = useState("00");
+  const [tempPeriod, setTempPeriod] = useState<"AM" | "PM">("AM");
+
+  const isoToDisplay = (iso: string): string => {
+    if (!iso) return "";
+    const [datePart, timePart] = iso.split("T");
+    if (!datePart) return "";
+    const [y, m, d] = datePart.split("-");
+    if (!y || !m || !d) return "";
+    const time = timePart ? timePart.slice(0, 5) : "00:00";
+    
+    const [h24Str, minStr] = time.split(":");
+    const h24 = parseInt(h24Str, 10);
+    const period = h24 >= 12 ? "PM" : "AM";
+    let h12 = h24 % 12;
+    if (h12 === 0) h12 = 12;
+    const formattedH12 = String(h12).padStart(2, "0");
+    return `${d}/${m}/${y} ${formattedH12}:${minStr} ${period}`;
+  };
+
+  const displayToIso = (display: string): string => {
+    if (!display || display.length < 19) return "";
+    const parts = display.trim().split(" ");
+    const datePart = parts[0];
+    const timePart = parts[1];
+    const period = parts[2];
+    if (!datePart || !timePart || !period) return "";
+    
+    const [d, m, y] = datePart.split("/");
+    if (!d || !m || !y || y.length !== 4) return "";
+    
+    const [h12Str, minStr] = timePart.split(":");
+    let hour24 = parseInt(h12Str, 10);
+    if (period === "PM" && hour24 < 12) {
+      hour24 += 12;
+    } else if (period === "AM" && hour24 === 12) {
+      hour24 = 0;
+    }
+    const formattedHour24 = String(hour24).padStart(2, "0");
+    return `${y}-${m}-${d}T${formattedHour24}:${minStr}`;
+  };
+
+  useEffect(() => {
+    if (value) {
+      setDisplayValue(isoToDisplay(value));
+    } else {
+      setDisplayValue("");
+    }
+  }, [value]);
+
+  const formatAsDateTime = (val: string) => {
+    // Buscar si ya escribieron algo de AM o PM al final
+    const periodMatch = val.match(/(am|pm|a|p|m)?\s*$/i);
+    const periodTyped = periodMatch ? periodMatch[0].toUpperCase().trim() : "";
+
+    const digits = val.replace(/\D/g, "").slice(0, 12);
+    let formatted = "";
+    if (digits.length > 0) {
+      formatted += digits.slice(0, 2);
+    }
+    if (digits.length > 2) {
+      formatted += "/" + digits.slice(2, 4);
+    }
+    if (digits.length > 4) {
+      formatted += "/" + digits.slice(4, 8);
+    }
+    if (digits.length > 8) {
+      formatted += " " + digits.slice(8, 10);
+    }
+    if (digits.length > 10) {
+      formatted += ":" + digits.slice(10, 12);
+    }
+
+    if (digits.length >= 12) {
+      let finalPeriod = "AM";
+      if (periodTyped.includes("P")) {
+        finalPeriod = "PM";
+      } else if (periodTyped.includes("A")) {
+        finalPeriod = "AM";
+      } else {
+        const existingPeriod = displayValue.split(" ")[2];
+        finalPeriod = existingPeriod || "AM";
+      }
+      formatted += " " + finalPeriod;
+    }
+    return formatted;
+  };
+
+  const validateAndTrigger = (isoVal: string): boolean => {
+    if (!isoVal) return true;
+    const inputDate = new Date(isoVal);
+    const minDate = new Date(min);
+    if (!isNaN(inputDate.getTime()) && !isNaN(minDate.getTime())) {
+      if (inputDate < minDate) {
+        if (triggerError) {
+          triggerError(`La fecha de ${fieldName} del tiquete no puede ser anterior a la fecha y hora actual.`);
+        }
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatAsDateTime(e.target.value);
+    setDisplayValue(formatted);
+
+    if (formatted.length === 19) {
+      const iso = displayToIso(formatted);
+      if (iso) {
+        if (validateAndTrigger(iso)) {
+          onChange(iso);
+        } else {
+          onChange(min);
+          setDisplayValue(isoToDisplay(min));
+        }
+      }
+    }
+  };
+
+  const handleBlur = () => {
+    if (!displayValue) {
+      onChange("");
+      return;
+    }
+    const iso = displayToIso(displayValue);
+    if (!iso || displayValue.length < 19) {
+      if (triggerError) {
+        triggerError(`Fecha incompleta. Se ha restablecido a la fecha mínima.`);
+      }
+      onChange(min);
+      setDisplayValue(isoToDisplay(min));
+    } else {
+      if (!validateAndTrigger(iso)) {
+        onChange(min);
+        setDisplayValue(isoToDisplay(min));
+      }
+    }
+  };
+
+  return (
+    <div className={`relative flex items-center ${className}`}>
+      {/* Input visual con mascara */}
+      <input
+        type="text"
+        value={displayValue}
+        onChange={handleTextChange}
+        onBlur={handleBlur}
+        placeholder="DD/MM/AAAA HH:MM"
+        className="w-full px-3 py-2 pr-10 border border-gray-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00828a]/50 text-xs bg-white text-gray-700"
+      />
+      
+      {/* Icono de calendario decorativo */}
+      <div className="absolute right-2 text-gray-400 p-1 pointer-events-none z-10">
+        <Calendar size={15} />
+      </div>
+
+      {/* Datepicker de Tailwind CSS invisible superpuesto para disparar el popup (sin overflow-hidden para permitir ver el dropdown) */}
+      <div className="absolute right-1 w-8 h-8 z-20 cursor-pointer [&>div]:w-full [&>div]:h-full [&_input]:w-full [&_input]:h-full [&_input]:cursor-pointer [&_input]:opacity-0 [&_input]:absolute [&_input]:inset-0 [&_div.absolute]:right-0 [&_div.absolute]:left-auto">
+        <Datepicker
+          popoverDirection={popoverDirection}
+          asSingle={true}
+          useRange={false}
+          value={{
+            startDate: value ? value.split("T")[0] : null,
+            endDate: value ? value.split("T")[0] : null,
+          } as any}
+          onChange={(newValue: any) => {
+            if (newValue && newValue.startDate) {
+              const formattedDate = dayjs(newValue.startDate).format("YYYY-MM-DD");
+              const currentHour = value ? value.split("T")[1]?.split(":")[0] || "12" : "12";
+              const currentMin = value ? value.split("T")[1]?.split(":")[1] || "00" : "00";
+              
+              // Convertir de 24h a 12h para los estados del selector de hora
+              const hour24 = parseInt(currentHour, 10);
+              let h12 = hour24 % 12;
+              if (h12 === 0) h12 = 12;
+              setTempHour(String(h12).padStart(2, "0"));
+              setTempMin(currentMin);
+              setTempPeriod(hour24 >= 12 ? "PM" : "AM");
+              
+              const newIso = `${formattedDate}T${currentHour}:${currentMin}`;
+              if (validateAndTrigger(newIso)) {
+                onChange(newIso);
+              } else {
+                onChange(min);
+              }
+              setShowTimePopover(true);
+            }
+          }}
+          inputClassName="w-full h-full cursor-pointer"
+          toggleClassName="hidden"
+        />
+      </div>
+
+      {/* Popover de Selección de Hora */}
+      {showTimePopover && (
+        <div className="absolute right-0 top-10 bg-white border border-gray-200 rounded-xl shadow-xl p-3 z-50 w-52 text-xs text-gray-700 animate-fade-in">
+          <div className="font-bold text-center border-b pb-1.5 mb-2 text-primary">
+            Elegir Hora
+          </div>
+          <div className="flex gap-2 justify-center mb-3">
+            <div className="flex flex-col items-center">
+              <span className="text-[10px] text-gray-400 mb-1">Hora</span>
+              <select
+                value={tempHour}
+                onChange={(e) => setTempHour(e.target.value)}
+                className="border rounded px-1.5 py-0.5 text-xs focus:ring-1 focus:ring-[#00828a] focus:outline-none bg-white"
+              >
+                {Array.from({ length: 12 }).map((_, i) => {
+                  const h = String(i + 1).padStart(2, "0");
+                  return <option key={h} value={h}>{h}</option>;
+                })}
+              </select>
+            </div>
+            <div className="flex items-center pt-4 text-gray-400 font-bold">:</div>
+            <div className="flex flex-col items-center">
+              <span className="text-[10px] text-gray-400 mb-1">Minuto</span>
+              <select
+                value={tempMin}
+                onChange={(e) => setTempMin(e.target.value)}
+                className="border rounded px-1.5 py-0.5 text-xs focus:ring-1 focus:ring-[#00828a] focus:outline-none bg-white"
+              >
+                {Array.from({ length: 60 }).map((_, i) => {
+                  const m = String(i).padStart(2, "0");
+                  return <option key={m} value={m}>{m}</option>;
+                })}
+              </select>
+            </div>
+            <div className="flex flex-col items-center">
+              <span className="text-[10px] text-gray-400 mb-1">Período</span>
+              <select
+                value={tempPeriod}
+                onChange={(e) => setTempPeriod(e.target.value as "AM" | "PM")}
+                className="border rounded px-1.5 py-0.5 text-xs focus:ring-1 focus:ring-[#00828a] focus:outline-none bg-white"
+              >
+                <option value="AM">AM</option>
+                <option value="PM">PM</option>
+              </select>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setShowTimePopover(false)}
+              className="flex-1 py-1 rounded bg-gray-100 hover:bg-gray-200 transition-colors font-semibold text-[10px]"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const datePart = value ? value.split("T")[0] : dayjs().format("YYYY-MM-DD");
+                
+                // Convertir de formato 12h + AM/PM de vuelta a formato militar 24h
+                let hour24 = parseInt(tempHour, 10);
+                if (tempPeriod === "PM" && hour24 < 12) {
+                  hour24 += 12;
+                } else if (tempPeriod === "AM" && hour24 === 12) {
+                  hour24 = 0;
+                }
+                const formattedHour24 = String(hour24).padStart(2, "0");
+
+                const newIso = `${datePart}T${formattedHour24}:${tempMin}`;
+                if (validateAndTrigger(newIso)) {
+                  onChange(newIso);
+                } else {
+                  onChange(min);
+                }
+                setShowTimePopover(false);
+              }}
+              className="flex-1 py-1 rounded bg-[#00828a] text-white hover:bg-[#00828a]/90 transition-colors font-semibold text-[10px]"
+            >
+              Aceptar
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface DatePickerProps {
+  value: string;
+  onChange: (val: string) => void;
+  min?: string;
+  max?: string;
+  triggerError?: (msg: string) => void;
+  fieldName: string;
+  className?: string;
+  popoverDirection?: "up" | "down";
+}
+
+export function DatePicker({
+  value,
+  onChange,
+  min,
+  max,
+  triggerError,
+  fieldName,
+  className = "",
+  popoverDirection,
+}: DatePickerProps) {
+  const [displayValue, setDisplayValue] = useState("");
+
+  const isoToDisplay = (iso: string): string => {
+    if (!iso) return "";
+    const datePart = iso.split("T")[0];
+    const [y, m, d] = datePart.split("-");
+    if (!y || !m || !d) return "";
+    return `${d}/${m}/${y}`;
+  };
+
+  const displayToIso = (display: string): string => {
+    if (!display || display.length < 10) return "";
+    const [d, m, y] = display.split("/");
+    if (!d || !m || !y || y.length !== 4) return "";
+    return `${y}-${m}-${d}`;
+  };
+
+  useEffect(() => {
+    if (value) {
+      setDisplayValue(isoToDisplay(value));
+    } else {
+      setDisplayValue("");
+    }
+  }, [value]);
+
+  const formatAsDate = (val: string) => {
+    const digits = val.replace(/\D/g, "").slice(0, 8);
+    let formatted = "";
+    if (digits.length > 0) {
+      formatted += digits.slice(0, 2);
+    }
+    if (digits.length > 2) {
+      formatted += "/" + digits.slice(2, 4);
+    }
+    if (digits.length > 4) {
+      formatted += "/" + digits.slice(4, 8);
+    }
+    return formatted;
+  };
+
+  const validateAndTrigger = (isoVal: string): boolean => {
+    if (!isoVal) return true;
+    const inputDate = new Date(isoVal + "T00:00:00");
+    
+    if (min) {
+      const minDate = new Date(min + "T00:00:00");
+      if (!isNaN(inputDate.getTime()) && !isNaN(minDate.getTime()) && inputDate < minDate) {
+        if (triggerError) {
+          triggerError(`La fecha de ${fieldName} no puede ser anterior a ${isoToDisplay(min)}.`);
+        }
+        return false;
+      }
+    }
+    
+    if (max) {
+      const maxDate = new Date(max + "T00:00:00");
+      if (!isNaN(inputDate.getTime()) && !isNaN(maxDate.getTime()) && inputDate > maxDate) {
+        if (triggerError) {
+          triggerError(`La fecha de ${fieldName} no puede ser posterior a ${isoToDisplay(max)}.`);
+        }
+        return false;
+      }
+    }
+    
+    return true;
+  };
+
+  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatAsDate(e.target.value);
+    setDisplayValue(formatted);
+
+    if (formatted.length === 10) {
+      const iso = displayToIso(formatted);
+      if (iso) {
+        if (validateAndTrigger(iso)) {
+          onChange(iso);
+        } else {
+          const fallback = min || max || "";
+          onChange(fallback);
+          setDisplayValue(isoToDisplay(fallback));
+        }
+      }
+    }
+  };
+
+  const handleBlur = () => {
+    if (!displayValue) {
+      onChange("");
+      return;
+    }
+    const iso = displayToIso(displayValue);
+    if (!iso || displayValue.length < 10) {
+      if (triggerError) {
+        triggerError(`Fecha incompleta.`);
+      }
+      const fallback = min || max || "";
+      onChange(fallback);
+      setDisplayValue(isoToDisplay(fallback));
+    } else {
+      if (!validateAndTrigger(iso)) {
+        const fallback = min || max || "";
+        onChange(fallback);
+        setDisplayValue(isoToDisplay(fallback));
+      }
+    }
+  };
+
+  return (
+    <div className={`relative flex items-center ${className}`}>
+      <input
+        type="text"
+        value={displayValue}
+        onChange={handleTextChange}
+        onBlur={handleBlur}
+        placeholder="DD/MM/AAAA"
+        className="w-full px-3 py-2 pr-10 border border-gray-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00828a]/50 text-xs bg-white text-gray-700"
+      />
+      <div className="absolute right-2 text-gray-400 p-1 pointer-events-none z-10">
+        <Calendar size={15} />
+      </div>
+      <div className="absolute right-1 w-8 h-8 z-20 cursor-pointer [&>div]:w-full [&>div]:h-full [&_input]:w-full [&_input]:h-full [&_input]:cursor-pointer [&_input]:opacity-0 [&_input]:absolute [&_input]:inset-0 [&_div.absolute]:right-0 [&_div.absolute]:left-auto">
+        <Datepicker
+          popoverDirection={popoverDirection}
+          asSingle={true}
+          useRange={false}
+          value={{
+            startDate: value || null,
+            endDate: value || null,
+          } as any}
+          onChange={(newValue: any) => {
+            if (newValue && newValue.startDate) {
+              const formattedDate = dayjs(newValue.startDate).format("YYYY-MM-DD");
+              if (validateAndTrigger(formattedDate)) {
+                onChange(formattedDate);
+              } else {
+                onChange(min || max || "");
+              }
+            }
+          }}
+          inputClassName="w-full h-full cursor-pointer"
+          toggleClassName="hidden"
+        />
+      </div>
+    </div>
+  );
+}
 
 export function TicketForm({
   ticket,
@@ -235,46 +710,22 @@ export function TicketForm({
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <FormField label="Salida">
-                    <Input
-                      type="datetime-local" required min={minDateTime}
+                    <DateTimePicker
                       value={stop.date || ""}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (validateDateInput(val, "Salida de la escala")) {
-                          updateStop(type, sIdx, { date: val });
-                        } else {
-                          updateStop(type, sIdx, { date: minDateTime });
-                        }
-                      }}
-                      onBlur={(e) => {
-                        const val = e.target.value;
-                        if (!validateDateInput(val, "Salida de la escala")) {
-                          updateStop(type, sIdx, { date: minDateTime });
-                        }
-                      }}
-                      className="text-xs"
+                      onChange={(val) => updateStop(type, sIdx, { date: val })}
+                      min={minDateTime}
+                      triggerError={triggerError}
+                      fieldName="Salida de la escala"
                     />
                   </FormField>
                   
                   <FormField label="Llegada">
-                    <Input
-                      type="datetime-local" required min={minDateTime}
+                    <DateTimePicker
                       value={stop.arrivalDate || ""}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (validateDateInput(val, "Llegada de la escala")) {
-                          updateStop(type, sIdx, { arrivalDate: val });
-                        } else {
-                          updateStop(type, sIdx, { arrivalDate: minDateTime });
-                        }
-                      }}
-                      onBlur={(e) => {
-                        const val = e.target.value;
-                        if (!validateDateInput(val, "Llegada de la escala")) {
-                          updateStop(type, sIdx, { arrivalDate: minDateTime });
-                        }
-                      }}
-                      className="text-xs"
+                      onChange={(val) => updateStop(type, sIdx, { arrivalDate: val })}
+                      min={minDateTime}
+                      triggerError={triggerError}
+                      fieldName="Llegada de la escala"
                     />
                   </FormField>
                 </div>
@@ -457,45 +908,21 @@ export function TicketForm({
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <FormField label="Salida">
-                    <Input
-                      type="datetime-local" required min={minDateTime}
+                    <DateTimePicker
                       value={leg.date}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (validateDateInput(val, "Salida del tramo")) {
-                          updateLeg(lIdx, { date: val });
-                        } else {
-                          updateLeg(lIdx, { date: minDateTime });
-                        }
-                      }}
-                      onBlur={(e) => {
-                        const val = e.target.value;
-                        if (!validateDateInput(val, "Salida del tramo")) {
-                          updateLeg(lIdx, { date: minDateTime });
-                        }
-                      }}
-                      className="text-xs"
+                      onChange={(val) => updateLeg(lIdx, { date: val })}
+                      min={minDateTime}
+                      triggerError={triggerError}
+                      fieldName="Salida del tramo"
                     />
                   </FormField>
                   <FormField label="Llegada">
-                    <Input
-                      type="datetime-local" required min={minDateTime}
+                    <DateTimePicker
                       value={leg.arrivalDate || ""}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (validateDateInput(val, "Llegada del tramo")) {
-                          updateLeg(lIdx, { arrivalDate: val });
-                        } else {
-                          updateLeg(lIdx, { arrivalDate: minDateTime });
-                        }
-                      }}
-                      onBlur={(e) => {
-                        const val = e.target.value;
-                        if (!validateDateInput(val, "Llegada del tramo")) {
-                          updateLeg(lIdx, { arrivalDate: minDateTime });
-                        }
-                      }}
-                      className="text-xs"
+                      onChange={(val) => updateLeg(lIdx, { arrivalDate: val })}
+                      min={minDateTime}
+                      triggerError={triggerError}
+                      fieldName="Llegada del tramo"
                     />
                   </FormField>
                 </div>
@@ -594,45 +1021,21 @@ export function TicketForm({
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <FormField label="Salida Vuelta">
-                    <Input
-                      type="datetime-local" required min={minDateTime}
+                    <DateTimePicker
                       value={ticket.returnLeg?.date || ""}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (validateDateInput(val, "Salida de vuelta")) {
-                          onChange({ returnLeg: { ...ticket.returnLeg!, date: val } });
-                        } else {
-                          onChange({ returnLeg: { ...ticket.returnLeg!, date: minDateTime } });
-                        }
-                      }}
-                      onBlur={(e) => {
-                        const val = e.target.value;
-                        if (!validateDateInput(val, "Salida de vuelta")) {
-                          onChange({ returnLeg: { ...ticket.returnLeg!, date: minDateTime } });
-                        }
-                      }}
-                      className="text-xs"
+                      onChange={(val) => onChange({ returnLeg: { ...ticket.returnLeg!, date: val } })}
+                      min={minDateTime}
+                      triggerError={triggerError}
+                      fieldName="Salida de vuelta"
                     />
                   </FormField>
                   <FormField label="Llegada Vuelta">
-                    <Input
-                      type="datetime-local" required min={minDateTime}
+                    <DateTimePicker
                       value={ticket.returnLeg?.arrivalDate || ""}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (validateDateInput(val, "Llegada de vuelta")) {
-                          onChange({ returnLeg: { ...ticket.returnLeg!, arrivalDate: val } });
-                        } else {
-                          onChange({ returnLeg: { ...ticket.returnLeg!, arrivalDate: minDateTime } });
-                        }
-                      }}
-                      onBlur={(e) => {
-                        const val = e.target.value;
-                        if (!validateDateInput(val, "Llegada de vuelta")) {
-                          onChange({ returnLeg: { ...ticket.returnLeg!, arrivalDate: minDateTime } });
-                        }
-                      }}
-                      className="text-xs"
+                      onChange={(val) => onChange({ returnLeg: { ...ticket.returnLeg!, arrivalDate: val } })}
+                      min={minDateTime}
+                      triggerError={triggerError}
+                      fieldName="Llegada de vuelta"
                     />
                   </FormField>
                 </div>

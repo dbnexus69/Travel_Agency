@@ -2,15 +2,22 @@ import { Car } from "lucide-react";
 import { FormField, Input, Combobox , CurrencyInput} from "../../ui/Form";
 import { CarRentalData } from "../../../types";
 import { ClientInfoSection, VoucherField, FinancialSection } from "./VoucherField";
+import { DateTimePicker } from "./TicketForm";
 
 interface CarRentalFormProps {
   car: CarRentalData;
   client: any;
   suppliers?: any[];
   onChange: (updates: Partial<CarRentalData>) => void;
+  triggerError?: (msg: string) => void;
 }
 
-export function CarRentalForm({ car, client, suppliers, onChange }: CarRentalFormProps) {
+export function CarRentalForm({ car, client, suppliers, onChange, triggerError }: CarRentalFormProps) {
+  const minDateTime = (() => {
+    const now = new Date();
+    const tzOffset = now.getTimezoneOffset() * 60000;
+    return new Date(now.getTime() - tzOffset).toISOString().slice(0, 16);
+  })();
   return (
     <div className="space-y-6 animate-fade-in">
       {client && <ClientInfoSection client={client} />}
@@ -38,17 +45,21 @@ export function CarRentalForm({ car, client, suppliers, onChange }: CarRentalFor
             />
           </FormField>
           <FormField label="Recogida (Fecha y Hora)">
-            <Input
-              type="datetime-local" required min={new Date().toISOString().slice(0, 16)}
+            <DateTimePicker
               value={car.pickupDate}
-              onChange={(e) => onChange({ pickupDate: e.target.value })}
+              onChange={(val) => onChange({ pickupDate: val })}
+              min={minDateTime}
+              triggerError={triggerError}
+              fieldName="Recogida del vehículo"
             />
           </FormField>
           <FormField label="Devolución (Fecha y Hora)">
-            <Input
-              type="datetime-local" required min={new Date().toISOString().slice(0, 16)}
+            <DateTimePicker
               value={car.returnDate}
-              onChange={(e) => onChange({ returnDate: e.target.value })}
+              onChange={(val) => onChange({ returnDate: val })}
+              min={minDateTime}
+              triggerError={triggerError}
+              fieldName="Devolución del vehículo"
             />
           </FormField>
           <FormField label="Lugar de Recogida">

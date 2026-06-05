@@ -2,15 +2,22 @@ import { Home } from "lucide-react";
 import { FormField, Input , CurrencyInput} from "../../ui/Form";
 import { FincaData } from "../../../types";
 import { ClientInfoSection, VoucherField, FinancialSection } from "./VoucherField";
+import { DateTimePicker } from "./TicketForm";
 
 interface FincaFormProps {
   finca: FincaData;
   client: any;
   suppliers?: any[];
   onChange: (updates: Partial<FincaData>) => void;
+  triggerError?: (msg: string) => void;
 }
 
-export function FincaForm({ finca, client, suppliers, onChange }: FincaFormProps) {
+export function FincaForm({ finca, client, suppliers, onChange, triggerError }: FincaFormProps) {
+  const minDateTime = (() => {
+    const now = new Date();
+    const tzOffset = now.getTimezoneOffset() * 60000;
+    return new Date(now.getTime() - tzOffset).toISOString().slice(0, 16);
+  })();
   return (
     <div className="space-y-6 animate-fade-in">
       {client && <ClientInfoSection client={client} />}
@@ -27,10 +34,22 @@ export function FincaForm({ finca, client, suppliers, onChange }: FincaFormProps
             <Input value={finca.docNumber} onChange={(e) => onChange({ docNumber: e.target.value })} placeholder="C.C." />
           </FormField>
           <FormField label="Check-in (Fecha y Hora)">
-            <Input type="datetime-local" required min={new Date().toISOString().slice(0, 16)} value={finca.checkInDate} onChange={(e) => onChange({ checkInDate: e.target.value })} />
+            <DateTimePicker
+              value={finca.checkInDate}
+              onChange={(val) => onChange({ checkInDate: val })}
+              min={minDateTime}
+              triggerError={triggerError}
+              fieldName="Check-in de la finca"
+            />
           </FormField>
           <FormField label="Check-out (Fecha y Hora)">
-            <Input type="datetime-local" required min={new Date().toISOString().slice(0, 16)} value={finca.checkOutDate} onChange={(e) => onChange({ checkOutDate: e.target.value })} />
+            <DateTimePicker
+              value={finca.checkOutDate}
+              onChange={(val) => onChange({ checkOutDate: val })}
+              min={minDateTime}
+              triggerError={triggerError}
+              fieldName="Check-out de la finca"
+            />
           </FormField>
           <FormField label="Número de Adultos">
             <Input 

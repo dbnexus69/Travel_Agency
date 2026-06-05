@@ -47,8 +47,8 @@ export function InsuranceForm({ insurance, onChange, data }: InsuranceFormProps)
             <Input
               value={insurance.contactNumber}
               onChange={(e) => {
-                // Allow letters, numbers, spaces, plus, minus, and parentheses visually
-                const cleaned = e.target.value.replace(/[^0-9a-zA-Z\s+\-()]/g, "");
+                // Only allow numbers, spaces, plus, minus, and parentheses
+                const cleaned = e.target.value.replace(/[^0-9\s+\-()]/g, "");
                 onChange({ contactNumber: cleaned });
               }}
               placeholder="Ej: +57 300 123 4567"

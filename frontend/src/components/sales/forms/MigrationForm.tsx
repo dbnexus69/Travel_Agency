@@ -2,15 +2,18 @@ import { LuMapPin } from "react-icons/lu";
 import { FormField, Input, Combobox , CurrencyInput} from "../../ui/Form";
 import { MigrationData } from "../../../types";
 import { ClientInfoSection, VoucherField, FinancialSection } from "./VoucherField";
+import { DatePicker } from "./TicketForm";
 
 interface MigrationFormProps {
   migration: MigrationData;
   client: any;
   suppliers?: any[];
   onChange: (updates: Partial<MigrationData>) => void;
+  triggerError?: (msg: string) => void;
 }
 
-export function MigrationForm({ migration, client, suppliers, onChange }: MigrationFormProps) {
+export function MigrationForm({ migration, client, suppliers, onChange, triggerError }: MigrationFormProps) {
+  const todayStr = new Date().toISOString().slice(0, 10);
   return (
     <div className="space-y-6 animate-fade-in">
       {client && <ClientInfoSection client={client} />}
@@ -24,7 +27,13 @@ export function MigrationForm({ migration, client, suppliers, onChange }: Migrat
             <Input value={migration.passengerName} onChange={(e) => onChange({ passengerName: e.target.value })} placeholder="Nombre completo" />
           </FormField>
           <FormField label="Fecha de Nacimiento">
-            <Input type="date" required max={new Date().toISOString().slice(0, 10)} value={migration.birthDate} onChange={(e) => onChange({ birthDate: e.target.value })} />
+            <DatePicker
+              value={migration.birthDate}
+              onChange={(val) => onChange({ birthDate: val })}
+              max={todayStr}
+              triggerError={triggerError}
+              fieldName="Nacimiento del pasajero"
+            />
           </FormField>
           <FormField label="Nacionalidad">
             <Input 
@@ -49,7 +58,13 @@ export function MigrationForm({ migration, client, suppliers, onChange }: Migrat
             />
           </FormField>
           <FormField label="Vencimiento Pasaporte">
-            <Input type="date" required min={new Date().toISOString().slice(0, 10)} value={migration.passportExpiry} onChange={(e) => onChange({ passportExpiry: e.target.value })} />
+            <DatePicker
+              value={migration.passportExpiry}
+              onChange={(val) => onChange({ passportExpiry: val })}
+              min={todayStr}
+              triggerError={triggerError}
+              fieldName="Vencimiento del pasaporte"
+            />
           </FormField>
           <FormField label="País de Destino">
             <Input 

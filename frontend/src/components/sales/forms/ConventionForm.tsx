@@ -2,15 +2,22 @@ import { Building2 } from "lucide-react";
 import { FormField, Input, Combobox, Textarea , CurrencyInput} from "../../ui/Form";
 import { ConventionData } from "../../../types";
 import { ClientInfoSection, VoucherField, FinancialSection } from "./VoucherField";
+import { DateTimePicker } from "./TicketForm";
 
 interface ConventionFormProps {
   convention: ConventionData;
   client: any;
   suppliers?: any[];
   onChange: (updates: Partial<ConventionData>) => void;
+  triggerError?: (msg: string) => void;
 }
 
-export function ConventionForm({ convention, client, suppliers, onChange }: ConventionFormProps) {
+export function ConventionForm({ convention, client, suppliers, onChange, triggerError }: ConventionFormProps) {
+  const minDateTime = (() => {
+    const now = new Date();
+    const tzOffset = now.getTimezoneOffset() * 60000;
+    return new Date(now.getTime() - tzOffset).toISOString().slice(0, 16);
+  })();
   const toggleAV = (item: string) => {
     const current = convention.avEquipment;
     const next = current.includes(item) ? current.filter((i) => i !== item) : [...current, item];
@@ -40,10 +47,22 @@ export function ConventionForm({ convention, client, suppliers, onChange }: Conv
             <Input value={convention.contactName} onChange={(e) => onChange({ contactName: e.target.value })} placeholder="Persona de contacto" />
           </FormField>
           <FormField label="Fecha Inicio">
-            <Input type="datetime-local" required min={new Date().toISOString().slice(0, 16)} value={convention.startDate} onChange={(e) => onChange({ startDate: e.target.value })} />
+            <DateTimePicker
+              value={convention.startDate}
+              onChange={(val) => onChange({ startDate: val })}
+              min={minDateTime}
+              triggerError={triggerError}
+              fieldName="Inicio del evento"
+            />
           </FormField>
           <FormField label="Fecha Fin">
-            <Input type="datetime-local" required min={new Date().toISOString().slice(0, 16)} value={convention.endDate} onChange={(e) => onChange({ endDate: e.target.value })} />
+            <DateTimePicker
+              value={convention.endDate}
+              onChange={(val) => onChange({ endDate: val })}
+              min={minDateTime}
+              triggerError={triggerError}
+              fieldName="Fin del evento"
+            />
           </FormField>
           <FormField label="Asistencia Estimada">
             <Input 

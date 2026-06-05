@@ -2,15 +2,22 @@ import { LuMap } from "react-icons/lu";
 import { FormField, Input, Combobox, Textarea , CurrencyInput} from "../../ui/Form";
 import { TourData } from "../../../types";
 import { ClientInfoSection, VoucherField, FinancialSection } from "./VoucherField";
+import { DateTimePicker } from "./TicketForm";
 
 interface TourFormProps {
   tour: TourData;
   client: any;
   suppliers?: any[];
   onChange: (updates: Partial<TourData>) => void;
+  triggerError?: (msg: string) => void;
 }
 
-export function TourForm({ tour, client, suppliers, onChange }: TourFormProps) {
+export function TourForm({ tour, client, suppliers, onChange, triggerError }: TourFormProps) {
+  const minDateTime = (() => {
+    const now = new Date();
+    const tzOffset = now.getTimezoneOffset() * 60000;
+    return new Date(now.getTime() - tzOffset).toISOString().slice(0, 16);
+  })();
   return (
     <div className="space-y-6 animate-fade-in">
       {client && <ClientInfoSection client={client} />}
@@ -35,7 +42,13 @@ export function TourForm({ tour, client, suppliers, onChange }: TourFormProps) {
             />
           </FormField>
           <FormField label="Fecha y Hora Preferida">
-            <Input type="datetime-local" required min={new Date().toISOString().slice(0, 16)} value={tour.preferredDate} onChange={(e) => onChange({ preferredDate: e.target.value })} />
+            <DateTimePicker
+              value={tour.preferredDate}
+              onChange={(val) => onChange({ preferredDate: val })}
+              min={minDateTime}
+              triggerError={triggerError}
+              fieldName="Tour guiado"
+            />
           </FormField>
           <FormField label="Número de Adultos">
             <Input 

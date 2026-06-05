@@ -2,15 +2,18 @@ import { LuGlobe } from "react-icons/lu";
 import { FormField, Input, Combobox , CurrencyInput} from "../../ui/Form";
 import { VisaData } from "../../../types";
 import { ClientInfoSection, VoucherField, FinancialSection } from "./VoucherField";
+import { DatePicker } from "./TicketForm";
 
 interface VisaFormProps {
   visa: VisaData;
   client: any;
   suppliers?: any[];
   onChange: (updates: Partial<VisaData>) => void;
+  triggerError?: (msg: string) => void;
 }
 
-export function VisaForm({ visa, client, suppliers, onChange }: VisaFormProps) {
+export function VisaForm({ visa, client, suppliers, onChange, triggerError }: VisaFormProps) {
+  const todayStr = new Date().toISOString().slice(0, 10);
   return (
     <div className="space-y-6 animate-fade-in">
       {client && <ClientInfoSection client={client} />}
@@ -24,12 +27,12 @@ export function VisaForm({ visa, client, suppliers, onChange }: VisaFormProps) {
             <Input value={visa.fullName} onChange={(e) => onChange({ fullName: e.target.value })} placeholder="Como aparece en el pasaporte" />
           </FormField>
           <FormField label="Fecha de Nacimiento">
-            <Input 
-              type="date" 
-              required 
-              max={new Date().toISOString().slice(0, 10)} 
-              value={visa.birthDate} 
-              onChange={(e) => onChange({ birthDate: e.target.value })} 
+            <DatePicker
+              value={visa.birthDate}
+              onChange={(val) => onChange({ birthDate: val })}
+              max={todayStr}
+              triggerError={triggerError}
+              fieldName="Nacimiento del solicitante"
             />
           </FormField>
           <FormField label="Nacionalidad">
@@ -58,12 +61,12 @@ export function VisaForm({ visa, client, suppliers, onChange }: VisaFormProps) {
             />
           </FormField>
           <FormField label="Vencimiento Pasaporte">
-            <Input 
-              type="date" 
-              required 
-              min={new Date().toISOString().slice(0, 10)} 
-              value={visa.passportExpiration} 
-              onChange={(e) => onChange({ passportExpiration: e.target.value })} 
+            <DatePicker
+              value={visa.passportExpiration}
+              onChange={(val) => onChange({ passportExpiration: val })}
+              min={todayStr}
+              triggerError={triggerError}
+              fieldName="Vencimiento del pasaporte"
             />
           </FormField>
           <FormField label="País al que aplica">
@@ -94,11 +97,12 @@ export function VisaForm({ visa, client, suppliers, onChange }: VisaFormProps) {
             />
           </FormField>
           <FormField label="Fecha Estimada Viaje">
-            <Input 
-              type="date" 
-              min={new Date().toISOString().slice(0, 10)} 
-              value={visa.estimatedTravelDate} 
-              onChange={(e) => onChange({ estimatedTravelDate: e.target.value })} 
+            <DatePicker
+              value={visa.estimatedTravelDate}
+              onChange={(val) => onChange({ estimatedTravelDate: val })}
+              min={todayStr}
+              triggerError={triggerError}
+              fieldName="Estimación de viaje"
             />
           </FormField>
           <FormField label="Correo de Contacto" className="md:col-span-2">

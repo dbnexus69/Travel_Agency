@@ -2,15 +2,18 @@ import { LuDog } from "react-icons/lu";
 import { FormField, Input, Combobox, Textarea , CurrencyInput} from "../../ui/Form";
 import { PetServiceData } from "../../../types";
 import { ClientInfoSection, VoucherField, FinancialSection } from "./VoucherField";
+import { DatePicker } from "./TicketForm";
 
 interface PetServiceFormProps {
   pet: PetServiceData;
   client: any;
   suppliers?: any[];
   onChange: (updates: Partial<PetServiceData>) => void;
+  triggerError?: (msg: string) => void;
 }
 
-export function PetServiceForm({ pet, client, suppliers, onChange }: PetServiceFormProps) {
+export function PetServiceForm({ pet, client, suppliers, onChange, triggerError }: PetServiceFormProps) {
+  const todayStr = new Date().toISOString().slice(0, 10);
   return (
     <div className="space-y-6 animate-fade-in">
       {client && <ClientInfoSection client={client} />}
@@ -115,12 +118,12 @@ export function PetServiceForm({ pet, client, suppliers, onChange }: PetServiceF
             />
           </FormField>
           <FormField label="Fecha de Viaje">
-            <Input 
-              type="date" 
-              required 
-              min={new Date().toISOString().slice(0, 10)} 
-              value={pet.travelDate} 
-              onChange={(e) => onChange({ travelDate: e.target.value })} 
+            <DatePicker
+              value={pet.travelDate}
+              onChange={(val) => onChange({ travelDate: val })}
+              min={todayStr}
+              triggerError={triggerError}
+              fieldName="Viaje de la mascota"
             />
           </FormField>
           <FormField label="País Destino">

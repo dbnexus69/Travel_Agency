@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { CreditCard, Coins, Plus, Trash2, Info, AlertTriangle, CheckCircle } from "lucide-react";
 import { FormField, Input, Select, Textarea, Combobox, CurrencyInput } from "../../ui/Form";
 import { Button } from "../../ui/Button";
+import { DatePicker } from "../forms/TicketForm";
 
 export function Step3Payment({ form, set, data, errors }: any) {
   // Local state for the new payment item being added
@@ -298,12 +299,12 @@ export function Step3Payment({ form, set, data, errors }: any) {
 
         {(form.status === "credito" || form.status === "abonado") && (
           <FormField label="Fecha Límite del Crédito *" error={errors.creditDueDate}>
-            <Input
-              type="date"
+            <DatePicker
               value={form.creditDueDate}
-              onChange={(e) => set("creditDueDate", e.target.value)}
+              onChange={(val) => set("creditDueDate", val)}
               min={new Date().toISOString().split("T")[0]}
-              error={errors.creditDueDate}
+              fieldName="Fecha límite del crédito"
+              popoverDirection="up"
             />
           </FormField>
         )}

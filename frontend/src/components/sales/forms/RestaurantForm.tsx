@@ -2,15 +2,22 @@ import { LuUtensils } from "react-icons/lu";
 import { FormField, Input, Combobox , CurrencyInput} from "../../ui/Form";
 import { RestaurantData } from "../../../types";
 import { ClientInfoSection, VoucherField, FinancialSection } from "./VoucherField";
+import { DateTimePicker } from "./TicketForm";
 
 interface RestaurantFormProps {
   restaurant: RestaurantData;
   client: any;
   suppliers?: any[];
   onChange: (updates: Partial<RestaurantData>) => void;
+  triggerError?: (msg: string) => void;
 }
 
-export function RestaurantForm({ restaurant, client, suppliers, onChange }: RestaurantFormProps) {
+export function RestaurantForm({ restaurant, client, suppliers, onChange, triggerError }: RestaurantFormProps) {
+  const minDateTime = (() => {
+    const now = new Date();
+    const tzOffset = now.getTimezoneOffset() * 60000;
+    return new Date(now.getTime() - tzOffset).toISOString().slice(0, 16);
+  })();
   const toggleRestriction = (res: string) => {
     const current = restaurant.dietaryRestrictions;
     const next = current.includes(res) ? current.filter((i) => i !== res) : [...current, res];
@@ -30,7 +37,13 @@ export function RestaurantForm({ restaurant, client, suppliers, onChange }: Rest
             <Input value={restaurant.reservationName} onChange={(e) => onChange({ reservationName: e.target.value })} placeholder="A nombre de..." />
           </FormField>
           <FormField label="Fecha y Hora *">
-            <Input type="datetime-local" required min={new Date().toISOString().slice(0, 16)} value={restaurant.dateTime} onChange={(e) => onChange({ dateTime: e.target.value })} />
+            <DateTimePicker
+              value={restaurant.dateTime}
+              onChange={(val) => onChange({ dateTime: val })}
+              min={minDateTime}
+              triggerError={triggerError}
+              fieldName="Reserva de restaurante"
+            />
           </FormField>
           <FormField label="Nº de Personas *">
             <Input 

@@ -254,7 +254,7 @@ export default function Login() {
                 </label>
                 <button 
                   type="button" 
-                  onClick={() => { setView('forgot'); setError(''); setResetEmail(email); }}
+                  onClick={() => { setView('forgot'); setErrorToastMessage(''); setResetEmail(email); }}
                   className="text-sm text-[#00828a] font-bold hover:underline"
                 >
                   ¿Olvidaste tu contraseña?
@@ -320,7 +320,7 @@ export default function Login() {
 
               <button
                 type="button"
-                onClick={() => { setView('login'); setError(''); }}
+                onClick={() => { setView('login'); setErrorToastMessage(''); }}
                 className="w-full h-11 text-sm font-bold text-gray-500 hover:text-[#00828a] flex items-center justify-center gap-2 transition-colors"
                 disabled={isLoading}
               >
@@ -366,7 +366,7 @@ export default function Login() {
 
               <button
                 type="button"
-                onClick={() => { setView('forgot'); setError(''); setCode(''); }}
+                onClick={() => { setView('forgot'); setErrorToastMessage(''); setCode(''); }}
                 className="w-full h-11 text-sm font-bold text-gray-500 hover:text-[#00828a] flex items-center justify-center gap-2 transition-colors"
                 disabled={isLoading}
               >

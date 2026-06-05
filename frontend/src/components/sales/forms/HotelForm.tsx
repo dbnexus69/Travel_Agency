@@ -3,14 +3,22 @@ import * as LuIcons from "react-icons/lu";
 import { FormField, Input, Combobox, Select , CurrencyInput} from "../../ui/Form";
 import { Button } from "../../ui/Button";
 import { HotelData, GuestInfo } from "../../../types";
+import { DateTimePicker } from "./TicketForm";
 
 interface HotelFormProps {
   hotel: HotelData;
   onChange: (updates: Partial<HotelData>) => void;
   data: any;
+  triggerError?: (msg: string) => void;
 }
 
-export function HotelForm({ hotel, onChange, data }: HotelFormProps) {
+export function HotelForm({ hotel, onChange, data, triggerError }: HotelFormProps) {
+  const minDateTime = (() => {
+    const now = new Date();
+    const tzOffset = now.getTimezoneOffset() * 60000;
+    return new Date(now.getTime() - tzOffset).toISOString().slice(0, 16);
+  })();
+
   const addGuest = () => {
     onChange({ guests: [...hotel.guests, { name: "", docType: "CC", docNumber: "" }] });
   };
@@ -72,27 +80,21 @@ export function HotelForm({ hotel, onChange, data }: HotelFormProps) {
             />
           </FormField>
           <FormField label="Check-in (Fecha y Hora)">
-            <Input
-              type="datetime-local" required
-              min={(() => {
-                const now = new Date();
-                const tzOffset = now.getTimezoneOffset() * 60000;
-                return new Date(now.getTime() - tzOffset).toISOString().slice(0, 16);
-              })()}
+            <DateTimePicker
               value={hotel.startDate}
-              onChange={(e) => onChange({ startDate: e.target.value })}
+              onChange={(val) => onChange({ startDate: val })}
+              min={minDateTime}
+              triggerError={triggerError}
+              fieldName="Check-in del hotel"
             />
           </FormField>
           <FormField label="Check-out (Fecha y Hora)">
-            <Input
-              type="datetime-local" required
-              min={(() => {
-                const now = new Date();
-                const tzOffset = now.getTimezoneOffset() * 60000;
-                return new Date(now.getTime() - tzOffset).toISOString().slice(0, 16);
-              })()}
+            <DateTimePicker
               value={hotel.endDate}
-              onChange={(e) => onChange({ endDate: e.target.value })}
+              onChange={(val) => onChange({ endDate: val })}
+              min={minDateTime}
+              triggerError={triggerError}
+              fieldName="Check-out del hotel"
             />
           </FormField>
           <FormField label="Tipo de Hotel">

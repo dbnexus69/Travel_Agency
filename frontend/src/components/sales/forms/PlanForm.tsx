@@ -2,14 +2,22 @@ import { Package, Plane, Users, Briefcase, Trash2, PlusCircle } from "lucide-rea
 import { FormField, Input, Combobox, Select , CurrencyInput} from "../../ui/Form";
 import { Button } from "../../ui/Button";
 import { PlanData, GuestInfo } from "../../../types";
+import { DateTimePicker } from "./TicketForm";
 
 interface PlanFormProps {
   plan: PlanData;
   onChange: (updates: Partial<PlanData>) => void;
   data: any;
+  triggerError?: (msg: string) => void;
 }
 
-export function PlanForm({ plan, onChange, data }: PlanFormProps) {
+export function PlanForm({ plan, onChange, data, triggerError }: PlanFormProps) {
+  const minDateTime = (() => {
+    const now = new Date();
+    const tzOffset = now.getTimezoneOffset() * 60000;
+    return new Date(now.getTime() - tzOffset).toISOString().slice(0, 16);
+  })();
+
   const addGuest = () => {
     onChange({ guests: [...plan.guests, { name: "", docType: "CC", docNumber: "" }] });
   };
@@ -171,57 +179,57 @@ export function PlanForm({ plan, onChange, data }: PlanFormProps) {
             />
           </FormField>
           <FormField label="Fecha Ida (Vuelo)">
-            <Input
-              type="datetime-local" required min={new Date().toISOString().slice(0, 16)}
+            <DateTimePicker
               value={plan.flightDepartureDate || ""}
-              onChange={(e) => {
-                const val = e.target.value;
-                onChange({ flightDepartureDate: val });
-              }}
+              onChange={(val) => onChange({ flightDepartureDate: val })}
+              min={minDateTime}
+              triggerError={triggerError}
+              fieldName="Salida de ida del plan"
             />
           </FormField>
           <FormField label="Llegada Ida (Vuelo)">
-            <Input
-              type="datetime-local" required min={new Date().toISOString().slice(0, 16)}
+            <DateTimePicker
               value={plan.flightDepartureArrivalDate || ""}
-              onChange={(e) => {
-                const val = e.target.value;
-                onChange({ flightDepartureArrivalDate: val });
-              }}
+              onChange={(val) => onChange({ flightDepartureArrivalDate: val })}
+              min={minDateTime}
+              triggerError={triggerError}
+              fieldName="Llegada de ida del plan"
             />
           </FormField>
           <FormField label="Fecha Vuelta (Vuelo)">
-            <Input
-              type="datetime-local" required min={new Date().toISOString().slice(0, 16)}
+            <DateTimePicker
               value={plan.flightReturnDate || ""}
-              onChange={(e) => {
-                const val = e.target.value;
-                onChange({ flightReturnDate: val });
-              }}
+              onChange={(val) => onChange({ flightReturnDate: val })}
+              min={minDateTime}
+              triggerError={triggerError}
+              fieldName="Salida de vuelta del plan"
             />
           </FormField>
           <FormField label="Llegada Vuelta (Vuelo)">
-            <Input
-              type="datetime-local" required min={new Date().toISOString().slice(0, 16)}
+            <DateTimePicker
               value={plan.flightReturnArrivalDate || ""}
-              onChange={(e) => {
-                const val = e.target.value;
-                onChange({ flightReturnArrivalDate: val });
-              }}
+              onChange={(val) => onChange({ flightReturnArrivalDate: val })}
+              min={minDateTime}
+              triggerError={triggerError}
+              fieldName="Llegada de vuelta del plan"
             />
           </FormField>
           <FormField label="Ingreso Hotel">
-            <Input
-              type="datetime-local" required min={new Date().toISOString().slice(0, 16)}
+            <DateTimePicker
               value={plan.startDate || ""}
-              onChange={(e) => onChange({ startDate: e.target.value })}
+              onChange={(val) => onChange({ startDate: val })}
+              min={minDateTime}
+              triggerError={triggerError}
+              fieldName="Ingreso al hotel del plan"
             />
           </FormField>
           <FormField label="Salida Hotel">
-            <Input
-              type="datetime-local" required min={new Date().toISOString().slice(0, 16)}
+            <DateTimePicker
               value={plan.endDate || ""}
-              onChange={(e) => onChange({ endDate: e.target.value })}
+              onChange={(val) => onChange({ endDate: val })}
+              min={minDateTime}
+              triggerError={triggerError}
+              fieldName="Salida del hotel del plan"
             />
           </FormField>
         </div>

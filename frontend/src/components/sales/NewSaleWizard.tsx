@@ -1197,6 +1197,7 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
                     set("hotels", next);
                   }}
                   data={data}
+                  triggerError={triggerError}
                 />
               );
             case "seguros_viaje":
@@ -1221,6 +1222,7 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
                     set("plans", next);
                   }}
                   data={data}
+                  triggerError={triggerError}
                 />
               );
             case "checkin":
@@ -1235,6 +1237,7 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
                     next[activeIdx] = { ...next[activeIdx], ...updates };
                     set("checkIns", next);
                   }}
+                  triggerError={triggerError}
                 />
               );
             case "documentacion_migratoria":
@@ -1248,6 +1251,7 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
                     next[activeIdx] = { ...next[activeIdx], ...updates };
                     set("migrations", next);
                   }}
+                  triggerError={triggerError}
                 />
               );
             case "simcard":
@@ -1261,6 +1265,7 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
                     next[activeIdx] = { ...next[activeIdx], ...updates };
                     set("simCards", next);
                   }}
+                  triggerError={triggerError}
                 />
               );
             case "renta_vehiculos":
@@ -1274,6 +1279,7 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
                     next[activeIdx] = { ...next[activeIdx], ...updates };
                     set("carRentals", next);
                   }}
+                  triggerError={triggerError}
                 />
               );
             case "renta_fincas":
@@ -1287,6 +1293,7 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
                     next[activeIdx] = { ...next[activeIdx], ...updates };
                     set("fincas", next);
                   }}
+                  triggerError={triggerError}
                 />
               );
             case "tours":
@@ -1300,6 +1307,7 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
                     next[activeIdx] = { ...next[activeIdx], ...updates };
                     set("tours", next);
                   }}
+                  triggerError={triggerError}
                 />
               );
             case "centros_convencion":
@@ -1313,6 +1321,7 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
                     next[activeIdx] = { ...next[activeIdx], ...updates };
                     set("conventions", next);
                   }}
+                  triggerError={triggerError}
                 />
               );
             case "restaurantes":
@@ -1326,6 +1335,7 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
                     next[activeIdx] = { ...next[activeIdx], ...updates };
                     set("restaurants", next);
                   }}
+                  triggerError={triggerError}
                 />
               );
             case "visa":
@@ -1339,6 +1349,7 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
                     next[activeIdx] = { ...next[activeIdx], ...updates };
                     set("visas", next);
                   }}
+                  triggerError={triggerError}
                 />
               );
             case "pasaporte":
@@ -1352,6 +1363,7 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
                     next[activeIdx] = { ...next[activeIdx], ...updates };
                     set("passports", next);
                   }}
+                  triggerError={triggerError}
                 />
               );
             case "servicio_mascotas":
@@ -1365,6 +1377,7 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
                     next[activeIdx] = { ...next[activeIdx], ...updates };
                     set("petServices", next);
                   }}
+                  triggerError={triggerError}
                 />
               );
 

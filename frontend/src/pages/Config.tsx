@@ -254,7 +254,7 @@ export default function Config() {
       <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-primary flex items-center gap-3">
-            <Database className="text-accent w-8 h-8" /> Catálogos del Sistema
+            <Database className="text-accent w-8 h-8" /> Gestión Interna
           </h1>
           <p className="text-gray-500 text-xs mt-1">
             Administración central de tablas maestras, catálogos base y parámetros para la facturación.

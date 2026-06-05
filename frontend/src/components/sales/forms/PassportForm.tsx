@@ -2,15 +2,18 @@ import { LuBookOpen } from "react-icons/lu";
 import { FormField, Input, Combobox , CurrencyInput} from "../../ui/Form";
 import { PassportData } from "../../../types";
 import { ClientInfoSection, VoucherField, FinancialSection } from "./VoucherField";
+import { DatePicker } from "./TicketForm";
 
 interface PassportFormProps {
   passport: PassportData;
   client: any;
   suppliers?: any[];
   onChange: (updates: Partial<PassportData>) => void;
+  triggerError?: (msg: string) => void;
 }
 
-export function PassportForm({ passport, client, suppliers, onChange }: PassportFormProps) {
+export function PassportForm({ passport, client, suppliers, onChange, triggerError }: PassportFormProps) {
+  const todayStr = new Date().toISOString().slice(0, 10);
   return (
     <div className="space-y-6 animate-fade-in">
       {client && <ClientInfoSection client={client} />}
@@ -27,12 +30,12 @@ export function PassportForm({ passport, client, suppliers, onChange }: Passport
             <Input value={passport.idNumber} onChange={(e) => onChange({ idNumber: e.target.value })} placeholder="Número de documento" />
           </FormField>
           <FormField label="Fecha de Nacimiento">
-            <Input 
-              type="date" 
-              required 
-              max={new Date().toISOString().slice(0, 10)} 
-              value={passport.birthDate} 
-              onChange={(e) => onChange({ birthDate: e.target.value })} 
+            <DatePicker
+              value={passport.birthDate}
+              onChange={(val) => onChange({ birthDate: val })}
+              max={todayStr}
+              triggerError={triggerError}
+              fieldName="Nacimiento del solicitante"
             />
           </FormField>
           <FormField label="Ciudad de Residencia">
@@ -59,11 +62,12 @@ export function PassportForm({ passport, client, suppliers, onChange }: Passport
             />
           </FormField>
           <FormField label="Fecha Estimada de Viaje">
-            <Input 
-              type="date" 
-              min={new Date().toISOString().slice(0, 10)} 
-              value={passport.estimatedTravelDate} 
-              onChange={(e) => onChange({ estimatedTravelDate: e.target.value })} 
+            <DatePicker
+              value={passport.estimatedTravelDate}
+              onChange={(val) => onChange({ estimatedTravelDate: val })}
+              min={todayStr}
+              triggerError={triggerError}
+              fieldName="Estimación de viaje"
             />
           </FormField>
           <FormField label="Teléfono de Contacto" className="md:col-span-2">
