@@ -188,7 +188,7 @@ export default function CommissionAgents() {
     <div className="space-y-6 relative pb-10">
       {/* Toast Notification */}
       {showSuccess && (
-        <div className="fixed top-20 right-6 z-[100] bg-emerald-50 border border-emerald-200 text-emerald-700 px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 animate-slide-in-right">
+        <div className="fixed top-20 right-6 z-[200] bg-emerald-50 border border-emerald-200 text-emerald-700 px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 animate-slide-in-right">
           <div className="bg-emerald-500 text-white rounded-full p-1">
             <TrendingUp size={18} />
           </div>
@@ -199,7 +199,7 @@ export default function CommissionAgents() {
         </div>
       )}
       {showError && (
-        <div className="fixed top-32 right-6 z-[100] bg-rose-50 border border-rose-200 text-rose-700 px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 animate-slide-in-right">
+        <div className="fixed top-32 right-6 z-[200] bg-rose-50 border border-rose-200 text-rose-700 px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 animate-slide-in-right">
           <div className="bg-rose-500 text-white rounded-full p-1">
             <AlertCircle size={18} />
           </div>

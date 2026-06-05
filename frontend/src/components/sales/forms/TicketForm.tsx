@@ -19,6 +19,7 @@ interface TicketFormProps {
     checkedBag: string;
     notes: string;
   }[];
+  triggerError?: (msg: string) => void;
 }
 
 const FLIGHT_MODE_TABS = [
@@ -49,6 +50,7 @@ export function TicketForm({
   airports,
   paymentMethods,
   baggage,
+  triggerError,
 }: TicketFormProps) {
   const airportOptions = airports.map((a) => ({
     value: a.abbreviation,
@@ -61,6 +63,21 @@ export function TicketForm({
     const tzOffset = now.getTimezoneOffset() * 60000;
     return new Date(now.getTime() - tzOffset).toISOString().slice(0, 16);
   })();
+
+  const validateDateInput = (value: string, fieldName: string): boolean => {
+    if (!value) return true;
+    if (value.length < 16) return true;
+    const inputDate = new Date(value);
+    const now = new Date();
+    now.setSeconds(0, 0);
+    if (!isNaN(inputDate.getTime()) && inputDate < now) {
+      if (triggerError) {
+        triggerError(`La fecha de ${fieldName} del tiquete no puede ser anterior a la fecha y hora actual.`);
+      }
+      return false;
+    }
+    return true;
+  };
 
   /* ─── Legs ─────────────────────────────────────────────────── */
   const updateLeg = (idx: number, updates: Partial<FlightLeg>) => {
@@ -221,7 +238,20 @@ export function TicketForm({
                     <Input
                       type="datetime-local" required min={minDateTime}
                       value={stop.date || ""}
-                      onChange={(e) => updateStop(type, sIdx, { date: e.target.value })}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (validateDateInput(val, "Salida de la escala")) {
+                          updateStop(type, sIdx, { date: val });
+                        } else {
+                          updateStop(type, sIdx, { date: minDateTime });
+                        }
+                      }}
+                      onBlur={(e) => {
+                        const val = e.target.value;
+                        if (!validateDateInput(val, "Salida de la escala")) {
+                          updateStop(type, sIdx, { date: minDateTime });
+                        }
+                      }}
                       className="text-xs"
                     />
                   </FormField>
@@ -230,7 +260,20 @@ export function TicketForm({
                     <Input
                       type="datetime-local" required min={minDateTime}
                       value={stop.arrivalDate || ""}
-                      onChange={(e) => updateStop(type, sIdx, { arrivalDate: e.target.value })}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (validateDateInput(val, "Llegada de la escala")) {
+                          updateStop(type, sIdx, { arrivalDate: val });
+                        } else {
+                          updateStop(type, sIdx, { arrivalDate: minDateTime });
+                        }
+                      }}
+                      onBlur={(e) => {
+                        const val = e.target.value;
+                        if (!validateDateInput(val, "Llegada de la escala")) {
+                          updateStop(type, sIdx, { arrivalDate: minDateTime });
+                        }
+                      }}
                       className="text-xs"
                     />
                   </FormField>
@@ -414,10 +457,46 @@ export function TicketForm({
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <FormField label="Salida">
-                    <Input type="datetime-local" required min={minDateTime} value={leg.date} onChange={(e) => updateLeg(lIdx, { date: e.target.value })} className="text-xs" />
+                    <Input
+                      type="datetime-local" required min={minDateTime}
+                      value={leg.date}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (validateDateInput(val, "Salida del tramo")) {
+                          updateLeg(lIdx, { date: val });
+                        } else {
+                          updateLeg(lIdx, { date: minDateTime });
+                        }
+                      }}
+                      onBlur={(e) => {
+                        const val = e.target.value;
+                        if (!validateDateInput(val, "Salida del tramo")) {
+                          updateLeg(lIdx, { date: minDateTime });
+                        }
+                      }}
+                      className="text-xs"
+                    />
                   </FormField>
                   <FormField label="Llegada">
-                    <Input type="datetime-local" required min={minDateTime} value={leg.arrivalDate || ""} onChange={(e) => updateLeg(lIdx, { arrivalDate: e.target.value })} className="text-xs" />
+                    <Input
+                      type="datetime-local" required min={minDateTime}
+                      value={leg.arrivalDate || ""}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (validateDateInput(val, "Llegada del tramo")) {
+                          updateLeg(lIdx, { arrivalDate: val });
+                        } else {
+                          updateLeg(lIdx, { arrivalDate: minDateTime });
+                        }
+                      }}
+                      onBlur={(e) => {
+                        const val = e.target.value;
+                        if (!validateDateInput(val, "Llegada del tramo")) {
+                          updateLeg(lIdx, { arrivalDate: minDateTime });
+                        }
+                      }}
+                      className="text-xs"
+                    />
                   </FormField>
                 </div>
               </div>
@@ -518,7 +597,20 @@ export function TicketForm({
                     <Input
                       type="datetime-local" required min={minDateTime}
                       value={ticket.returnLeg?.date || ""}
-                      onChange={(e) => onChange({ returnLeg: { ...ticket.returnLeg!, date: e.target.value } })}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (validateDateInput(val, "Salida de vuelta")) {
+                          onChange({ returnLeg: { ...ticket.returnLeg!, date: val } });
+                        } else {
+                          onChange({ returnLeg: { ...ticket.returnLeg!, date: minDateTime } });
+                        }
+                      }}
+                      onBlur={(e) => {
+                        const val = e.target.value;
+                        if (!validateDateInput(val, "Salida de vuelta")) {
+                          onChange({ returnLeg: { ...ticket.returnLeg!, date: minDateTime } });
+                        }
+                      }}
                       className="text-xs"
                     />
                   </FormField>
@@ -526,7 +618,20 @@ export function TicketForm({
                     <Input
                       type="datetime-local" required min={minDateTime}
                       value={ticket.returnLeg?.arrivalDate || ""}
-                      onChange={(e) => onChange({ returnLeg: { ...ticket.returnLeg!, arrivalDate: e.target.value } })}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (validateDateInput(val, "Llegada de vuelta")) {
+                          onChange({ returnLeg: { ...ticket.returnLeg!, arrivalDate: val } });
+                        } else {
+                          onChange({ returnLeg: { ...ticket.returnLeg!, arrivalDate: minDateTime } });
+                        }
+                      }}
+                      onBlur={(e) => {
+                        const val = e.target.value;
+                        if (!validateDateInput(val, "Llegada de vuelta")) {
+                          onChange({ returnLeg: { ...ticket.returnLeg!, arrivalDate: minDateTime } });
+                        }
+                      }}
                       className="text-xs"
                     />
                   </FormField>

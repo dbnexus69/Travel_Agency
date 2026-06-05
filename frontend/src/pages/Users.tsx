@@ -419,7 +419,7 @@ export default function Users() {
   return (
     <div className="space-y-6 relative animate-fade-in">
       {showConfetti && (
-        <div className="fixed inset-0 pointer-events-none z-[100] flex justify-center">
+        <div className="fixed inset-0 pointer-events-none z-[200] flex justify-center">
           {[...Array(20)].map((_, i) => (
             <div
               key={i}
@@ -439,7 +439,7 @@ export default function Users() {
       )}
 
       {showSuccess && (
-        <div className="fixed top-20 right-6 z-[100] bg-green-50 border border-green-200 text-green-700 px-6 py-4 rounded-xl shadow-xl flex items-center gap-3 animate-slide-in-right">
+        <div className="fixed top-20 right-6 z-[200] bg-green-50 border border-green-200 text-green-700 px-6 py-4 rounded-xl shadow-xl flex items-center gap-3 animate-slide-in-right">
           <div className="bg-green-500 text-white rounded-full p-1">
             <CheckCircle size={18} />
           </div>
@@ -450,7 +450,7 @@ export default function Users() {
         </div>
       )}
       {showError && (
-        <div className="fixed top-32 right-6 z-[100] bg-rose-50 border border-rose-200 text-rose-700 px-6 py-4 rounded-xl shadow-xl flex items-center gap-3 animate-slide-in-right">
+        <div className="fixed top-32 right-6 z-[200] bg-rose-50 border border-rose-200 text-rose-700 px-6 py-4 rounded-xl shadow-xl flex items-center gap-3 animate-slide-in-right">
           <div className="bg-rose-500 text-white rounded-full p-1">
             <AlertCircle size={18} />
           </div>

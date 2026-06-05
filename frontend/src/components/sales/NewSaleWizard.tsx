@@ -1184,6 +1184,7 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
                   airports={data.config.airports}
                   paymentMethods={data.config.cards}
                   baggage={data.config.baggage}
+                  triggerError={triggerError}
                 />
               );
             case "hoteleria":

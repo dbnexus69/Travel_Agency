@@ -28,12 +28,39 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   error?: string;
 }
 
-export function Input({ className = '', error, ...props }: InputProps) {
+export function Input({ className = '', error, onBlur, ...props }: InputProps) {
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if ((props.type === 'date' || props.type === 'datetime-local') && props.min && value) {
+      const minDate = new Date(props.min);
+      const inputDate = new Date(value);
+
+      if (!isNaN(minDate.getTime()) && !isNaN(inputDate.getTime())) {
+        if (inputDate < minDate) {
+          // Coerce to minimum allowed value
+          e.target.value = props.min;
+          
+          // Dispatch change event to update React parent states
+          if (props.onChange) {
+            const changeEvent = Object.create(e);
+            changeEvent.target = e.target;
+            changeEvent.currentTarget = e.target;
+            props.onChange(changeEvent);
+          }
+        }
+      }
+    }
+    if (onBlur) {
+      onBlur(e);
+    }
+  };
+
   return (
     <input
       className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/50 ${
         error ? 'border-red-500' : 'border-gray-border'
       } ${className}`}
+      onBlur={handleBlur}
       {...props}
     />
   );

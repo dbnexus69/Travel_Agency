@@ -168,7 +168,7 @@ export default function Itineraries() {
   return (
     <div className="space-y-6 relative">
       {showSuccess && (
-        <div className="fixed top-20 right-6 z-[100] bg-green-50 border border-green-200 text-green-700 px-6 py-4 rounded-xl shadow-xl flex items-center gap-3 animate-slide-in-right">
+        <div className="fixed top-20 right-6 z-[200] bg-green-50 border border-green-200 text-green-700 px-6 py-4 rounded-xl shadow-xl flex items-center gap-3 animate-slide-in-right">
           <div className="bg-green-500 text-white rounded-full p-1">
             <CheckCircle2 size={18} />
           </div>
@@ -180,7 +180,7 @@ export default function Itineraries() {
       )}
 
       {showError && (
-        <div className="fixed top-20 right-6 z-[100] bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl shadow-xl flex items-center gap-3 animate-slide-in-right">
+        <div className="fixed top-20 right-6 z-[200] bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl shadow-xl flex items-center gap-3 animate-slide-in-right">
           <div className="bg-red-500 text-white rounded-full p-1">
             <X size={18} />
           </div>
