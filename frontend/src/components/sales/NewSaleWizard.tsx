@@ -1106,23 +1106,24 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
         onSubmit={(e) => { e.preventDefault(); closeActiveForm(); }}
       >
         {/* Sub-form Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b bg-gray-50/50">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b bg-gray-50/50">
+          <div className="flex items-center gap-2 sm:gap-3">
             <button
               type="button"
               onClick={closeActiveForm}
-              className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-600"
+              className="p-1.5 sm:p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-600"
             >
-              <ChevronLeft size={20} />
+              <ChevronLeft size={18} className="sm:hidden" />
+              <ChevronLeft size={20} className="hidden sm:block" />
             </button>
             <div>
-              <h3 className="font-bold text-primary flex items-center gap-2">
+              <h3 className="font-bold text-primary flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base">
                 {product?.label}
-                <span className="text-xs font-normal text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                <span className="text-[10px] sm:text-xs font-normal text-gray-500 bg-gray-100 px-1.5 sm:px-2 py-0.5 rounded-full">
                   Item #{activeIdx + 1}
                 </span>
               </h3>
-              <p className="text-[10px] text-gray-500">
+              <p className="text-[9px] sm:text-[10px] text-gray-500 hidden sm:block">
                 Completa la información detallada del servicio
               </p>
             </div>
@@ -1130,7 +1131,7 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
           <Button 
             type="submit"
             size="sm" 
-            className="bg-primary hover:bg-primary/90 text-white disabled:bg-gray-300 disabled:cursor-not-allowed"
+            className="bg-primary hover:bg-primary/90 text-white disabled:bg-gray-300 disabled:cursor-not-allowed text-xs sm:text-sm px-3 sm:px-4 py-1.5"
             disabled={(() => {
               if (!activeForm || activeIdx === null) return false;
               if (activeForm === "tiqueteria") return isTicketFormEmpty;
@@ -1166,7 +1167,7 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
         </div>
 
         {/* Sub-form Content */}
-        <div className="flex-1 overflow-y-auto px-6 py-8">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-8 bg-gray-light/30">
           <div className="max-w-3xl mx-auto">
         {(() => {
           switch (activeForm) {
@@ -1541,7 +1542,7 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
       {activeForm ? renderActiveForm() : (
         <>
           {/* Header / Stepper */}
-          <div className="px-6 py-4 border-b bg-gray-50/50">
+          <div className="px-4 sm:px-6 py-3 sm:py-4 border-b bg-gray-50/50">
             <div className="flex justify-between items-center max-w-2xl mx-auto relative">
               <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gray-200 -translate-y-1/2 -z-10" />
               {STEPS.map((s) => {
@@ -1550,23 +1551,24 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
                 const isActive = step === s.id;
 
                 return (
-                  <div key={s.id} className="flex flex-col items-center gap-2">
+                  <div key={s.id} className="flex flex-col items-center gap-1.5 sm:gap-2">
                     <div
                       className={`
-                        w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-500
+                        w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center border-2 transition-all duration-500
                         ${
                           isCompleted
-                            ? "bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-100"
-                            : isActive
-                              ? "bg-primary border-primary text-white shadow-lg shadow-primary/20 scale-110"
-                              : "bg-white border-gray-200 text-gray-400"
+                             ? "bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-100"
+                             : isActive
+                               ? "bg-primary border-primary text-white shadow-lg shadow-primary/20 scale-105 sm:scale-110"
+                               : "bg-white border-gray-200 text-gray-400"
                         }
                       `}
                     >
-                      <Icon size={18} />
+                      <Icon size={16} className="sm:hidden" />
+                      <Icon size={18} className="hidden sm:block" />
                     </div>
                     <span
-                      className={`text-[10px] font-bold uppercase tracking-wider ${
+                      className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-wider ${
                         isActive ? "text-primary" : "text-gray-400"
                       }`}
                     >
@@ -1578,7 +1580,7 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-6 py-4">
+          <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-3 sm:py-4 bg-gray-light/30">
             {step === 1 && <Step1Client form={form} set={set} data={data} errors={errors} />}
             {step === 2 && <Step2Products form={form} set={set} data={data} errors={errors} toggleProduct={toggleProduct} actions={actions} />}
             {step === 3 && <Step3Payment form={form} set={set} data={data} errors={errors} />}
@@ -1587,12 +1589,13 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
       )}
 
       {/* Footer */}
-      <div className="px-6 py-4 border-t bg-white flex gap-3">
+      <div className="px-4 sm:px-6 py-3 sm:py-4 border-t bg-white flex gap-2 sm:gap-3 flex-shrink-0">
         {activeForm ? (
-          <>
+          <div className="flex justify-between items-center w-full gap-2">
             <Button
               variant="outline"
               onClick={closeActiveForm}
+              className="px-3 sm:px-6 text-xs sm:text-sm"
             >
               Regresar
             </Button>
@@ -1627,26 +1630,26 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
                 }
                 return false;
               })()}
-              className="disabled:bg-gray-300 disabled:cursor-not-allowed"
+              className="px-3 sm:px-6 text-xs sm:text-sm disabled:bg-gray-300 disabled:cursor-not-allowed"
             >
               Confirmar y Continuar
             </Button>
-          </>
+          </div>
         ) : (
-          <div className="flex justify-between items-center w-full">
+          <div className="flex justify-between items-center w-full gap-2">
             <Button
               variant="outline"
               onClick={goBack}
               disabled={step === 1}
-              className="px-8 border-gray-200 text-gray-500 hover:bg-gray-50"
+              className="px-3 sm:px-8 border-gray-200 text-gray-500 hover:bg-gray-50 text-xs sm:text-sm"
             >
               Anterior
             </Button>
 
-            <div className="flex gap-3">
+            <div className="flex gap-2 sm:gap-3">
               <Button
                 variant="outline"
-                className="px-8 border-gray-200 text-gray-500 hover:bg-gray-50"
+                className="px-3 sm:px-8 border-gray-200 text-gray-500 hover:bg-gray-50 text-xs sm:text-sm"
                 onClick={handleCancel}
               >
                 Cancelar
@@ -1656,28 +1659,28 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
                 <Button
                   onClick={goNext}
                   disabled={step === 2 && form.selectedProducts.length === 0}
-                  className="px-10 group disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  className="px-4 sm:px-10 group disabled:bg-gray-300 disabled:cursor-not-allowed text-xs sm:text-sm"
                 >
                   Siguiente
                   <ArrowRight
-                    size={18}
-                    className="ml-2 group-hover:translate-x-1 transition-transform"
+                    size={16}
+                    className="ml-1.5 sm:ml-2 group-hover:translate-x-1 transition-transform"
                   />
                 </Button>
               ) : (
                 <Button
                   onClick={handleSubmit}
                   disabled={isSubmitting}
-                  className={`px-10 text-white shadow-lg ${
+                  className={`px-4 sm:px-10 text-white shadow-lg text-xs sm:text-sm ${
                     isSubmitting
                       ? "bg-emerald-400 cursor-not-allowed shadow-none"
                       : "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200"
                   }`}
                 >
                   {isSubmitting ? (
-                    <span className="flex items-center gap-2">
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Creando venta...
+                    <span className="flex items-center gap-1.5 sm:gap-2">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      Creando...
                     </span>
                   ) : (
                     "Finalizar Venta"

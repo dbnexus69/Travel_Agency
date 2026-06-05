@@ -10,6 +10,7 @@ interface ModalProps {
   children: ReactNode;
   footer?: ReactNode;
   size?: "sm" | "md" | "lg" | "xl";
+  contentClassName?: string;
 }
 
 export function Modal({
@@ -19,6 +20,7 @@ export function Modal({
   children,
   footer,
   size = "md",
+  contentClassName = "",
 }: ModalProps) {
   useEffect(() => {
     if (isOpen) {
@@ -41,17 +43,17 @@ export function Modal({
   }[size];
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4">
       <div
         className="fixed inset-0 bg-primary/40 backdrop-blur-sm transition-opacity duration-300"
         onClick={onClose}
       />
       <div
-        className={`relative z-[101] w-full ${maxWidth} bg-white rounded-xl shadow-2xl overflow-hidden animate-scale-in`}
+        className={`relative z-[101] w-full ${maxWidth} bg-white rounded-xl shadow-2xl overflow-hidden animate-scale-in flex flex-col max-h-[95vh] sm:max-h-[90vh]`}
       >
         {/* Header con color primary */}
-        <div className="bg-primary px-6 py-4 flex items-center justify-between">
-          <h2 className="text-lg font-heading font-semibold text-white">
+        <div className="bg-primary px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between flex-shrink-0">
+          <h2 className="text-base sm:text-lg font-heading font-semibold text-white truncate">
             {title}
           </h2>
           <button
@@ -63,13 +65,13 @@ export function Modal({
         </div>
 
         {/* Content */}
-        <div className="p-6 max-h-[70vh] overflow-y-auto bg-gray-light">
+        <div className={`p-4 sm:p-6 bg-gray-light flex-1 ${contentClassName ? "" : "overflow-y-auto"} ${contentClassName}`}>
           {children}
         </div>
 
         {/* Footer */}
         {footer && (
-          <div className="px-6 py-4 bg-white border-t border-gray-border flex justify-end gap-3">
+          <div className="px-4 sm:px-6 py-3 sm:py-4 bg-white border-t border-gray-border flex justify-end gap-2 sm:gap-3 flex-shrink-0">
             {footer}
           </div>
         )}

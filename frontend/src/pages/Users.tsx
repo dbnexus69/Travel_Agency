@@ -464,6 +464,29 @@ export default function Users() {
 
   const confirmDelete = async () => {
     if (!userToDelete) return;
+
+    const isFreelancerOrAsesor = userToDelete.role === "freelancer" || userToDelete.role === "asesor";
+    if (isFreelancerOrAsesor) {
+      const hasSales = (data.sales || []).some(s => Number(s.asesorId) === Number(userToDelete.id));
+      if (hasSales) {
+        setIsSaving(true);
+        try {
+          await updateUser(userToDelete.id, { status: "inactive" });
+          setErrorMessage("No se puede eliminar un usuario con ventas registradas. El usuario ha sido desactivado automáticamente retirando su acceso.");
+          setShowError(true);
+          setIsDeleteModalOpen(false);
+          setTimeout(() => setShowError(false), 5000);
+        } catch (err: any) {
+          setErrorMessage(err?.response?.data?.message || "Error al desactivar el usuario");
+          setShowError(true);
+          setTimeout(() => setShowError(false), 3000);
+        } finally {
+          setIsSaving(false);
+        }
+        return;
+      }
+    }
+
     setIsSaving(true);
     try {
       await deleteUser(userToDelete.id);
@@ -615,9 +638,9 @@ export default function Users() {
       )}
 
       {/* Header de Sección */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-primary flex items-center gap-3">
+          <h1 className="text-2xl sm:text-3xl font-bold text-primary flex items-center gap-3">
             <ShieldCheck className="text-accent w-8 h-8" /> Gestión de Usuarios
           </h1>
           <p className="text-gray-500 text-sm mt-1">
@@ -626,7 +649,7 @@ export default function Users() {
         </div>
         <Button
           onClick={() => handleOpenModal()}
-          className="shadow-lg shadow-primary/20"
+          className="shadow-lg shadow-primary/20 w-full sm:w-auto justify-center"
         >
           <Plus size={18} /> Nuevo Usuario
         </Button>
@@ -634,10 +657,10 @@ export default function Users() {
 
 
 
-      <div className="flex gap-2 border-b border-gray-border">
+      <div className="flex w-full sm:w-auto overflow-x-auto border-b border-gray-border scrollbar-none">
         <button
           onClick={() => setActiveTab("users")}
-          className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${activeTab === "users" ? "border-primary text-primary" : "border-transparent text-gray-500 hover:text-primary"}`}
+          className={`flex-1 sm:flex-initial text-center whitespace-nowrap px-4 py-2 text-sm font-medium transition-colors border-b-2 ${activeTab === "users" ? "border-primary text-primary" : "border-transparent text-gray-500 hover:text-primary"}`}
         >
           Lista de Usuarios
         </button>
@@ -647,7 +670,7 @@ export default function Users() {
             setEditingRole('asesor');
             setEditingUserPermissions(data.config.rolePermissions.asesor);
           }}
-          className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${activeTab === "permissions" ? "border-primary text-primary" : "border-transparent text-gray-500 hover:text-primary"}`}
+          className={`flex-1 sm:flex-initial text-center whitespace-nowrap px-4 py-2 text-sm font-medium transition-colors border-b-2 ${activeTab === "permissions" ? "border-primary text-primary" : "border-transparent text-gray-500 hover:text-primary"}`}
         >
           Permisos por Rol
         </button>
@@ -657,12 +680,12 @@ export default function Users() {
         <Card className="animate-fade-in">
           <CardHeader
             actions={
-              <div className="flex gap-3 items-center flex-wrap">
-                <div className="relative">
+              <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center flex-wrap w-full sm:w-auto">
+                <div className="relative w-full sm:w-72">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                   <Input 
                     placeholder="Buscar por nombre, doc o correo..." 
-                    className="pl-10 pr-9 w-72"
+                    className="pl-10 pr-9 w-full"
                     value={searchTerm}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
                   />
@@ -675,7 +698,7 @@ export default function Users() {
                 <select
                   value={filterRole}
                   onChange={(e) => setFilterRole(e.target.value)}
-                  className="text-sm border border-gray-border rounded-lg px-3 py-2 bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="text-sm border border-gray-border rounded-lg px-3 py-2 bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/20 w-full sm:w-auto"
                 >
                   <option value="all">Todos los Roles</option>
                   <option value="admin">Admins</option>
@@ -687,7 +710,8 @@ export default function Users() {
           >
             Personal de la Agencia
           </CardHeader>
-          <Table
+          <div className="overflow-x-auto w-full">
+            <Table
             headers={[
               { key: 'id', label: '#' },
               { key: 'name', label: 'Usuario' },
@@ -813,6 +837,7 @@ export default function Users() {
               </TableRow>
             ))}
           </Table>
+        </div>
 
           <div className="p-4 bg-gray-50/30 border-t border-gray-border flex items-center justify-between">
             <span className="text-xs text-gray-500">
@@ -930,7 +955,7 @@ export default function Users() {
           onChange={(avatar) => setFormData({ ...formData, avatar })}
         />
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField label="Nombres" error={errors.firstName}>
             <Input
               maxLength={40}

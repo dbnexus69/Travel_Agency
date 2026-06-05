@@ -22,7 +22,7 @@ interface CardHeaderProps {
 
 export function CardHeader({ children, actions, className = '' }: CardHeaderProps) {
   return (
-    <div className={`flex items-center justify-between p-4 border-b border-gray-border ${className}`}>
+    <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 border-b border-gray-border ${className}`}>
       <div className="flex-1">{children}</div>
       {actions}
     </div>

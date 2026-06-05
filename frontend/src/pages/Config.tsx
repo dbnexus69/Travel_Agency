@@ -284,8 +284,8 @@ export default function Config() {
         {/* Left internal Sidebar: catalog selection */}
         <div className="lg:col-span-1 space-y-2">
           <div className="bg-white border border-gray-border rounded-xl p-3 shadow-sm">
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-3">Módulos Catálogos</p>
-            <div className="space-y-1">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2 lg:mb-3 hidden lg:block">Módulos Catálogos</p>
+            <div className="flex flex-row overflow-x-auto lg:flex-col gap-1.5 lg:gap-0 lg:space-y-1 pb-1 lg:pb-0 scrollbar-none">
               {SECTIONS.map(section => {
                 const isActive = currentSection === section.id;
                 const count = (data.config[section.id as keyof ConfigData] as any[])?.length || 0;
@@ -296,7 +296,7 @@ export default function Config() {
                       setCurrentSection(section.id);
                       setSearchTerm('');
                     }}
-                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold transition-all ${
+                    className={`shrink-0 lg:w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all ${
                       isActive
                         ? 'bg-primary text-white shadow-md shadow-primary/10'
                         : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
@@ -388,52 +388,54 @@ export default function Config() {
                     setViewingPackage={setViewingPackage}
                   />
                 ) : (
-                  <Table headers={getHeaders(currentSection)}>
-                    {filteredData.map((item: any) => {
-                      const isOptimistic = isOptimisticId(item);
-                      return (
-                        <TableRow key={item.id}>
-                          <TableCell className="font-semibold text-gray-700">
-                            {item.id}
-                          </TableCell>
-                          {getRow(item, currentSection).map((val, i) => (
-                            <TableCell key={i}>{val}</TableCell>
-                          ))}
-                          <TableCell>
-                            <div className="flex gap-2">
-                              {currentSection === 'packages' && (
+                  <div className="overflow-x-auto w-full">
+                    <Table headers={getHeaders(currentSection)}>
+                      {filteredData.map((item: any) => {
+                        const isOptimistic = isOptimisticId(item);
+                        return (
+                          <TableRow key={item.id}>
+                            <TableCell className="font-semibold text-gray-700">
+                              {item.id}
+                            </TableCell>
+                            {getRow(item, currentSection).map((val, i) => (
+                              <TableCell key={i}>{val}</TableCell>
+                            ))}
+                            <TableCell>
+                              <div className="flex gap-2">
+                                {currentSection === 'packages' && (
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    onClick={() => setViewingPackage(item)} 
+                                    title="Ver Detalle"
+                                    disabled={isOptimistic}
+                                  >
+                                    <Eye size={13} />
+                                  </Button>
+                                )}
                                 <Button 
                                   variant="outline" 
                                   size="sm" 
-                                  onClick={() => setViewingPackage(item)} 
-                                  title="Ver Detalle"
+                                  onClick={() => handleOpenModal(item)}
                                   disabled={isOptimistic}
                                 >
-                                  <Eye size={13} />
+                                  <Pencil size={13} />
                                 </Button>
-                              )}
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                onClick={() => handleOpenModal(item)}
-                                disabled={isOptimistic}
-                              >
-                                <Pencil size={13} />
-                              </Button>
-                              <Button 
-                                variant="danger" 
-                                size="sm" 
-                                onClick={() => handleDelete(item.id)}
-                                disabled={isOptimistic}
-                              >
-                                <Trash2 size={13} />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </Table>
+                                <Button 
+                                  variant="danger" 
+                                  size="sm" 
+                                  onClick={() => handleDelete(item.id)}
+                                  disabled={isOptimistic}
+                                >
+                                  <Trash2 size={13} />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </Table>
+                  </div>
                 )
               )}
             </CardBody>

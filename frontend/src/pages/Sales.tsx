@@ -23,6 +23,7 @@ import { usePermissions } from "../context/PermissionsContext";
 import { formatCurrency, formatDate } from "../utils/formatters";
 import { buildAirportMap } from "../utils/airportInfo";
 import { Sale } from "../types";
+import { DatePicker } from "../components/sales/forms/TicketForm";
 import NewSaleWizard from "../components/sales/NewSaleWizard";
 import ProductDetailsModal from "../components/sales/ProductDetailsModal";
 import SaleDetailModal from "../components/sales/SaleDetailModal";
@@ -421,12 +422,12 @@ export default function Sales() {
           <Card className="animate-fade-in">
             <CardHeader
               actions={
-                <div className="flex gap-3 items-center flex-wrap">
-                  <div className="relative">
+                <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center flex-wrap w-full sm:w-auto">
+                  <div className="relative w-full sm:w-72">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                     <input 
                       placeholder="Buscar por cliente, asesor, comisionista..." 
-                      className="text-sm border border-gray-border rounded-lg pl-10 pr-9 py-2 bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/20 w-72"
+                      className="text-sm border border-gray-border rounded-lg pl-10 pr-9 py-2 bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/20 w-full"
                       value={searchTerm}
                       onChange={e => setSearchTerm(e.target.value)}
                     />
@@ -439,7 +440,7 @@ export default function Sales() {
                   <select
                     value={statusFilter}
                     onChange={e => setStatusFilter(e.target.value as any)}
-                    className="text-sm border border-gray-border rounded-lg px-3 py-2 bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className="text-sm border border-gray-border rounded-lg px-3 py-2 bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/20 w-full sm:w-auto"
                   >
                     <option value="all">Todos los estados</option>
                     <option value="pagado">Finalizado</option>
@@ -447,33 +448,41 @@ export default function Sales() {
                     <option value="credito">En Crédito</option>
                     <option value="anulado">Anulado</option>
                   </select>
-                  <div className="flex items-center gap-1.5 border border-gray-border rounded-lg px-2 py-1 bg-white text-xs text-gray-500">
-                    <span className="font-semibold text-gray-400">Desde:</span>
-                    <input
-                      type="date"
-                      value={startDate}
-                      onChange={e => setStartDate(e.target.value)}
-                      className="bg-transparent focus:outline-none text-gray-600"
-                    />
-                    <span className="font-semibold text-gray-400 ml-1">Hasta:</span>
-                    <input
-                      type="date"
-                      value={endDate}
-                      onChange={e => setEndDate(e.target.value)}
-                      className="bg-transparent focus:outline-none text-gray-600"
-                    />
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                      <span className="text-xs font-semibold text-gray-400 whitespace-nowrap">Desde:</span>
+                      <div className="w-full sm:w-36">
+                        <DatePicker
+                          value={startDate}
+                          onChange={setStartDate}
+                          fieldName="Fecha Inicial"
+                          popoverDirection="down"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                      <span className="text-xs font-semibold text-gray-400 whitespace-nowrap">Hasta:</span>
+                      <div className="w-full sm:w-36">
+                        <DatePicker
+                          value={endDate}
+                          onChange={setEndDate}
+                          fieldName="Fecha Final"
+                          popoverDirection="down"
+                        />
+                      </div>
+                    </div>
                     {(startDate || endDate) && (
                       <button 
                         onClick={() => { setStartDate(""); setEndDate(""); }}
-                        className="text-red-400 hover:text-red-600 ml-1 p-0.5 rounded bg-red-50"
+                        className="text-red-400 hover:text-red-600 p-2 rounded bg-red-50 hover:bg-red-100 flex items-center justify-center h-[34px] w-[34px] shrink-0 self-end sm:self-auto border border-red-100"
                         title="Limpiar fechas"
                       >
-                        <X size={12} />
+                        <X size={14} />
                       </button>
                     )}
                   </div>
                   {canCreate("sales") && (
-                    <Button onClick={handleOpenNewSale}>
+                    <Button onClick={handleOpenNewSale} className="w-full sm:w-auto justify-center">
                       <Plus size={18} />
                       Nueva Venta
                     </Button>
@@ -541,6 +550,7 @@ export default function Sales() {
         onClose={() => setIsWizardOpen(false)}
         title="Nueva Venta"
         size="xl"
+        contentClassName="!p-0 flex flex-col h-[75vh] sm:h-[80vh] md:h-[85vh]"
       >
         <NewSaleWizard
           onClose={() => setIsWizardOpen(false)}

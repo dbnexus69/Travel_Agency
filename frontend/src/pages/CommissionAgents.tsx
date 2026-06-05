@@ -215,21 +215,22 @@ export default function CommissionAgents() {
       <div className="absolute top-1/2 -left-20 w-80 h-80 bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
 
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 animate-fade-in relative z-10">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-in relative z-10">
         <div>
-          <h1 className="text-4xl font-black text-primary tracking-tight flex items-center gap-4">
-            <div className="p-3 bg-primary rounded-2xl shadow-xl shadow-primary/20 text-white">
-              <Coins size={32} />
+          <h1 className="text-2xl sm:text-4xl font-black text-primary tracking-tight flex items-center gap-3 sm:gap-4">
+            <div className="p-2.5 sm:p-3 bg-primary rounded-xl sm:rounded-2xl shadow-xl shadow-primary/20 text-white shrink-0">
+              <Coins size={24} className="sm:hidden" />
+              <Coins size={32} className="hidden sm:block" />
             </div>
             Comisionistas
           </h1>
-          <p className="text-gray-500 font-medium mt-2 max-w-lg">
+          <p className="text-gray-500 font-medium mt-1 sm:mt-2 max-w-lg text-xs sm:text-sm">
             Sistema avanzado de gestión de aliados, control de liquidaciones y seguimiento financiero.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="w-full sm:w-auto">
           {canCreate('commissions') && (
-            <Button onClick={() => handleOpenModal()} className="h-14 px-8 bg-accent hover:bg-accent/90 text-white shadow-lg shadow-accent/20 rounded-2xl transition-all hover:scale-105 active:scale-95 font-bold">
+            <Button onClick={() => handleOpenModal()} className="w-full sm:w-auto h-12 sm:h-14 px-6 sm:px-8 bg-accent hover:bg-accent/90 text-white shadow-lg shadow-accent/20 rounded-xl sm:rounded-2xl transition-all hover:scale-105 active:scale-95 font-bold justify-center text-xs sm:text-sm">
               <Plus size={20} /> Registrar Aliado
             </Button>
           )}
@@ -240,7 +241,7 @@ export default function CommissionAgents() {
 
       {/* Tab Navigation */}
       <div className="flex flex-col gap-6 relative z-10">
-        <div className="flex gap-2 bg-white/50 backdrop-blur-sm p-1.5 rounded-2xl border border-gray-100 shadow-sm self-start">
+        <div className="flex flex-wrap sm:flex-nowrap gap-1.5 sm:gap-2 bg-white/50 backdrop-blur-sm p-1.5 rounded-2xl border border-gray-100 shadow-sm w-full sm:w-auto self-start">
           {TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -248,13 +249,13 @@ export default function CommissionAgents() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 ${
+                className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 ${
                   isActive
                     ? "bg-primary text-white shadow-xl shadow-primary/20 scale-105"
                     : "text-gray-500 hover:bg-white hover:text-primary"
                 }`}
               >
-                <Icon size={18} className={isActive ? "animate-pulse" : ""} />
+                <Icon size={16} className={isActive ? "animate-pulse" : ""} />
                 {tab.label}
               </button>
             );
@@ -398,18 +399,18 @@ export default function CommissionAgents() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {filteredAgents.filter((a: any) => a.accumulated >= 50000).map((agent: any) => (
                       <div key={agent.id} className="relative group p-6 bg-gradient-to-br from-amber-50 to-white border border-amber-100 rounded-3xl hover:shadow-xl transition-all duration-300">
-                        <div className="flex items-center justify-between mb-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                           <div className="flex items-center gap-3">
                              <div className="w-10 h-10 bg-amber-500 text-white rounded-xl flex items-center justify-center font-bold">
                                {agent.name.charAt(0)}
                              </div>
                              <span className="font-bold text-gray-800">{agent.name}</span>
                           </div>
-                          <span className="text-[10px] font-black text-amber-600 bg-white px-2 py-1 rounded-lg border border-amber-100 uppercase">Saldo Pendiente</span>
+                          <span className="text-[10px] font-black text-amber-600 bg-white px-2 py-1 rounded-lg border border-amber-100 uppercase self-start sm:self-auto">Saldo Pendiente</span>
                         </div>
-                        <div className="flex items-center justify-between">
-                          <p className="text-3xl font-black text-gray-800">{formatCurrency(agent.accumulated)}</p>
-                          <Button onClick={() => openSettleModal(agent)} className="bg-amber-500 hover:bg-amber-600 text-white px-6 rounded-xl font-bold h-12">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <p className="text-2xl sm:text-3xl font-black text-gray-800">{formatCurrency(agent.accumulated)}</p>
+                          <Button onClick={() => openSettleModal(agent)} className="bg-amber-500 hover:bg-amber-600 text-white px-6 rounded-xl font-bold h-12 w-full sm:w-auto justify-center">
                             Pagar Ahora
                           </Button>
                         </div>
@@ -472,8 +473,8 @@ export default function CommissionAgents() {
                 </div>
               </CardHeader>
               <div className="p-0">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
+                <div className="overflow-x-auto w-full">
+                  <table className="w-full text-left border-collapse min-w-[750px]">
                     <thead>
                       <tr className="bg-gray-50/30">
                         <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100">Fecha</th>

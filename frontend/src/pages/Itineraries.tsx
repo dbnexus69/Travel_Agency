@@ -60,6 +60,16 @@ export default function Itineraries() {
   const flightsIda = data.flights.filter(f => f.type === 'ida');
   const flightsRegreso = data.flights.filter(f => f.type === 'regreso');
 
+  const currentMonthFlights = useMemo(() => {
+    return data.flights.filter(f => {
+      const parts = f.date.split('-');
+      if (parts.length < 3) return false;
+      const y = Number(parts[0]);
+      const m = Number(parts[1]);
+      return y === currentYear && m === currentMonth + 1 && f.type === calendarTab;
+    }).sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
+  }, [data.flights, currentMonth, currentYear, calendarTab]);
+
   const getDaysInMonth = (month: number, year: number) => new Date(year, month + 1, 0).getDate();
   const getFirstDayOfMonth = (month: number, year: number) => new Date(year, month, 1).getDay();
 
@@ -223,30 +233,30 @@ export default function Itineraries() {
       {activeTab === 'calendar' ? (
         <div className="animate-fade-in space-y-6">
           {/* Sub-navegación para el Calendario */}
-          <div className="flex bg-gray-100/50 p-1 rounded-xl w-fit mx-auto border border-gray-border">
+          <div className="flex bg-gray-100/50 p-1 rounded-xl w-full sm:w-fit mx-auto border border-gray-border">
             <button
               onClick={() => setCalendarTab('ida')}
-              className={`flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition-all ${calendarTab === 'ida' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-blue-400'}`}
+              className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all ${calendarTab === 'ida' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-blue-400'}`}
             >
-              <PlaneTakeoff size={16} /> Vuelos de Ida ({flightsIda.length})
+              <PlaneTakeoff size={15} /> Vuelos de Ida ({flightsIda.length})
             </button>
             <button
               onClick={() => setCalendarTab('regreso')}
-              className={`flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition-all ${calendarTab === 'regreso' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-indigo-400'}`}
+              className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all ${calendarTab === 'regreso' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-indigo-400'}`}
             >
-              <PlaneLanding size={16} /> Vuelos de Regreso ({flightsRegreso.length})
+              <PlaneLanding size={15} /> Vuelos de Regreso ({flightsRegreso.length})
             </button>
           </div>
 
           {/* Controles del Calendario */}
           <Card className="overflow-hidden border-none shadow-lg">
-            <div className="flex items-center justify-between p-4 bg-white border-b border-gray-border">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 bg-white border-b border-gray-border">
+              <div className="flex flex-wrap items-center justify-between sm:justify-start gap-3 sm:gap-4">
+                <div className="flex items-center gap-1">
                   <select
                     value={currentMonth}
                     onChange={(e) => setCurrentMonth(Number(e.target.value))}
-                    className="text-lg font-bold text-primary bg-transparent outline-none cursor-pointer hover:bg-gray-100 rounded p-1"
+                    className="text-base sm:text-lg font-bold text-primary bg-transparent outline-none cursor-pointer hover:bg-gray-100 rounded p-1"
                   >
                     {MONTHS.map((m, i) => (
                       <option key={m} value={i}>{m}</option>
@@ -255,7 +265,7 @@ export default function Itineraries() {
                   <select
                     value={currentYear}
                     onChange={(e) => setCurrentYear(Number(e.target.value))}
-                    className="text-lg font-bold text-primary bg-transparent outline-none cursor-pointer hover:bg-gray-100 rounded p-1"
+                    className="text-base sm:text-lg font-bold text-primary bg-transparent outline-none cursor-pointer hover:bg-gray-100 rounded p-1"
                   >
                     {Array.from({ length: 11 }, (_, i) => new Date().getFullYear() - 3 + i).map(y => (
                       <option key={y} value={y}>{y}</option>
@@ -274,7 +284,7 @@ export default function Itineraries() {
                   </button>
                 </div>
               </div>
-              <div className="flex items-center gap-4 text-xs font-medium text-gray-500">
+              <div className="flex items-center justify-end text-xs font-medium text-gray-500">
                 <div className="flex items-center gap-1.5">
                   <div className={`w-3 h-3 rounded-full ${calendarTab === 'ida' ? 'bg-blue-500' : 'bg-indigo-600'}`}></div> 
                   Mostrando {calendarTab === 'ida' ? 'Salidas' : 'Regresos'}
@@ -283,67 +293,117 @@ export default function Itineraries() {
             </div>
 
             <CardBody className="p-0">
-              <div className="grid grid-cols-7 bg-gray-50/50">
-                {DAYS.map(day => (
-                  <div key={day} className="py-3 text-center text-[10px] font-bold text-gray-400 uppercase tracking-widest border-r border-gray-border/50 last:border-r-0">
-                    {day}
-                  </div>
-                ))}
-              </div>
-              <div className="grid grid-cols-7 border-t border-gray-border/50">
-                {calendarDays.map((item, i) => {
-                  const isOtherMonth = item.month !== currentMonth;
-                  const dayKey = getDayKey(item.day, item.month, item.year);
-                  const isExpanded = expandedDays.has(dayKey);
-                  const isToday = dayKey === todayStr;
-                  const dayFlights = item.flights;
-                  const displayFlights = isExpanded ? dayFlights : dayFlights.slice(0, 3);
-                  
-                  return (
-                    <div
-                      key={i}
-                      className={`min-h-[140px] p-2 border-r border-b border-gray-border/50 relative group transition-colors ${isOtherMonth ? 'bg-gray-50/30' : 'bg-white hover:bg-primary/[0.02]'}`}
-                    >
-                      <div className={`text-xs font-bold mb-2 flex items-center justify-center w-7 h-7 rounded-full transition-all ${isToday ? 'bg-primary text-white shadow-lg shadow-primary/20 scale-110' : isOtherMonth ? 'text-gray-300' : 'text-gray-500'}`}>
-                        {item.day}
-                      </div>
-
-                      <div className="space-y-1">
-                        {displayFlights.map(flight => {
-                          const client = data.clients.find(c => c.name === flight.passenger);
-                          const docInfo = client ? `\n${client.docType}: ${client.docNumber}` : '';
-                          return (
-                          <div
-                            key={flight.id}
-                            title={`${flight.passenger}${docInfo}\nHora: ${flight.time}\nCheck-in: ${flight.checkin}`}
-                            className={`px-2 py-1 rounded-md text-[10px] font-semibold border flex items-center gap-1 shadow-sm transition-transform hover:scale-[1.02] ${
-                              flight.type === 'ida' 
-                                ? 'bg-blue-50 border-blue-100 text-blue-700' 
-                                : 'bg-indigo-50 border-indigo-100 text-indigo-800'
-                            }`}
-                          >
-                            {flight.type === 'ida' ? <PlaneTakeoff size={10} className="shrink-0" /> : <PlaneLanding size={10} className="shrink-0" />}
-                            <span className="truncate flex-1">{flight.passenger}</span>
-                            <span className="opacity-60 shrink-0">{flight.time}</span>
-                            <span title={flight.checkin === 'realizado' ? 'Check-in realizado' : 'Check-in pendiente'}
-                              className={`w-1.5 h-1.5 rounded-full shrink-0 ${flight.checkin === 'realizado' ? 'bg-green-500' : 'bg-yellow-400'}`}
-                            />
-                          </div>
-                          );
-                        })}
-                      </div>
-
-                      {dayFlights.length > 3 && (
-                        <button
-                          onClick={() => toggleDay(dayKey)}
-                          className="mt-2 w-full py-1 text-[9px] font-bold text-accent uppercase tracking-tighter hover:bg-accent/5 rounded transition-colors border border-accent/10"
-                        >
-                          {isExpanded ? 'Ver menos' : `+${dayFlights.length - 3} más vuelos`}
-                        </button>
-                      )}
+              {/* Desktop Calendar Grid */}
+              <div className="hidden sm:block">
+                <div className="grid grid-cols-7 bg-gray-50/50">
+                  {DAYS.map(day => (
+                    <div key={day} className="py-3 text-center text-[10px] font-bold text-gray-400 uppercase tracking-widest border-r border-gray-border/50 last:border-r-0">
+                      {day}
                     </div>
-                  );
-                })}
+                  ))}
+                </div>
+                <div className="grid grid-cols-7 border-t border-gray-border/50">
+                  {calendarDays.map((item, i) => {
+                    const isOtherMonth = item.month !== currentMonth;
+                    const dayKey = getDayKey(item.day, item.month, item.year);
+                    const isExpanded = expandedDays.has(dayKey);
+                    const isToday = dayKey === todayStr;
+                    const dayFlights = item.flights;
+                    const displayFlights = isExpanded ? dayFlights : dayFlights.slice(0, 3);
+                    
+                    return (
+                      <div
+                        key={i}
+                        className={`min-h-[140px] p-2 border-r border-b border-gray-border/50 relative group transition-colors ${isOtherMonth ? 'bg-gray-50/30' : 'bg-white hover:bg-primary/[0.02]'}`}
+                      >
+                        <div className={`text-xs font-bold mb-2 flex items-center justify-center w-7 h-7 rounded-full transition-all ${isToday ? 'bg-primary text-white shadow-lg shadow-primary/20 scale-110' : isOtherMonth ? 'text-gray-300' : 'text-gray-500'}`}>
+                          {item.day}
+                        </div>
+
+                        <div className="space-y-1">
+                          {displayFlights.map(flight => {
+                            const client = data.clients.find(c => c.name === flight.passenger);
+                            const docInfo = client ? `\n${client.docType}: ${client.docNumber}` : '';
+                            return (
+                            <div
+                              key={flight.id}
+                              title={`${flight.passenger}${docInfo}\nHora: ${flight.time}\nCheck-in: ${flight.checkin}`}
+                              className={`px-2 py-1 rounded-md text-[10px] font-semibold border flex items-center gap-1 shadow-sm transition-transform hover:scale-[1.02] ${
+                                flight.type === 'ida' 
+                                  ? 'bg-blue-50 border-blue-100 text-blue-700' 
+                                  : 'bg-indigo-50 border-indigo-100 text-indigo-800'
+                              }`}
+                            >
+                              {flight.type === 'ida' ? <PlaneTakeoff size={10} className="shrink-0" /> : <PlaneLanding size={10} className="shrink-0" />}
+                              <span className="truncate flex-1">{flight.passenger}</span>
+                              <span className="opacity-60 shrink-0">{flight.time}</span>
+                              <span title={flight.checkin === 'realizado' ? 'Check-in realizado' : 'Check-in pendiente'}
+                                className={`w-1.5 h-1.5 rounded-full shrink-0 ${flight.checkin === 'realizado' ? 'bg-green-500' : 'bg-yellow-400'}`}
+                              />
+                            </div>
+                            );
+                          })}
+                        </div>
+
+                        {dayFlights.length > 3 && (
+                          <button
+                            onClick={() => toggleDay(dayKey)}
+                            className="mt-2 w-full py-1 text-[9px] font-bold text-accent uppercase tracking-tighter hover:bg-accent/5 rounded transition-colors border border-accent/10"
+                          >
+                            {isExpanded ? 'Ver menos' : `+${dayFlights.length - 3} más vuelos`}
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Mobile List View */}
+              <div className="block sm:hidden p-4 space-y-4 bg-gray-50/30">
+                {currentMonthFlights.length > 0 ? (
+                  <div className="space-y-3">
+                    {currentMonthFlights.map(flight => {
+                      const client = data.clients.find(c => c.name === flight.passenger);
+                      const parts = flight.date.split('-');
+                      const dayStr = parts[2] || '';
+                      const dayOfWeekIndex = new Date(flight.date + 'T00:00:00').getDay();
+                      const dayOfWeek = DAYS[isNaN(dayOfWeekIndex) ? 0 : dayOfWeekIndex];
+                      
+                      return (
+                        <div key={flight.id} className="p-3 bg-white rounded-xl border border-gray-100 shadow-sm flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="flex flex-col items-center justify-center bg-primary/5 text-primary rounded-lg w-10 h-10 shrink-0 font-bold">
+                              <span className="text-[8px] uppercase font-semibold text-gray-400 leading-none">{dayOfWeek}</span>
+                              <span className="text-sm font-heading leading-tight mt-0.5">{Number(dayStr) || dayStr}</span>
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs font-bold text-gray-850 truncate">{flight.passenger}</span>
+                                {client && (
+                                  <span className="text-[8px] bg-gray-100 text-gray-500 px-1 py-0.2 rounded shrink-0 border border-gray-150">
+                                    {client.docNumber}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[10px] text-gray-500 truncate mt-0.5">{flight.route} · {flight.time} · {flight.airline}</p>
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-end gap-1 shrink-0">
+                            <span title={flight.checkin === 'realizado' ? 'Check-in realizado' : 'Check-in pendiente'}
+                              className={`w-2 h-2 rounded-full ${flight.checkin === 'realizado' ? 'bg-green-500' : 'bg-yellow-400'}`}
+                            />
+                            <span className="text-[9px] font-semibold text-gray-400 uppercase tracking-wider">{flight.checkin === 'realizado' ? 'Listo' : 'Pendiente'}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-400">
+                    <p className="text-xs">No hay vuelos programados para este mes.</p>
+                  </div>
+                )}
               </div>
             </CardBody>
           </Card>
@@ -360,7 +420,7 @@ export default function Itineraries() {
                     <input
                       type="text"
                       placeholder="Buscar pasajero o ruta..."
-                      className="pl-9 pr-10 py-1.5 text-sm bg-gray-50 border border-gray-border rounded-lg w-64 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      className="pl-9 pr-10 py-1.5 text-sm bg-gray-50 border border-gray-border rounded-lg w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-primary/20"
                       value={checkinSearch}
                       onChange={e => setCheckinSearch(e.target.value)}
                     />
@@ -384,14 +444,14 @@ export default function Itineraries() {
                         const client = data.clients.find(c => c.name === flight.passenger);
 
                         return (
-                          <div key={flight.id} className="p-4 flex items-center justify-between hover:bg-gray-50/50 transition-colors">
-                            <div className="flex items-center gap-4">
-                              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border ${isUrgente ? 'bg-red-50 border-red-100 text-red-500 animate-pulse' : 'bg-blue-50 border-blue-100 text-blue-500'}`}>
+                          <div key={flight.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-gray-50/50 transition-colors">
+                            <div className="flex items-start gap-4">
+                              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border shrink-0 ${isUrgente ? 'bg-red-50 border-red-100 text-red-500 animate-pulse' : 'bg-blue-50 border-blue-100 text-blue-500'}`}>
                                 <Plane size={24} className={flight.type === 'regreso' ? 'rotate-180' : ''} />
                               </div>
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <span className="font-bold text-primary">{flight.passenger}</span>
+                              <div className="min-w-0">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span className="font-bold text-primary truncate">{flight.passenger}</span>
                                   {client && (
                                     <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded border border-gray-200">
                                       {client.docType}: {client.docNumber}
@@ -399,7 +459,7 @@ export default function Itineraries() {
                                   )}
                                   {isUrgente && <Badge variant="danger" className="text-[10px] py-0">URGENTE</Badge>}
                                 </div>
-                                <div className="flex items-center gap-3 text-xs text-gray-500 mt-1">
+                                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 mt-1">
                                   <span className="flex items-center gap-1"><Filter size={12} /> {flight.route}</span>
                                   <span className="flex items-center gap-1"><Clock size={12} /> {formatDate(flight.date)} - {flight.time}</span>
                                   <span className="font-medium text-primary/60">{flight.airline}</span>
@@ -410,7 +470,7 @@ export default function Itineraries() {
                               <Button 
                                 size="sm" 
                                 onClick={() => handleMarkCheckin(flight.id, flight.passenger)}
-                                className="shadow-md shadow-primary/10 whitespace-nowrap"
+                                className="shadow-md shadow-primary/10 w-full sm:w-auto justify-center"
                               >
                                 <UserCheck size={16} /> Realizar Check-in
                               </Button>

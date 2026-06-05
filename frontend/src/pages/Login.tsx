@@ -10,7 +10,7 @@ export default function Login() {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
+
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -63,7 +63,7 @@ export default function Login() {
     e.preventDefault();
     setIsLoading(true);
 
-    const result = await login(email, password, rememberMe);
+    const result = await login(email, password, false);
     
     setIsLoading(false);
 
@@ -241,17 +241,7 @@ export default function Login() {
                 </div>
               </FormField>
 
-              <div className="flex items-center justify-between">
-                <label className="flex items-center gap-2 cursor-pointer group">
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={e => setRememberMe(e.target.checked)}
-                    disabled={isLoading}
-                    className="w-4 h-4 text-[#00828a] border-gray-300 rounded focus:ring-[#00828a]/30 transition-all bg-slate-50"
-                  />
-                  <span className="text-sm text-gray-600 group-hover:text-[#00828a] transition-colors font-medium">Recordarme</span>
-                </label>
+              <div className="flex items-center justify-end">
                 <button 
                   type="button" 
                   onClick={() => { setView('forgot'); setErrorToastMessage(''); setResetEmail(email); }}
