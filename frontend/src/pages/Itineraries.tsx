@@ -42,7 +42,7 @@ export default function Itineraries() {
 
   // Estadísticas y filtros
   const pendingCheckins = useMemo(() => {
-    return data.flights.filter(f => f.checkin === 'pendiente' && f.source !== 'plan').sort((a, b) => a.date.localeCompare(b.date));
+    return data.flights.filter(f => f.checkin === 'pendiente').sort((a, b) => a.date.localeCompare(b.date));
   }, [data.flights]);
 
   const filteredPending = useMemo(() => {
@@ -460,8 +460,12 @@ export default function Itineraries() {
                         return (
                           <div key={flight.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-gray-50/50 transition-colors">
                             <div className="flex items-start gap-4">
-                              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border shrink-0 ${isUrgente ? 'bg-red-50 border-red-100 text-red-500 animate-pulse' : 'bg-blue-50 border-blue-100 text-blue-500'}`}>
-                                <Plane size={24} className={flight.type === 'regreso' ? 'rotate-180' : ''} />
+                              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border shrink-0 ${isUrgente ? 'bg-red-50 border-red-100 text-red-500 animate-pulse' : flight.source === 'plan' ? 'bg-emerald-50 border-emerald-100 text-emerald-500' : 'bg-blue-50 border-blue-100 text-blue-500'}`}>
+                                {flight.source === 'plan' ? (
+                                  <Package size={24} />
+                                ) : (
+                                  <Plane size={24} className={flight.type === 'regreso' ? 'rotate-180' : ''} />
+                                )}
                               </div>
                               <div className="min-w-0">
                                 <div className="flex flex-wrap items-center gap-2">
@@ -472,6 +476,11 @@ export default function Itineraries() {
                                     </span>
                                   )}
                                   {isUrgente && <Badge variant="danger" className="text-[10px] py-0">URGENTE</Badge>}
+                                  {flight.source === 'plan' && flight.additionalPassengers && flight.additionalPassengers > 0 ? (
+                                    <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                                      +{flight.additionalPassengers} acompañantes
+                                    </span>
+                                  ) : null}
                                 </div>
                                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 mt-1">
                                   <span className="flex items-center gap-1"><Filter size={12} /> {flight.route}</span>
@@ -485,7 +494,7 @@ export default function Itineraries() {
                                 </div>
                               </div>
                             </div>
-                            {canEditItinerary('itineraries') && flight.source !== 'plan' && (
+                            {canEditItinerary('itineraries') && (
                               <Button 
                                 size="sm" 
                                 onClick={() => handleMarkCheckin(flight.id, flight.passenger)}

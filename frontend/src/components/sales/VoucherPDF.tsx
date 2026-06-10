@@ -159,13 +159,14 @@ export const VoucherPDF = forwardRef<HTMLDivElement, VoucherPDFProps>(({ sale, a
         {/* ══ HEADER ══════════════════════════════════════════════════ */}
         <div className="v-header">
           <div className="v-logo-block">
-            <img className="v-logo-img" src="/itea logo.png" alt="iTea Logo" crossOrigin="anonymous" />
+            <img className="v-logo-img" src="/samtur_nuevo.png.png" alt="Samtur Logo" crossOrigin="anonymous" />
           </div>
           <div className="v-header-right">
-            <strong>iTea Travel Agency</strong><br />
-            MEDELLÍN, ANTIOQUIA<br />
-            Teléfono: +57 (312) 875 15 89<br />
-            <strong>Fecha de Impresión:</strong> {currentDate}
+            <strong>Samtur Travel Agency</strong><br />
+            Nit 902062715- 5<br />
+            Dirección: calle 18 # 18 143 mall estación de servicios medrano<br />
+            Teléfono: 3126339919<br />
+            <strong>Fecha de Emision:</strong> {currentDate}
           </div>
         </div>
 
@@ -552,7 +553,7 @@ export const VoucherPDF = forwardRef<HTMLDivElement, VoucherPDFProps>(({ sale, a
         <div className="v-payment">
           <div className="v-payment-col">
             <h4>Información de Pago</h4>
-            <div className="v-payment-row"><label>Agencia:</label><span>iTea</span></div>
+            <div className="v-payment-row"><label>Agencia:</label><span>Samtur</span></div>
             <div className="v-payment-row">
               <label>Forma de Pago:</label>
               <span>
@@ -584,23 +585,23 @@ export const VoucherPDF = forwardRef<HTMLDivElement, VoucherPDFProps>(({ sale, a
           <h4>Términos y Condiciones</h4>
           No olvide reconfirmar el horario de los vuelos y servicios entre 24 y 48 horas antes de la salida.
           Verifique que cuente con todos los documentos necesarios para viajar.<br /><br />
-          <strong>iTea</strong> agradece que haya elegido nuestros servicios y le desea un excelente viaje.<br /><br />
+          <strong>Samtur</strong> agradece que haya elegido nuestros servicios y le desea un excelente viaje.<br /><br />
           <strong>1.</strong> En vuelos nacionales, llegue como mínimo tres horas antes del vuelo para el chequeo y embarque.<br /><br />
           <strong>2.</strong> Todo pasajero deberá exhibir el documento de identidad pertinente ante la aerolínea y autoridades que lo requieran.
           <div className="v-company">
-            iTea Travel Agency &nbsp;|&nbsp; Carrera 65A 13-157, Aeropuerto Olaya Herrera, Medellín &nbsp;|&nbsp; info@itea.com.co
+            Samtur Travel Agency &nbsp;|&nbsp; calle 18 # 18 143 mall estación de servicios medrano &nbsp;|&nbsp; Comercial@samturtravel.com
           </div>
         </div>
 
         {/* ══ FOOTER ══════════════════════════════════════════════════ */}
         <div className="v-footer">
           <div>
-            <div className="v-footer-brand">i<span>T</span>ea</div>
+            <div className="v-footer-brand">Sam<span>T</span>ur</div>
             <div className="v-footer-tagline">Travel Agency</div>
           </div>
           <div className="v-footer-right">
             Voucher Electrónico — Orden #{sale.id}<br />
-            www.itea.com.co &nbsp;|&nbsp; info@itea.com.co<br />
+            Comercial@samturtravel.com<br />
             Impreso el {currentDate}
           </div>
         </div>

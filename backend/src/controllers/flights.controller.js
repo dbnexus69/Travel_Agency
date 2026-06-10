@@ -169,7 +169,7 @@ exports.list = async (req, res, next) => {
             date: formatLocalDate(depDate),
             time: formatLocalTime(depDate),
             type: 'ida',
-            checkin: 'pendiente',
+            checkin: p.checkinStatusIda || 'pendiente',
             flightNumber: p.nroVuelo || '',
             seat: null,
             reservationNumber: p.nroReserva || '',
@@ -193,7 +193,7 @@ exports.list = async (req, res, next) => {
             date: formatLocalDate(retDate),
             time: formatLocalTime(retDate),
             type: 'regreso',
-            checkin: 'pendiente',
+            checkin: p.checkinStatusRegreso || 'pendiente',
             flightNumber: p.nroVuelo || '',
             seat: null,
             reservationNumber: p.nroReserva || '',
@@ -242,6 +242,75 @@ exports.updateCheckin = async (req, res, next) => {
     const data = req.body;
     const file = req.file;
 
+    // Handle Packages (Planes)
+    if (id.startsWith('plan-ida-') || id.startsWith('plan-ret-')) {
+      const isIda = id.startsWith('plan-ida-');
+      const planId = id.replace('plan-ida-', '').replace('plan-ret-', '');
+
+      const plan = await prisma.prodPlanes.findUnique({
+        where: { id: planId },
+        include: {
+          detalleVenta: {
+            include: {
+              venta: {
+                include: {
+                  cliente: { include: { persona: true } }
+                }
+              }
+            }
+          }
+        }
+      });
+
+      if (!plan) return error(res, 'Paquete no encontrado', 404);
+
+      if (req.permissionScope === 'own' && plan.detalleVenta?.venta?.usuarioId !== req.user.id) {
+        return error(res, 'No tiene permiso para modificar este check-in', 403);
+      }
+
+      const updateData = isIda 
+        ? { checkinStatusIda: data.checkin || 'pendiente' }
+        : { checkinStatusRegreso: data.checkin || 'pendiente' };
+
+      await prisma.prodPlanes.update({
+        where: { id: planId },
+        data: updateData
+      });
+
+      // Send email if file attached
+      if (file) {
+        const emailService = require('../utils/emailService');
+        const email = plan.detalleVenta?.venta?.cliente?.persona?.email;
+        if (email) {
+          const pasajeroNombres = plan.detalleVenta?.venta?.cliente?.persona?.nombres || 'Cliente';
+          const ruta = plan.nombrePlan || 'Paquete';
+          await emailService.sendEmail({
+            to: email,
+            subject: `Su pase de abordar está listo - ${ruta}`,
+            html: `
+              <div style="font-family: sans-serif; padding: 20px;">
+                <h2>¡Hola ${pasajeroNombres}!</h2>
+                <p>Su check-in para el ${isIda ? 'vuelo de ida' : 'vuelo de regreso'} del paquete <strong>${ruta}</strong> ha sido realizado exitosamente.</p>
+                <p>Adjuntamos a este correo su pase de abordar.</p>
+                <p>¡Buen viaje!</p>
+                <br>
+                <p>Atentamente,<br>El equipo de iTea Travel</p>
+              </div>
+            `,
+            attachments: [
+              {
+                filename: file.originalname,
+                content: file.buffer
+              }
+            ]
+          });
+        }
+      }
+
+      return success(res, { checkinStatus: updateData.checkinStatusIda || updateData.checkinStatusRegreso });
+    }
+
+    // Handle Normal Flights (TramosVuelo)
     const tramo = await prisma.tramosVuelo.findUnique({
       where: { id },
       include: { 
@@ -250,13 +319,7 @@ exports.updateCheckin = async (req, res, next) => {
             detalleVenta: {
               include: {
                 venta: {
-                  include: {
-                    cliente: {
-                      include: {
-                        persona: true
-                      }
-                    }
-                  }
+                  include: { cliente: { include: { persona: true } } }
                 }
               }
             }
@@ -277,7 +340,6 @@ exports.updateCheckin = async (req, res, next) => {
       data: { checkinStatus: data.checkin || 'pendiente' }
     });
 
-    // Send email if a file was uploaded and we have the client's email
     if (file) {
       const emailService = require('../utils/emailService');
       const email = tramo.prodTiqueteria?.detalleVenta?.venta?.cliente?.persona?.email;

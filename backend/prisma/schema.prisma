@@ -635,6 +635,8 @@ model ProdPlanes {
   menoresCount     Int?               @map("menores_count")
   numeroConfirmacion String?          @map("numero_confirmacion")
   observaciones    String?
+  checkinStatusIda CheckinStatus?     @default(pendiente) @map("checkin_status_ida")
+  checkinStatusRegreso CheckinStatus? @default(pendiente) @map("checkin_status_regreso")
 
   @@map("prod_planes")
 }

@@ -1431,7 +1431,7 @@ exports.create = async (req, res, next) => {
               console.log(`[VOUCHER] Sending email to ${clientEmail} for ${handler.nombreServicio}...`);
               const result = await emailService.sendEmail({
                 to: clientEmail,
-                subject: `Tu voucher de ${handler.nombreServicio} - Curinoupel`,
+                subject: `Tu voucher de ${handler.nombreServicio} - iTea Travel`,
                 html: `
                   <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eaeaec; border-radius: 8px; overflow: hidden;">
                     <div style="background-color: #0f172a; padding: 20px; text-align: center;">
