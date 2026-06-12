@@ -290,6 +290,7 @@ export interface CheckInData {
   sendVoucher?: boolean;
   supplierName?: string;
   supplierCost?: number;
+  supplierPaymentMethod?: string;
   ta?: number;
 }
 
@@ -325,6 +326,7 @@ export interface SimCardData {
   sendVoucher?: boolean;
   supplierName?: string;
   supplierCost?: number;
+  supplierPaymentMethod?: string;
   ta?: number;
 }
 
@@ -342,6 +344,7 @@ export interface CarRentalData {
   sendVoucher?: boolean;
   supplierName?: string;
   supplierCost?: number;
+  supplierPaymentMethod?: string;
   ta?: number;
 }
 
