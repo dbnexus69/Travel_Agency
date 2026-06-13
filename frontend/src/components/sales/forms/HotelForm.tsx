@@ -132,9 +132,30 @@ export function HotelForm({ hotel, onChange, data, triggerError }: HotelFormProp
           {hotel.guests.map((guest, gIdx) => (
             <div key={gIdx} className="flex gap-2 items-start">
               <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-2">
-                <Input
+                <Combobox
                   value={guest.name}
-                  onChange={(e) => updateGuest(gIdx, { name: e.target.value })}
+                  onChange={(val) => {
+                    const client = (data?.clients || []).find(
+                      (c: any) =>
+                        (c.name === val || `${c.firstName} ${c.lastName || ""}`.trim() === val) &&
+                        c.status === "active"
+                    );
+                    if (client) {
+                      updateGuest(gIdx, {
+                        name: client.name || `${client.firstName} ${client.lastName || ""}`.trim(),
+                        docType: client.docType || guest.docType,
+                        docNumber: client.docNumber || guest.docNumber,
+                      });
+                    } else {
+                      updateGuest(gIdx, { name: val });
+                    }
+                  }}
+                  options={(data?.clients || [])
+                    .filter((c: any) => c.status === "active")
+                    .map((c: any) => ({
+                      value: c.name || `${c.firstName} ${c.lastName || ""}`.trim(),
+                      label: c.name || `${c.firstName} ${c.lastName || ""}`.trim(),
+                    }))}
                   placeholder="Nombre completo"
                 />
                 <Combobox

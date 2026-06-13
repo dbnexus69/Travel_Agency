@@ -96,9 +96,30 @@ export function InsuranceForm({ insurance, onChange, data, client }: InsuranceFo
           {insurance.members.map((member, mIdx) => (
             <div key={mIdx} className="flex gap-2 items-start">
               <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-2">
-                <Input
+                <Combobox
                   value={member.name}
-                  onChange={(e) => updateMember(mIdx, { name: e.target.value })}
+                  onChange={(val) => {
+                    const client = (data?.clients || []).find(
+                      (c: any) =>
+                        (c.name === val || `${c.firstName} ${c.lastName || ""}`.trim() === val) &&
+                        c.status === "active"
+                    );
+                    if (client) {
+                      updateMember(mIdx, {
+                        name: client.name || `${client.firstName} ${client.lastName || ""}`.trim(),
+                        docType: client.docType || member.docType,
+                        docNumber: client.docNumber || member.docNumber,
+                      });
+                    } else {
+                      updateMember(mIdx, { name: val });
+                    }
+                  }}
+                  options={(data?.clients || [])
+                    .filter((c: any) => c.status === "active")
+                    .map((c: any) => ({
+                      value: c.name || `${c.firstName} ${c.lastName || ""}`.trim(),
+                      label: c.name || `${c.firstName} ${c.lastName || ""}`.trim(),
+                    }))}
                   placeholder="Nombre completo"
                 />
                 <Select

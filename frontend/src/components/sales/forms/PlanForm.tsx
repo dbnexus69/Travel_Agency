@@ -301,14 +301,33 @@ export function PlanForm({ plan, onChange, data, triggerError }: PlanFormProps) 
           {plan.guests.map((guest, gIdx) => (
             <div key={gIdx} className="flex gap-2 items-start">
               <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-2">
-                <Input
+                <Combobox
                   value={guest.name}
-                  onChange={(e) => {
-                    const cleaned = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, "");
-                    updateGuest(gIdx, { name: cleaned });
+                  onChange={(val) => {
+                    const cleaned = val.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, "");
+                    const client = (data?.clients || []).find(
+                      (c: any) =>
+                        (c.name === cleaned || `${c.firstName} ${c.lastName || ""}`.trim() === cleaned) &&
+                        c.status === "active"
+                    );
+                    if (client) {
+                      updateGuest(gIdx, {
+                        name: client.name || `${client.firstName} ${client.lastName || ""}`.trim(),
+                        docType: client.docType || guest.docType,
+                        docNumber: client.docNumber || guest.docNumber,
+                      });
+                    } else {
+                      updateGuest(gIdx, { name: cleaned });
+                    }
                   }}
+                  options={(data?.clients || [])
+                    .filter((c: any) => c.status === "active")
+                    .map((c: any) => ({
+                      value: c.name || `${c.firstName} ${c.lastName || ""}`.trim(),
+                      label: c.name || `${c.firstName} ${c.lastName || ""}`.trim(),
+                    }))}
                   placeholder="Nombre completo"
-                  maxLength={70}
+                  preventNumbers={true}
                 />
                 <Select
                   value={guest.docType}
