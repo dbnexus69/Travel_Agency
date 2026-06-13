@@ -1,11 +1,24 @@
 import { Modal } from "../ui/Modal";
 import { Button } from "../ui/Button";
 import { Badge } from "../ui/Badge";
-import { formatDate } from "../../utils/formatters";
+import { formatDate, formatDateTime } from "../../utils/formatters";
 import { type AirportInfo } from "../../utils/airportInfo";
 
 // Format time in 12-hour AM/PM
-const formatTimeAMPM = (dateStr: string) => new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+const formatTimeAMPM = (time24: string) => {
+  if (!time24) return '';
+  if (time24.includes('T')) {
+    return new Date(time24).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+  }
+  const parts = time24.split(':');
+  if (parts.length < 2) return time24;
+  const [hour, minute] = parts;
+  let h = parseInt(hour, 10);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12;
+  h = h ? h : 12;
+  return `${h.toString().padStart(2, '0')}:${minute} ${ampm}`;
+};
 
 // Get full airport display name
 const getAirport = (code: string, map?: Record<string, AirportInfo>) => {
@@ -61,6 +74,35 @@ function renderPassengers(items: any[]) {
   );
 }
 
+function renderTicketPassengers(items: any[]) {
+  if (!items || items.length === 0) return null;
+  return (
+    <div className="bg-gray-50 rounded-lg p-3 mt-3 border border-gray-100">
+      <p className="text-xs font-bold text-gray-600 mb-2 uppercase">Pasajeros ({items.length})</p>
+      <div className="space-y-2">
+        {items.map((p: any, i: number) => (
+          <div key={i} className="text-xs flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-100 last:border-0 pb-2 last:pb-0">
+            <div>
+              <div className="font-semibold text-gray-800">
+                {p.name || p.nombreCompleto || "-"}
+                {p.esTitular && <span className="ml-2 text-[9px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded uppercase font-bold">PASAJERO PRINCIPAL</span>}
+              </div>
+              <div className="text-[10px] text-gray-500 mt-0.5">
+                {p.docType || p.tipoDocumento || ""} {p.docNumber || p.nroDocumento || ""}
+              </div>
+            </div>
+            <div className="flex gap-3 mt-1 sm:mt-0 text-[10px] text-gray-600 text-right">
+              {p.nroReserva && <div><span className="font-semibold uppercase text-gray-400">Reserva:</span> {p.nroReserva}</div>}
+              {p.nroTiquete && <div><span className="font-semibold uppercase text-gray-400">Tiquete:</span> {p.nroTiquete}</div>}
+              {p.asiento && <div><span className="font-semibold uppercase text-gray-400">Asiento:</span> {p.asiento}</div>}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function renderGrid(items: { label: string; value: any }[]) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
@@ -81,45 +123,91 @@ export default function ProductDetailsModal({ product, onClose, airportMap }: Pr
     switch (product.type) {
       case "Tiquetería":
         return product.data.map((ticket, idx) => {
-          const passengerInfo = ticket.passengerInfo || ticket.passengers?. [0] || null;
+          const passengers = ticket.passengers || (ticket.passengerInfo ? [ticket.passengerInfo] : []);
+          const mainPassenger = passengers.find((p: any) => p.esTitular) || passengers[0];
 
-          // Dynamically split flight segments into outbound and return
-          const legs = ticket.legs || [];
+          // Helper to filter out summary legs if layovers exist
+          const filterSummaryLegs = (legsToFilter: any[]) => {
+            if (legsToFilter.length <= 1) return legsToFilter;
+            return legsToFilter.filter((leg, idx) => {
+              const otherLegs = legsToFilter.filter((_, i) => i !== idx);
+              const hasPath = (start: string, end: string, visited: Set<string>): boolean => {
+                if (start === end) return true;
+                visited.add(start);
+                const nextLegs = otherLegs.filter(l => l.origin === start && !visited.has(l.destination));
+                for (const nextLeg of nextLegs) {
+                  if (hasPath(nextLeg.destination, end, new Set(visited))) return true;
+                }
+                return false;
+              };
+              return !hasPath(leg.origin, leg.destination, new Set());
+            });
+          };
+
+          // Filter out summary/duplicate legs first
+          const actualLegs = filterSummaryLegs(ticket.legs || []);
           const flightMode = ticket.flightMode || "one_way";
 
-          let outboundLegs = [...legs];
+          let outboundLegs = [...actualLegs];
           let returnLegs: any[] = [];
 
-          if (flightMode === "round_trip" && legs.length >= 2) {
-            const originalOrigin = legs[0]?.origin;
-            const N = legs.length;
-            let splitIdx = N - 1;
+          if (flightMode === "round_trip" && actualLegs.length >= 2) {
+            const outboundMain = actualLegs[0];
+            // Find index of the return segment
+            let splitIdx = actualLegs.findIndex((leg, idx) => 
+              idx > 0 && 
+              leg.origin === outboundMain.destination && 
+              leg.destination === outboundMain.origin
+            );
 
-            for (let i = N - 2; i >= 1; i--) {
-              const prevLeg = legs[i];
-              const currentLeg = legs[i + 1];
-
-              // Check direct reversal
-              const isReversal = prevLeg.origin === currentLeg.destination && prevLeg.destination === currentLeg.origin;
-              if (isReversal) {
-                splitIdx = i + 1;
-                break;
-              }
-
-              // Extend return chain backwards
-              if (prevLeg.destination === currentLeg.origin && prevLeg.origin !== originalOrigin) {
-                splitIdx = i;
-              } else {
-                break;
-              }
+            if (splitIdx === -1) {
+              splitIdx = actualLegs.findIndex((leg, idx) => 
+                idx > 0 && 
+                leg.origin === outboundMain.destination
+              );
             }
 
-            outboundLegs = legs.slice(0, splitIdx);
-            returnLegs = legs.slice(splitIdx);
+            if (splitIdx === -1) {
+              splitIdx = actualLegs.findIndex((leg, idx) => 
+                idx > 0 && 
+                leg.destination === outboundMain.origin
+              );
+            }
+
+            if (splitIdx === -1) {
+              splitIdx = Math.ceil(actualLegs.length / 2);
+            }
+
+            outboundLegs = actualLegs.slice(0, splitIdx);
+            returnLegs = actualLegs.slice(splitIdx);
           } else if (ticket.returnLeg && flightMode === "round_trip") {
-            // Fallback for older formats where returnLeg is explicitly defined
             returnLegs = [ticket.returnLeg];
           }
+
+          const deduplicateLegs = (legsToDedup: any[]) => {
+            const unique = [];
+            const seen = new Set();
+            for (const leg of legsToDedup) {
+              const key = `${leg.origin}-${leg.destination}-${leg.flightNumber}`;
+              if (!seen.has(key)) {
+                seen.add(key);
+                unique.push(leg);
+              }
+            }
+            return unique;
+          };
+
+          outboundLegs = deduplicateLegs(outboundLegs).map((leg, index) => ({
+            ...leg,
+            isStop: index > 0,
+            ticketNumber: index === 0 ? (leg.ticketNumber || ticket.ticketNumber || mainPassenger?.nroTiquete || "-") : (leg.ticketNumber || "-")
+          }));
+
+          returnLegs = deduplicateLegs(returnLegs).map((leg, index) => ({
+            ...leg,
+            isStop: index > 0,
+            ticketNumber: index === 0 ? (leg.ticketNumber || ticket.ticketNumber || mainPassenger?.nroTiquete || "-") : (leg.ticketNumber || "-")
+          }));
 
           const outboundTypeLabel = outboundLegs.length > 1 ? "Con Escalas" : "Directo";
           const returnTypeLabel = returnLegs.length > 1 ? "Con Escalas" : (returnLegs.length === 1 ? "Directo" : "");
@@ -128,13 +216,13 @@ export default function ProductDetailsModal({ product, onClose, airportMap }: Pr
             <div key={idx} className="bg-white border border-gray-200 rounded-xl p-4 mb-4 shadow-sm">
               <h4 className="font-bold text-primary flex items-center gap-2 mb-3 pb-2 border-b">
                 <Plane size={16} className="text-accent" /> Ticket #{idx + 1}
-                {passengerInfo?.name && ` - ${passengerInfo.name}`}
+                {mainPassenger?.name && ` - ${mainPassenger.name}`}
               </h4>
               {renderGrid([
                 { label: "Aerolínea", value: ticket.airlineName || ticket.airline },
-                { label: "Reserva", value: ticket.reservationNumber },
-                { label: "Tiquete", value: ticket.ticketNumber },
-                { label: "Vuelo", value: ticket.flightNumber || ticket.legs?.[0]?.flightNumber || "-" },
+                { label: "Equipaje", value: ticket.baggagePlan || "-" },
+                { label: "Reserva Global", value: ticket.reservationNumber || "-" },
+                { label: "Vuelo Ida", value: ticket.flightNumber || ticket.legs?.[0]?.flightNumber || "-" },
               ])}
 
               {/* Outbound Flights (Trayecto de Ida) */}
@@ -150,23 +238,27 @@ export default function ProductDetailsModal({ product, onClose, airportMap }: Pr
                     </span>
                   </div>
                   {outboundLegs.map((leg: any, lIdx: number) => (
-                    <div key={lIdx} className="grid grid-cols-1 sm:grid-cols-5 gap-2 text-xs mb-2 pb-2 last:border-0 last:pb-0 border-b border-gray-150 items-center">
+                    <div key={lIdx} className="grid grid-cols-1 sm:grid-cols-6 gap-2 text-xs mb-2 pb-2 last:border-0 last:pb-0 border-b border-gray-150 items-center">
                       <div className="font-semibold text-gray-800">{getAirport(leg.origin, airportMap)} <span className="text-gray-400 mx-1">→</span> {getAirport(leg.destination, airportMap)}</div>
                       <div className="text-gray-600">
                         <span className="font-bold text-[10px] text-gray-400 block uppercase mb-0.5">Salida</span>
-                        {leg.date ? `${formatDate(leg.date)} ${formatTimeAMPM(leg.date)}` : "-"}
+                        {leg.date ? `${formatDate(leg.date)} ${formatTimeAMPM(leg.time)}` : "-"}
                       </div>
                       <div className="text-gray-600">
                         <span className="font-bold text-[10px] text-gray-400 block uppercase mb-0.5">Llegada</span>
-                        {leg.arrivalDate ? `${formatDate(leg.arrivalDate)} ${formatTimeAMPM(leg.arrivalDate)}` : "-"}
+                        {leg.arrivalDate ? `${formatDate(leg.arrivalDate)} ${formatTimeAMPM(leg.arrivalTime)}` : "-"}
                       </div>
                       <div className="text-gray-600">
                         <span className="font-bold text-[10px] text-gray-400 block uppercase mb-0.5">Vuelo</span>
-                        <span className="font-medium text-gray-800">{leg.flightNumber || "-"}</span>
+                        <span className="font-medium text-gray-800">{leg.flightNumber || "-"}{leg.isStop ? " (Escala)" : ""}</span>
                       </div>
                       <div className="text-gray-600">
                         <span className="font-bold text-[10px] text-gray-400 block uppercase mb-0.5">Asiento</span>
                         <span className="font-medium text-gray-800">{leg.seat || "-"}</span>
+                      </div>
+                      <div className="text-gray-600">
+                        <span className="font-bold text-[10px] text-gray-400 block uppercase mb-0.5">N° Tiquete</span>
+                        <span className="font-medium text-gray-800">{leg.ticketNumber || "-"}</span>
                       </div>
                     </div>
                   ))}
@@ -186,29 +278,33 @@ export default function ProductDetailsModal({ product, onClose, airportMap }: Pr
                     </span>
                   </div>
                   {returnLegs.map((leg: any, lIdx: number) => (
-                    <div key={lIdx} className="grid grid-cols-1 sm:grid-cols-5 gap-2 text-xs mb-2 pb-2 last:border-0 last:pb-0 border-b border-blue-50 items-center">
+                    <div key={lIdx} className="grid grid-cols-1 sm:grid-cols-6 gap-2 text-xs mb-2 pb-2 last:border-0 last:pb-0 border-b border-blue-50 items-center">
                       <div className="font-semibold text-blue-800">{getAirport(leg.origin, airportMap)} <span className="text-gray-400 mx-1">→</span> {getAirport(leg.destination, airportMap)}</div>
                       <div className="text-gray-600">
                         <span className="font-bold text-[10px] text-gray-400 block uppercase mb-0.5">Salida</span>
-                        {leg.date ? `${formatDate(leg.date)} ${formatTimeAMPM(leg.date)}` : "-"}
+                        {leg.date ? `${formatDate(leg.date)} ${formatTimeAMPM(leg.time)}` : "-"}
                       </div>
                       <div className="text-gray-600">
                         <span className="font-bold text-[10px] text-gray-400 block uppercase mb-0.5">Llegada</span>
-                        {leg.arrivalDate ? `${formatDate(leg.arrivalDate)} ${formatTimeAMPM(leg.arrivalDate)}` : "-"}
+                        {leg.arrivalDate ? `${formatDate(leg.arrivalDate)} ${formatTimeAMPM(leg.arrivalTime)}` : "-"}
                       </div>
                       <div className="text-gray-600">
                         <span className="font-bold text-[10px] text-gray-400 block uppercase mb-0.5">Vuelo</span>
-                        <span className="font-medium text-blue-800">{leg.flightNumber || "-"}</span>
+                        <span className="font-medium text-blue-800">{leg.flightNumber || "-"}{leg.isStop ? " (Escala)" : ""}</span>
                       </div>
                       <div className="text-gray-600">
                         <span className="font-bold text-[10px] text-gray-400 block uppercase mb-0.5">Asiento</span>
                         <span className="font-medium text-blue-800">{leg.seat || "-"}</span>
                       </div>
+                      <div className="text-gray-600">
+                        <span className="font-bold text-[10px] text-gray-400 block uppercase mb-0.5">N° Tiquete</span>
+                        <span className="font-medium text-blue-800">{leg.ticketNumber || "-"}</span>
+                      </div>
                     </div>
                   ))}
                 </div>
               )}
-              {passengerInfo && renderPassengers([passengerInfo])}
+              {passengers.length > 0 && renderTicketPassengers(passengers)}
             </div>
           );
         });
@@ -257,7 +353,6 @@ export default function ProductDetailsModal({ product, onClose, airportMap }: Pr
 
       case "Planes":
         return product.data.map((plan, idx) => {
-          const formatDateTime = (dStr: string) => dStr ? `${formatDate(dStr)} ${new Date(dStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : "-";
           return (
             <div key={idx} className="bg-white border border-gray-200 rounded-xl p-4 mb-4 shadow-sm">
               <h4 className="font-bold text-primary flex items-center gap-2 mb-3 pb-2 border-b">

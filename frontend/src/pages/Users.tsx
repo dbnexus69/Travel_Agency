@@ -43,7 +43,7 @@ import Avatar from "../components/ui/Avatar";
 import SortIcon from "../components/ui/SortIcon";
 
 import AvatarPicker, { AVATARS } from "../components/ui/AvatarPicker";
-import { capitalizeName, formatId } from "../utils/formatters";
+import { capitalizeName, formatId, todayStr } from "../utils/formatters";
 import { DatePicker } from "../components/sales/forms/TicketForm";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -1099,7 +1099,7 @@ export default function Users() {
                   setErrors((p) => ({ ...p, birthDate: "" }));
                 validateField("birthDate", val);
               }}
-              max={new Date().toISOString().slice(0, 10)}
+              max={todayStr()}
               fieldName="Nacimiento del usuario"
               popoverDirection="up"
               triggerError={triggerError}

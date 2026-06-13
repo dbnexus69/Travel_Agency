@@ -22,6 +22,7 @@ interface TicketFormProps {
     checkedBag: string;
     notes: string;
   }[];
+  clients: any[];
   triggerError?: (msg: string) => void;
 }
 
@@ -493,12 +494,32 @@ export function TicketForm({
   airports,
   paymentMethods,
   baggage,
+  clients,
+  mainClient,
   triggerError,
-}: TicketFormProps) {
+}: TicketFormProps & { mainClient?: any }) {
   const airportOptions = airports.map((a) => ({
     value: a.abbreviation,
     label: `${a.abbreviation} - ${a.name} (${a.location})`,
   }));
+
+  React.useEffect(() => {
+    const pax = ticket.passengers || ((ticket as any).passengerInfo ? [{ ...(ticket as any).passengerInfo, esTitular: true, asiento: '', nroReserva: '', nroTiquete: '' }] : []);
+    if (pax.length === 0) {
+      onChange({
+        passengers: [{
+          name: mainClient?.name || mainClient ? `${mainClient.firstName} ${mainClient.lastName || ''}`.trim() : '',
+          docType: mainClient?.docType || '',
+          docNumber: mainClient?.docNumber || '',
+          birthDate: mainClient?.birthDate ? mainClient.birthDate.split('T')[0] : '',
+          esTitular: true,
+          asiento: '',
+          nroReserva: '',
+          nroTiquete: ''
+        }]
+      });
+    }
+  }, [ticket.passengers, (ticket as any).passengerInfo, mainClient]);
 
   // Obtener fecha y hora actual en la zona horaria local para la validación de min
   const minDateTime = (() => {
@@ -673,7 +694,7 @@ export function TicketForm({
                   </FormField>
                 </div>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <FormField label={<span>Salida <span className="text-red-500">*</span></span>}>
                     <DateTimePicker
                       value={stop.date || ""}
@@ -692,6 +713,25 @@ export function TicketForm({
                       triggerError={triggerError}
                       fieldName="Llegada de la escala"
                     />
+                  </FormField>
+
+                  <FormField label="N° Tiquete (Opcional)">
+                    <Input
+                      minLength={8}
+                      maxLength={16}
+                      value={stop.ticketNumber || ""}
+                      onChange={(e) => {
+                        const cleaned = e.target.value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+                        updateStop(type, sIdx, { ticketNumber: cleaned });
+                      }}
+                      placeholder="Tiquete de escala"
+                      className="text-xs"
+                    />
+                    {stop.ticketNumber && stop.ticketNumber.length > 0 && stop.ticketNumber.length < 8 && (
+                      <p className="text-[10px] text-amber-500 mt-1 font-medium animate-fade-in">
+                        ⚠️ Mínimo 8 caracteres.
+                      </p>
+                    )}
                   </FormField>
                 </div>
               </div>
@@ -735,7 +775,7 @@ export function TicketForm({
               placeholder="Ej: Viajes Éxito"
             />
           </FormField>
-          <FormField label="Número de Reserva">
+          <FormField label="Código de Reserva">
             <Input
               required
               maxLength={6}
@@ -1038,41 +1078,183 @@ export function TicketForm({
         )}
       </div>
 
-      {/* ── Información del Pasajero ────────────────────────── */}
+      {/* ── Información de Pasajeros ────────────────────────── */}
       <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-        <h4 className="text-xs font-bold text-gray-700 uppercase tracking-widest mb-4 flex items-center gap-2">
-          <User size={14} /> Información del Pasajero
-        </h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField label="Nombre Completo">
-            <Input value={ticket.passengerInfo.name} disabled className="bg-gray-100 cursor-not-allowed" />
-          </FormField>
-          <FormField label="Documento">
-            <div className="flex gap-2">
-              <Input value={ticket.passengerInfo.docType} disabled className="w-20 bg-gray-100 cursor-not-allowed" />
-              <Input value={ticket.passengerInfo.docNumber} disabled className="flex-1 bg-gray-100 cursor-not-allowed" />
-            </div>
-          </FormField>
-          <FormField label="Fecha de Nacimiento">
-            <Input type="date" required value={ticket.passengerInfo.birthDate} disabled className="bg-gray-100 cursor-not-allowed" />
-          </FormField>
-          <FormField label="N° de Tiquete">
-            <Input
-              required
-              maxLength={13}
-              value={ticket.ticketNumber}
-              onChange={(e) => {
-                const cleaned = e.target.value.replace(/[^a-zA-Z0-9]/g, "");
-                onChange({ ticketNumber: cleaned });
-              }}
-              placeholder="Máx 13 caracteres (sin especiales)"
-            />
-            {ticket.ticketNumber?.length > 0 && ticket.ticketNumber.length < 13 && (
-              <p className="text-[10px] text-amber-500 mt-1 font-medium animate-fade-in">
-                ⚠️ Faltan {13 - ticket.ticketNumber.length} caracteres (mínimo 13).
-              </p>
-            )}
-          </FormField>
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 gap-3">
+          <h4 className="text-xs font-bold text-gray-700 uppercase tracking-widest flex items-center gap-2">
+            <User size={14} /> Pasajeros
+          </h4>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const currentPax = ticket.passengers || ((ticket as any).passengerInfo ? [{ ...(ticket as any).passengerInfo, esTitular: true, asiento: '', nroReserva: '', nroTiquete: '' }] : []);
+              onChange({ passengers: [...currentPax, { name: '', docType: '', docNumber: '', birthDate: '', esTitular: false, asiento: '', nroReserva: '', nroTiquete: '' }] });
+            }}
+          >
+            <PlusCircle size={14} className="mr-2" />
+            Añadir Pasajero
+          </Button>
+        </div>
+
+        <div className="space-y-4">
+          {(() => {
+            let rawPax = ticket.passengers || ((ticket as any).passengerInfo ? [{ ...(ticket as any).passengerInfo, esTitular: true, asiento: '', nroReserva: '', nroTiquete: '' }] : []);
+            if (rawPax.length === 0) {
+              rawPax = [{
+                name: mainClient?.name || mainClient ? `${mainClient.firstName} ${mainClient.lastName || ''}`.trim() : '',
+                docType: mainClient?.docType || '',
+                docNumber: mainClient?.docNumber || '',
+                birthDate: mainClient?.birthDate ? mainClient.birthDate.split('T')[0] : '',
+                esTitular: true,
+                asiento: '',
+                nroReserva: '',
+                nroTiquete: ''
+              }];
+            }
+            // If no one is titular, make the first one titular
+            if (rawPax.length > 0 && !rawPax.some((p: any) => p.esTitular)) {
+              rawPax[0].esTitular = true;
+            }
+
+            return rawPax.map((pax, idx) => {
+            const isNew = !pax.name && !pax.docNumber;
+
+            return (
+              <div key={idx} className="p-4 border border-gray-200 rounded-lg bg-white relative group">
+                {!pax.esTitular && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const currentPax = ticket.passengers || ((ticket as any).passengerInfo ? [{ ...(ticket as any).passengerInfo, esTitular: true, asiento: '', nroReserva: '', nroTiquete: '' }] : []);
+                      const next = [...currentPax];
+                      next.splice(idx, 1);
+                      onChange({ passengers: next });
+                    }}
+                    className="absolute top-2 right-2 text-red-400 hover:text-red-600 p-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                )}
+
+                {isNew ? (
+                  <div className="flex flex-col gap-2">
+                    <span className="text-xs font-bold text-gray-700">{idx + 1}. Seleccionar Cliente</span>
+                    <Combobox
+                      value=""
+                      onChange={(val) => {
+                        if (!val) return;
+                        const client = clients.find(c => String(c.id) === val);
+                        if (client) {
+                          const currentPax = ticket.passengers || ((ticket as any).passengerInfo ? [{ ...(ticket as any).passengerInfo, esTitular: true, asiento: '', nroReserva: '', nroTiquete: '' }] : []);
+                          const next = [...currentPax];
+                          next[idx] = {
+                            ...next[idx],
+                            name: client.name || `${client.firstName} ${client.lastName || ''}`.trim(),
+                            docType: client.docType || '',
+                            docNumber: client.docNumber || '',
+                            birthDate: client.birthDate ? client.birthDate.split('T')[0] : '',
+                          };
+                          onChange({ passengers: next });
+                        }
+                      }}
+                      options={clients.map(c => ({ value: String(c.id), label: `${c.name || `${c.firstName} ${c.lastName || ''}`} - ${c.docNumber || ''}` }))}
+                      placeholder="Buscar cliente..."
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-gray-700">{idx + 1}. {pax.name || 'Sin Nombre'}</span>
+                        {pax.esTitular && <span className="text-[9px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold uppercase tracking-widest">Titular</span>}
+                      </div>
+                      <label className="flex items-center gap-1 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors">
+                        <input 
+                          type="radio" 
+                          name={`titular-${idx}`} 
+                          checked={pax.esTitular} 
+                          onChange={() => {
+                            const currentPax = ticket.passengers || ((ticket as any).passengerInfo ? [{ ...(ticket as any).passengerInfo, esTitular: true, asiento: '', nroReserva: '', nroTiquete: '' }] : []);
+                            const next = [...currentPax].map((p, i) => ({ ...p, esTitular: i === idx }));
+                            onChange({ passengers: next });
+                          }} 
+                          className="w-3 h-3 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-[10px] text-gray-600 font-bold uppercase">Es Titular</span>
+                      </label>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+                      <FormField label="Documento">
+                        <Input value={pax.docNumber || (pax as any).documento || ''} disabled className="bg-gray-50 text-xs" />
+                      </FormField>
+                      <FormField label="F. Nacimiento">
+                        <Input type="date" value={pax.birthDate || ''} disabled className="bg-gray-50 text-xs" />
+                      </FormField>
+                      { !pax.esTitular && (
+                        <FormField label="Asiento (Opcional)">
+                          <Input 
+                            value={pax.asiento || ''} 
+                            onChange={e => {
+                            const currentPax = ticket.passengers || ((ticket as any).passengerInfo ? [{ ...(ticket as any).passengerInfo, esTitular: true, asiento: '', nroReserva: '', nroTiquete: '' }] : []);
+                            const next = [...currentPax];
+                            next[idx].asiento = e.target.value;
+                            onChange({ passengers: next });
+                            }} 
+                            placeholder="Ej. 14A" className="text-xs" />
+                        </FormField>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      { !pax.esTitular && (
+                        <FormField label="Cód. Reserva (Opcional)">
+                          <Input 
+                            maxLength={6}
+                            value={pax.nroReserva || ''} 
+                            onChange={e => {
+                              const cleaned = e.target.value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase().slice(0, 6);
+                              const currentPax = ticket.passengers || ((ticket as any).passengerInfo ? [{ ...(ticket as any).passengerInfo, esTitular: true, asiento: '', nroReserva: '', nroTiquete: '' }] : []);
+                              const next = [...currentPax];
+                              next[idx].nroReserva = cleaned;
+                              onChange({ passengers: next });
+                            }} 
+                            placeholder="6 caracteres" className="text-xs" />
+                          {pax.nroReserva && pax.nroReserva.length > 0 && pax.nroReserva.length < 6 && (
+                            <p className="text-[10px] text-amber-500 mt-1 font-medium animate-fade-in">
+                              ⚠️ Faltan {6 - pax.nroReserva.length} caracteres.
+                            </p>
+                          )}
+                        </FormField>
+                      )}
+                      <FormField label={pax.esTitular ? <span>N° Tiquete <span className="text-red-500">*</span></span> : "N° Tiquete (Opcional)"}>
+                        <Input 
+                          required={pax.esTitular}
+                          minLength={8}
+                          maxLength={16}
+                          value={pax.nroTiquete || ''} 
+                          onChange={e => {
+                            const cleaned = e.target.value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+                            const currentPax = ticket.passengers || ((ticket as any).passengerInfo ? [{ ...(ticket as any).passengerInfo, esTitular: true, asiento: '', nroReserva: '', nroTiquete: '' }] : []);
+                            const next = [...currentPax];
+                            next[idx].nroTiquete = cleaned;
+                            onChange({ passengers: next });
+                          }} 
+                          placeholder="Tiquete" className="text-xs" />
+                        {pax.nroTiquete && pax.nroTiquete.length > 0 && pax.nroTiquete.length < 8 && (
+                          <p className="text-[10px] text-amber-500 mt-1 font-medium animate-fade-in">
+                            ⚠️ Mínimo 8 caracteres.
+                          </p>
+                        )}
+                      </FormField>
+                    </div>
+                  </>
+                )}
+              </div>
+            );
+          })})()}
         </div>
       </div>
 

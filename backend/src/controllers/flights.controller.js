@@ -45,16 +45,15 @@ exports.list = async (req, res, next) => {
     ]);
 
     const formatLocalDate = (dt) => {
-      const y = dt.getFullYear();
-      const m = String(dt.getMonth() + 1).padStart(2, '0');
-      const d = String(dt.getDate()).padStart(2, '0');
-      return `${y}-${m}-${d}`;
+      if (!dt) return null;
+      const formatter = new Intl.DateTimeFormat('fr-CA', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' });
+      return formatter.format(dt);
     };
 
     const formatLocalTime = (dt) => {
-      const h = String(dt.getHours()).padStart(2, '0');
-      const m = String(dt.getMinutes()).padStart(2, '0');
-      return `${h}:${m}`;
+      if (!dt) return null;
+      const formatter = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Bogota', hour12: false, hour: '2-digit', minute: '2-digit' });
+      return formatter.format(dt);
     };
 
     const filteredTramos = tramos.filter(t => {
@@ -102,10 +101,11 @@ exports.list = async (req, res, next) => {
       date: formatLocalDate(t.salida),
       time: formatLocalTime(t.salida),
       type: tramoType[t.id] || 'ida',
-      checkin: t.prodTiqueteria?.checkinStatus || 'pendiente',
+      checkin: t.checkinStatus || t.prodTiqueteria?.checkinStatus || 'pendiente',
       flightNumber: t.nroVueloTramo,
       seat: null,
       reservationNumber: t.prodTiqueteria?.nroReserva || '',
+      ticketNumber: t.nroTiquete || t.prodTiqueteria?.nroTiquete || null,
       source: 'ticket'
     }));
 
@@ -335,8 +335,8 @@ exports.updateCheckin = async (req, res, next) => {
       return error(res, 'No tiene permiso para modificar este check-in', 403);
     }
 
-    const updated = await prisma.prodTiqueteria.update({
-      where: { id: tramo.prodTiqueteriaId },
+    const updated = await prisma.tramosVuelo.update({
+      where: { id: tramo.id },
       data: { checkinStatus: data.checkin || 'pendiente' }
     });
 

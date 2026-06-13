@@ -24,7 +24,7 @@ import { FormField, Input, Select } from "../components/ui/Form";
 import { DatePicker } from "../components/sales/forms/TicketForm";
 import { useData } from "../context/DataContext";
 import { usePermissions } from "../context/PermissionsContext";
-import { formatCurrency, capitalizeName } from "../utils/formatters";
+import { formatCurrency, capitalizeName, todayStr } from "../utils/formatters";
 import StatCard from "../components/ui/StatCard";
 
 export default function CommissionAgents() {
@@ -42,7 +42,7 @@ export default function CommissionAgents() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [settleData, setSettleData] = useState<any>({
-    date: new Date().toISOString().split("T")[0],
+    date: todayStr(),
     paymentMethod: "",
     reference: "",
     notes: "",
@@ -178,7 +178,7 @@ export default function CommissionAgents() {
     setSelectedAgent(agent);
     const defaultPM = (data.config.paymentMethods || []).find((pm: any) => pm.name === "Transferencia");
     setSettleData({
-      date: new Date().toISOString().split("T")[0],
+      date: todayStr(),
       paymentMethod: defaultPM?.id?.toString() || "",
       amount: agent.accumulated,
       reference: "",

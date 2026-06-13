@@ -59,6 +59,7 @@ import {
 import { Step1Client } from "./steps/Step1Client";
 import { Step2Products } from "./steps/Step2Products";
 import { Step3Payment } from "./steps/Step3Payment";
+import { todayStr } from "../../utils/formatters";
 
 interface Props {
   onClose: () => void;
@@ -116,7 +117,9 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
       const hasAirline = !!ticket.airline?.trim();
       const hasSupplier = !!ticket.supplier?.trim();
       const hasResNumber = !!ticket.reservationNumber?.trim();
-      const hasTicketNumber = !!ticket.ticketNumber?.trim();
+      const paxList = ticket.passengers || ((ticket as any).passengerInfo ? [(ticket as any).passengerInfo] : []);
+      const titular = paxList.find((p: any) => p.esTitular) || paxList[0];
+      const hasTicketNumber = titular ? !!titular.nroTiquete?.trim() : false;
       const hasCost = ticket.supplierCost > 0;
       const hasTa = ticket.ta > 0;
       
@@ -354,7 +357,12 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
               if (!ticket.airline?.trim()) return false;
               if (!ticket.supplier?.trim()) return false;
               if (!ticket.reservationNumber || ticket.reservationNumber.length !== 6 || !/^[A-Z0-9]+$/.test(ticket.reservationNumber)) return false;
-              if (!ticket.ticketNumber?.trim() || ticket.ticketNumber.length < 13 || ticket.ticketNumber.length > 14) return false;
+              
+              // Validate Passengers (Main Ticket Number)
+              const paxList = ticket.passengers || ((ticket as any).passengerInfo ? [(ticket as any).passengerInfo] : []);
+              if (paxList.length === 0) return false;
+              const titular = paxList.find((p: any) => p.esTitular) || paxList[0];
+              if (!titular.nroTiquete?.trim() || titular.nroTiquete.length < 8 || titular.nroTiquete.length > 16) return false;
               
               // Tramos de ida
               if (!ticket.legs || ticket.legs.length === 0) return false;
@@ -400,6 +408,7 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
               // Campos financieros
               if (ticket.supplierCost <= 0) return false;
               if (ticket.ta < 0) return false;
+              if (!ticket.supplierPaymentMethod) return false;
               return true;
             })();
 
@@ -433,6 +442,7 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
 
               if (hotel.supplierCost <= 0) return false;
               if (hotel.ta < 0) return false;
+              if (!hotel.supplierPaymentMethod) return false;
               return true;
             })();
 
@@ -463,6 +473,7 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
 
               // Validar financieros: obligatorios y mayores de 0
               if (ins.supplierCost <= 0 || ins.ta < 0) return false;
+              if (!ins.supplierPaymentMethod) return false;
 
               return true;
             })();
@@ -544,6 +555,7 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
 
               if (plan.supplierCost === undefined || plan.supplierCost <= 0) errors.push("Costo Proveedor (> $0)");
               if (plan.ta === undefined || plan.ta < 0) errors.push("Valor TA (>= $0)");
+              if (!plan.supplierPaymentMethod) errors.push("Método de Pago Proveedor (requerido)");
 
               if (plan.guests && plan.guests.length > 0) {
                 plan.guests.forEach((g, gIdx) => {
@@ -1347,6 +1359,7 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
               return (
                 <TicketForm
                   ticket={form.tickets[activeIdx] || INITIAL_TICKET(client)}
+                  mainClient={client}
                   onChange={(updates) => {
                     const next = [...form.tickets];
                     next[activeIdx] = { ...next[activeIdx], ...updates };
@@ -1357,6 +1370,7 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
                   paymentMethods={data.config.cards}
                   airports={data.config.airports}
                   baggage={data.config.baggage}
+                  clients={data.clients}
                   triggerError={triggerError}
                 />
               );
@@ -1590,35 +1604,9 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
     const fullObservations = form.observations.trim();
 
     const mappedTickets = form.tickets.map(t => {
-      // 1. Accumulate outbound legs (initial leg + outbound stops/scales)
-      let finalLegs = [...t.legs];
-      if (t.hasStops && t.outboundStops && t.outboundStops.length > 0) {
-        const validOutboundStops = t.outboundStops.filter(s => s.origin || s.destination || s.flightNumber || s.seat || s.date);
-        finalLegs = [...finalLegs, ...validOutboundStops];
-      }
-
-      // 2. Accumulate return legs (initial return leg + return stops/scales)
-      let finalReturnLeg = t.returnLeg;
-      if (t.flightMode === 'round_trip' && t.returnLeg) {
-        if (t.returnHasStops && t.returnStops && t.returnStops.length > 0) {
-          const validReturnStops = t.returnStops.filter(s => s.origin || s.destination || s.flightNumber || s.seat || s.date);
-          if (validReturnStops.length > 0) {
-            // Append the primary returnLeg and all returnStops except the last one to finalLegs
-            finalLegs.push(t.returnLeg);
-            for (let i = 0; i < validReturnStops.length - 1; i++) {
-              finalLegs.push(validReturnStops[i]);
-            }
-            // The last returnStop becomes the final returnLeg
-            finalReturnLeg = validReturnStops[validReturnStops.length - 1];
-          }
-        }
-      }
-
       return {
         ...t,
-        legs: finalLegs,
-        returnLeg: finalReturnLeg,
-        seatNumber: finalLegs[0]?.seat || ""
+        seatNumber: t.legs && t.legs.length > 0 ? t.legs[0].seat : ""
       };
     });
 
@@ -1641,7 +1629,7 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
       clientName: client.name,
       asesorId: Number(form.asesorId) || user!.id,
       asesorName: form.asesorName || user!.name,
-      date: new Date().toISOString().split("T")[0],
+      date: todayStr(),
       total: Number(form.total),
       paymentMethod: calculatedPaymentMethod,
       payments: form.payments?.map(p => ({
@@ -1891,7 +1879,7 @@ function isItemEmpty(item: any, category: SaleProductId): boolean {
         !item.airline &&
         !item.reservationNumber &&
         !item.flightNumber &&
-        !item.ticketNumber &&
+        (!item.passengers || item.passengers.length === 0 || !item.passengers[0]?.nroTiquete) &&
         !item.seatNumber &&
         (!item.legs || item.legs.every((l: any) => !l.origin && !l.destination && !l.flightNumber))
       );

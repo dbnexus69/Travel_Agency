@@ -13,7 +13,7 @@ import ClientDetailModal from '../components/clients/ClientDetailModal';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
 import { usePermissions } from '../context/PermissionsContext';
-import { formatDate, capitalizeName, formatId } from '../utils/formatters';
+import { formatDate, capitalizeName, formatId, todayStr } from '../utils/formatters';
 import { Client } from '../types';
 
 import AvatarPicker, { AVATARS } from '../components/ui/AvatarPicker';
@@ -280,7 +280,7 @@ export default function Clients() {
       } else {
         await addClient({
           ...clientData as any,
-          registrationDate: new Date().toISOString().split('T')[0],
+          registrationDate: todayStr(),
           createdBy: user?.id
         });
         setSuccessMessage('Nuevo cliente registrado correctamente');
@@ -770,7 +770,7 @@ export default function Clients() {
                     if (errors.birthDate) setErrors(prev => ({ ...prev, birthDate: '' }));
                     validateField('birthDate', val);
                   }}
-                  max={new Date().toISOString().slice(0, 10)}
+                  max={todayStr()}
                   fieldName="Nacimiento del cliente"
                   popoverDirection="up"
                   triggerError={triggerError}

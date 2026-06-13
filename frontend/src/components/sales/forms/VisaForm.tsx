@@ -3,6 +3,7 @@ import { FormField, Input, Combobox , CurrencyInput} from "../../ui/Form";
 import { VisaData } from "../../../types";
 import { ClientInfoSection, VoucherField, FinancialSection } from "./VoucherField";
 import { DatePicker } from "./TicketForm";
+import { todayStr as todayStrHelper } from "../../../utils/formatters";
 
 interface VisaFormProps {
   visa: VisaData;
@@ -14,7 +15,7 @@ interface VisaFormProps {
 }
 
 export function VisaForm({ visa, client, suppliers, paymentMethods, onChange, triggerError }: VisaFormProps) {
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = todayStrHelper();
   return (
     <div className="space-y-6 animate-fade-in">
       {client && <ClientInfoSection client={client} />}

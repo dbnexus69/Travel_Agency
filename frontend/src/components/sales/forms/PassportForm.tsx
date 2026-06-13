@@ -3,6 +3,7 @@ import { FormField, Input, Combobox , CurrencyInput} from "../../ui/Form";
 import { PassportData } from "../../../types";
 import { ClientInfoSection, VoucherField, FinancialSection } from "./VoucherField";
 import { DatePicker } from "./TicketForm";
+import { todayStr as todayStrHelper } from "../../../utils/formatters";
 
 interface PassportFormProps {
   passport: PassportData;
@@ -14,7 +15,7 @@ interface PassportFormProps {
 }
 
 export function PassportForm({ passport, client, suppliers, paymentMethods, onChange, triggerError }: PassportFormProps) {
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = todayStrHelper();
   return (
     <div className="space-y-6 animate-fade-in">
       {client && <ClientInfoSection client={client} />}

@@ -205,7 +205,10 @@ const PRODUCT_INCLUDES = {
   tiqueteria: {
     prodTiqueteria: {
       include: {
-        tramosVuelo: { include: { aeropuertoOrigen: true, aeropuertoDestino: true } },
+        tramosVuelo: { 
+          include: { aeropuertoOrigen: true, aeropuertoDestino: true },
+          orderBy: { orden: 'asc' }
+        },
         aerolinea: true,
         planEquipaje: true
       }
@@ -235,14 +238,27 @@ function mapPassengers(detalle) {
     asiento: p.asiento,
     nombreCompleto: p.persona ? `${p.persona.nombres} ${p.persona.apellidos}` : null,
     tipoDocumento: p.persona?.tipoDocumentoId,
-    nroDocumento: p.persona?.documento
+    nroDocumento: p.persona?.documento,
+    nroReserva: p.nroReserva,
+    nroTiquete: p.nroTiquete
   }));
 }
 
+const formatColombiaDate = (date) => {
+  if (!date) return null;
+  const formatter = new Intl.DateTimeFormat('fr-CA', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' });
+  return formatter.format(date);
+};
+
+const formatColombiaTime = (date) => {
+  if (!date) return null;
+  const formatter = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Bogota', hour12: false, hour: '2-digit', minute: '2-digit' });
+  return formatter.format(date);
+};
+
 function mapLegs(legs) {
-  return (legs || []).map(l => {
-    const salidaStr = l.salida?.toISOString();
-    const llegadaStr = l.llegada?.toISOString();
+  const sorted = [...(legs || [])].sort((a, b) => (a.orden || 0) - (b.orden || 0));
+  return sorted.map(l => {
     return {
       origin: l.aeropuertoOrigen?.codigoIata || null,
       originCity: l.aeropuertoOrigen?.ciudad || null,
@@ -252,10 +268,12 @@ function mapLegs(legs) {
       destinationName: l.aeropuertoDestino?.nombre || null,
       flightNumber: l.nroVueloTramo,
       seat: l.asiento || null,
-      date: salidaStr ? salidaStr.split('T')[0] : null,
-      time: salidaStr ? salidaStr.split('T')[1].substring(0, 5) : null,
-      arrivalDate: llegadaStr ? llegadaStr.split('T')[0] : null,
-      arrivalTime: llegadaStr ? llegadaStr.split('T')[1].substring(0, 5) : null,
+      ticketNumber: l.nroTiquete || null,
+      date: formatColombiaDate(l.salida),
+      time: formatColombiaTime(l.salida),
+      arrivalDate: formatColombiaDate(l.llegada),
+      arrivalTime: formatColombiaTime(l.llegada),
+      orden: l.orden
     };
   });
 }
@@ -279,9 +297,15 @@ const PRODUCT_TRANSFORMS = {
       supplierCost: d.costoProveedor || 0,
       ta: d.ta || 0,
       legs: mapLegs(t.tramosVuelo),
-      passengerInfo: passengers.length > 0
-        ? { name: passengers[0].nombreCompleto, docType: passengers[0].tipoDocumento, docNumber: passengers[0].nroDocumento }
-        : null
+      passengers: passengers.map(p => ({
+        name: p.nombreCompleto,
+        docType: String(p.tipoDocumento || ''),
+        docNumber: p.nroDocumento || '',
+        esTitular: p.esTitular,
+        asiento: p.asiento || '',
+        nroReserva: p.nroReserva || '',
+        nroTiquete: p.nroTiquete || ''
+      }))
     });
   },
   hoteleria(d, passengers, target) {
@@ -1160,7 +1184,9 @@ async function createProductItems(tx, ventaId, clienteId, data) {
                 detalleVentaId: detalle.id,
                 personaId: pId,
                 esTitular: pId === personaId,
-                asiento: item.seatNumber || p.seat || null
+                asiento: item.seatNumber || p.seat || null,
+                nroReserva: p.nroReserva || item.reservationNumber || null,
+                nroTiquete: p.nroTiquete || item.ticketNumber || null
               }
             });
           }
@@ -1185,6 +1211,7 @@ async function createProductItems(tx, ventaId, clienteId, data) {
                 llegada: leg.arrivalDate ? new Date(leg.arrivalDate) : (leg.date ? new Date(leg.date) : new Date()),
                 nroVueloTramo: leg.flightNumber || null,
                 asiento: leg.seat || null,
+                nroTiquete: leg.ticketNumber || null,
                 orden: i + 1
               }
             });
@@ -1266,17 +1293,19 @@ exports.create = async (req, res, next) => {
 
            const pasajerosDetalleData = [];
           if (personaId) {
-            const hasPassengerInfo = item.passengerInfo || item.guests || item.passengerName || item.ownerName ||
+            const hasPassengerInfo = item.passengers || item.passengerInfo || item.guests || item.passengerName || item.ownerName ||
               ['checkin', 'documentacion_migratoria', 'simcard', 'tours', 'servicio_mascotas', 'renta_vehiculos'].includes(handler.category);
             
             if (hasPassengerInfo) {
-              const passengers = item.passengerInfo ? [item.passengerInfo] : (item.guests || [{}]);
+              const passengers = item.passengers ? item.passengers : (item.passengerInfo ? [item.passengerInfo] : (item.guests || [{}]));
               for (const p of passengers) {
                 const pid = await findOrCreatePersona(tx, p.name || p.passengerName || p.fullName || item.passengerName || item.ownerName || item.mainDriver, p.docType || item.docType, p.docNumber || item.docNumber || item.licenseNumber || item.passportNumber || item.idNumber, personaId);
                 pasajerosDetalleData.push({
                   personaId: pid,
                   esTitular: p.esTitular ?? true,
-                  asiento: p.asiento || item.seatNumber || item.seat || null
+                  asiento: p.asiento || item.seatNumber || item.seat || null,
+                  nroReserva: p.nroReserva || item.reservationNumber || null,
+                  nroTiquete: p.nroTiquete || item.ticketNumber || null
                 });
               }
             }
@@ -1323,10 +1352,33 @@ exports.create = async (req, res, next) => {
                   llegada: leg.arrivalDate ? new Date(leg.arrivalDate) : (leg.date ? new Date(leg.date) : new Date()),
                   nroVueloTramo: leg.flightNumber || null,
                   asiento: leg.seat || null,
+                  nroTiquete: leg.ticketNumber || null,
                   orden: i + 1
                 });
               }
             }
+            if (item.hasStops && item.outboundStops && item.outboundStops.length > 0) {
+              for (const stop of item.outboundStops) {
+                if (!stop.origin && !stop.destination) continue;
+                const [sOriginId, sDestId] = await Promise.all([
+                  stop.origin ? resolveAirportId(tx, stop.origin, memCache) : null,
+                  stop.destination ? resolveAirportId(tx, stop.destination, memCache) : null
+                ]);
+                if (sOriginId && sDestId) {
+                  tramosVueloData.push({
+                    aeropuertoOrigenId: sOriginId,
+                    aeropuertoDestinoId: sDestId,
+                    salida: stop.date ? new Date(stop.date) : new Date(),
+                    llegada: stop.arrivalDate ? new Date(stop.arrivalDate) : (stop.date ? new Date(stop.date) : new Date()),
+                    nroVueloTramo: stop.flightNumber || null,
+                    asiento: stop.seat || null,
+                    nroTiquete: stop.ticketNumber || null,
+                    orden: tramosVueloData.length + 1
+                  });
+                }
+              }
+            }
+
             if (item.returnLeg && item.returnLeg.origin && item.returnLeg.destination) {
               const rLeg = item.returnLeg;
               const [rOriginId, rDestId] = await Promise.all([
@@ -1341,10 +1393,34 @@ exports.create = async (req, res, next) => {
                   llegada: rLeg.arrivalDate ? new Date(rLeg.arrivalDate) : (rLeg.date ? new Date(rLeg.date) : new Date()),
                   nroVueloTramo: rLeg.flightNumber || null,
                   asiento: rLeg.seat || null,
-                  orden: (item.legs?.length || 0) + 1
+                  nroTiquete: rLeg.ticketNumber || null, // Even though it's not in the UI anymore, safe mapping
+                  orden: tramosVueloData.length + 1
                 });
               }
             }
+
+            if (item.returnHasStops && item.returnStops && item.returnStops.length > 0) {
+              for (const stop of item.returnStops) {
+                if (!stop.origin && !stop.destination) continue;
+                const [sOriginId, sDestId] = await Promise.all([
+                  stop.origin ? resolveAirportId(tx, stop.origin, memCache) : null,
+                  stop.destination ? resolveAirportId(tx, stop.destination, memCache) : null
+                ]);
+                if (sOriginId && sDestId) {
+                  tramosVueloData.push({
+                    aeropuertoOrigenId: sOriginId,
+                    aeropuertoDestinoId: sDestId,
+                    salida: stop.date ? new Date(stop.date) : new Date(),
+                    llegada: stop.arrivalDate ? new Date(stop.arrivalDate) : (stop.date ? new Date(stop.date) : new Date()),
+                    nroVueloTramo: stop.flightNumber || null,
+                    asiento: stop.seat || null,
+                    nroTiquete: stop.ticketNumber || null,
+                    orden: tramosVueloData.length + 1
+                  });
+                }
+              }
+            }
+
             if (tramosVueloData.length > 0) {
               detalleObj.prodTiqueteria.create.tramosVuelo = {
                 create: tramosVueloData
@@ -1646,43 +1722,94 @@ exports.update = async (req, res, next) => {
             });
           }
 
-          if (handler.table === 'prodTiqueteria' && item.legs && item.legs.length > 0) {
-            for (let i = 0; i < item.legs.length; i++) {
-              const leg = item.legs[i];
-              if (!leg.origin && !leg.destination) continue;
-              const originAirportId = leg.origin ? await resolveAirportId(tx, leg.origin) : null;
-              const destAirportId = leg.destination ? await resolveAirportId(tx, leg.destination) : null;
-              if (!originAirportId || !destAirportId) continue;
-              await tx.tramosVuelo.create({
-                data: {
-                  prodTiqueteriaId: product.id,
-                  aeropuertoOrigenId: originAirportId,
-                  aeropuertoDestinoId: destAirportId,
-                  salida: leg.date ? new Date(leg.date) : new Date(),
-                  llegada: leg.arrivalDate ? new Date(leg.arrivalDate) : (leg.date ? new Date(leg.date) : new Date()),
-                  nroVueloTramo: leg.flightNumber || null,
-                  orden: i + 1
-                }
-              });
+          if (handler.table === 'prodTiqueteria') {
+            let currentOrden = 1;
+            
+            if (item.legs && item.legs.length > 0) {
+              for (let i = 0; i < item.legs.length; i++) {
+                const leg = item.legs[i];
+                if (!leg.origin && !leg.destination) continue;
+                const originAirportId = leg.origin ? await resolveAirportId(tx, leg.origin) : null;
+                const destAirportId = leg.destination ? await resolveAirportId(tx, leg.destination) : null;
+                if (!originAirportId || !destAirportId) continue;
+                await tx.tramosVuelo.create({
+                  data: {
+                    prodTiqueteriaId: product.id,
+                    aeropuertoOrigenId: originAirportId,
+                    aeropuertoDestinoId: destAirportId,
+                    salida: leg.date ? new Date(leg.date) : new Date(),
+                    llegada: leg.arrivalDate ? new Date(leg.arrivalDate) : (leg.date ? new Date(leg.date) : new Date()),
+                    nroVueloTramo: leg.flightNumber || null,
+                    asiento: leg.seat || null,
+                    orden: currentOrden++
+                  }
+                });
+              }
             }
-          }
 
-          if (handler.table === 'prodTiqueteria' && item.returnLeg && item.returnLeg.origin && item.returnLeg.destination) {
-            const leg = item.returnLeg;
-            const rOriginId = await resolveAirportId(tx, leg.origin);
-            const rDestId = await resolveAirportId(tx, leg.destination);
-            if (rOriginId && rDestId) {
-              await tx.tramosVuelo.create({
-                data: {
-                  prodTiqueteriaId: product.id,
-                  aeropuertoOrigenId: rOriginId,
-                  aeropuertoDestinoId: rDestId,
-                  salida: leg.date ? new Date(leg.date) : new Date(),
-                  llegada: leg.arrivalDate ? new Date(leg.arrivalDate) : (leg.date ? new Date(leg.date) : new Date()),
-                  nroVueloTramo: leg.flightNumber || null,
-                  orden: (item.legs?.length || 0) + 1
-                }
-              });
+            if (item.hasStops && item.outboundStops && item.outboundStops.length > 0) {
+              for (const stop of item.outboundStops) {
+                if (!stop.origin && !stop.destination) continue;
+                const sOriginId = stop.origin ? await resolveAirportId(tx, stop.origin) : null;
+                const sDestId = stop.destination ? await resolveAirportId(tx, stop.destination) : null;
+                if (!sOriginId || !sDestId) continue;
+                await tx.tramosVuelo.create({
+                  data: {
+                    prodTiqueteriaId: product.id,
+                    aeropuertoOrigenId: sOriginId,
+                    aeropuertoDestinoId: sDestId,
+                    salida: stop.date ? new Date(stop.date) : new Date(),
+                    llegada: stop.arrivalDate ? new Date(stop.arrivalDate) : (stop.date ? new Date(stop.date) : new Date()),
+                    nroVueloTramo: stop.flightNumber || null,
+                    asiento: stop.seat || null,
+                    nroTiquete: stop.ticketNumber || null,
+                    orden: currentOrden++
+                  }
+                });
+              }
+            }
+
+            if (item.returnLeg && item.returnLeg.origin && item.returnLeg.destination) {
+              const rLeg = item.returnLeg;
+              const rOriginId = await resolveAirportId(tx, rLeg.origin);
+              const rDestId = await resolveAirportId(tx, rLeg.destination);
+              if (rOriginId && rDestId) {
+                await tx.tramosVuelo.create({
+                  data: {
+                    prodTiqueteriaId: product.id,
+                    aeropuertoOrigenId: rOriginId,
+                    aeropuertoDestinoId: rDestId,
+                    salida: rLeg.date ? new Date(rLeg.date) : new Date(),
+                    llegada: rLeg.arrivalDate ? new Date(rLeg.arrivalDate) : (rLeg.date ? new Date(rLeg.date) : new Date()),
+                    nroVueloTramo: rLeg.flightNumber || null,
+                    asiento: rLeg.seat || null,
+                    nroTiquete: rLeg.ticketNumber || null,
+                    orden: currentOrden++
+                  }
+                });
+              }
+            }
+
+            if (item.returnHasStops && item.returnStops && item.returnStops.length > 0) {
+              for (const stop of item.returnStops) {
+                if (!stop.origin && !stop.destination) continue;
+                const sOriginId = stop.origin ? await resolveAirportId(tx, stop.origin) : null;
+                const sDestId = stop.destination ? await resolveAirportId(tx, stop.destination) : null;
+                if (!sOriginId || !sDestId) continue;
+                await tx.tramosVuelo.create({
+                  data: {
+                    prodTiqueteriaId: product.id,
+                    aeropuertoOrigenId: sOriginId,
+                    aeropuertoDestinoId: sDestId,
+                    salida: stop.date ? new Date(stop.date) : new Date(),
+                    llegada: stop.arrivalDate ? new Date(stop.arrivalDate) : (stop.date ? new Date(stop.date) : new Date()),
+                    nroVueloTramo: stop.flightNumber || null,
+                    asiento: stop.seat || null,
+                    nroTiquete: stop.ticketNumber || null,
+                    orden: currentOrden++
+                  }
+                });
+              }
             }
           }
         }

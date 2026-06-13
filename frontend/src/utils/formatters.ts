@@ -8,12 +8,39 @@ export function formatCurrency(amount: number): string {
 
 export function formatDate(dateStr: string): string {
   if (!dateStr) return '-';
+  
+  const dateOnlyMatch = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (dateOnlyMatch) {
+    const hasMidnightTime = !dateStr.includes('T') || dateStr.includes('T00:00:00');
+    if (hasMidnightTime) {
+      const y = parseInt(dateOnlyMatch[1], 10);
+      const m = parseInt(dateOnlyMatch[2], 10);
+      const d = parseInt(dateOnlyMatch[3], 10);
+      return new Date(y, m - 1, d).toLocaleDateString('es-CO');
+    }
+  }
+
   const date = new Date(dateStr);
   return date.toLocaleDateString('es-CO');
 }
 
 export function formatDateTime(dateStr: string): string {
   if (!dateStr) return '-';
+  
+  const dateOnlyMatch = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (dateOnlyMatch) {
+    const hasMidnightTime = !dateStr.includes('T') || dateStr.includes('T00:00:00');
+    if (hasMidnightTime) {
+      const y = parseInt(dateOnlyMatch[1], 10);
+      const m = parseInt(dateOnlyMatch[2], 10);
+      const d = parseInt(dateOnlyMatch[3], 10);
+      return new Date(y, m - 1, d).toLocaleString('es-CO', {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', hour12: true
+      });
+    }
+  }
+
   const date = new Date(dateStr);
   return date.toLocaleString('es-CO', { 
     year: 'numeric', month: '2-digit', day: '2-digit',
@@ -22,7 +49,14 @@ export function formatDateTime(dateStr: string): string {
 }
 
 export function formatDateInput(date: Date): string {
-  return date.toISOString().split('T')[0];
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+export function todayStr(): string {
+  return formatDateInput(new Date());
 }
 
 export function getInitials(name: string): string {

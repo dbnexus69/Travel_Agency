@@ -3,6 +3,7 @@ import { FormField, Input, Combobox, Textarea , CurrencyInput} from "../../ui/Fo
 import { PetServiceData } from "../../../types";
 import { ClientInfoSection, VoucherField, FinancialSection } from "./VoucherField";
 import { DatePicker } from "./TicketForm";
+import { todayStr as todayStrHelper } from "../../../utils/formatters";
 
 interface PetServiceFormProps {
   pet: PetServiceData;
@@ -14,7 +15,7 @@ interface PetServiceFormProps {
 }
 
 export function PetServiceForm({ pet, client, suppliers, paymentMethods, onChange, triggerError }: PetServiceFormProps) {
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = todayStrHelper();
   return (
     <div className="space-y-6 animate-fade-in">
       {client && <ClientInfoSection client={client} />}

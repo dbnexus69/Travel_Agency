@@ -410,6 +410,8 @@ model PasajerosDetalle {
   persona         Personas    @relation(fields: [personaId], references: [id])
   esTitular       Boolean?    @default(false) @map("es_titular")
   asiento         String?
+  nroReserva      String?     @map("nro_reserva")
+  nroTiquete      String?     @map("nro_tiquete")
   nota            String?
 
   @@map("pasajeros_detalle")
@@ -588,6 +590,8 @@ model TramosVuelo {
   nroVueloTramo      String?        @map("nro_vuelo_tramo")
   asiento            String?
   orden              Int            @default(1)
+  checkinStatus      CheckinStatus? @default(pendiente) @map("checkin_status")
+  nroTiquete         String?        @map("nro_tiquete")
 
   @@map("tramos_vuelo")
   @@index([prodTiqueteriaId])

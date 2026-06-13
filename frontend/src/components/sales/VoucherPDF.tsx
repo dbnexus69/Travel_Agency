@@ -28,9 +28,91 @@ function ProductCard({ emoji, title, children }: { emoji: string; title: string;
 }
 
 function FlightBlock({ ticket, idx, airportMap }: { ticket: TicketData; idx: number; airportMap?: Record<string, AirportInfo> }) {
-  const mainLegs = ticket.legs && ticket.legs.length > 0 ? ticket.legs : [];
-  const returnLeg = ticket.returnLeg ? [ticket.returnLeg] : [];
-  const allLegs = [...mainLegs, ...returnLeg];
+  // Helper to filter out summary legs if layovers exist
+  const filterSummaryLegs = (legsToFilter: any[]) => {
+    if (legsToFilter.length <= 1) return legsToFilter;
+    return legsToFilter.filter((leg, idx) => {
+      const otherLegs = legsToFilter.filter((_, i) => i !== idx);
+      const hasPath = (start: string, end: string, visited: Set<string>): boolean => {
+        if (start === end) return true;
+        visited.add(start);
+        const nextLegs = otherLegs.filter(l => l.origin === start && !visited.has(l.destination));
+        for (const nextLeg of nextLegs) {
+          if (hasPath(nextLeg.destination, end, new Set(visited))) return true;
+        }
+        return false;
+      };
+      return !hasPath(leg.origin, leg.destination, new Set());
+    });
+  };
+
+  // Filter out summary/duplicate legs first
+  const actualLegs = filterSummaryLegs(ticket.legs || []);
+  const flightMode = ticket.flightMode || "one_way";
+  let outboundLegs = [...actualLegs];
+  let returnLegs: any[] = [];
+
+  if (flightMode === "round_trip" && actualLegs.length >= 2) {
+    const outboundMain = actualLegs[0];
+    // Find index of the return segment
+    let splitIdx = actualLegs.findIndex((leg, idx) => 
+      idx > 0 && 
+      leg.origin === outboundMain.destination && 
+      leg.destination === outboundMain.origin
+    );
+
+    if (splitIdx === -1) {
+      splitIdx = actualLegs.findIndex((leg, idx) => 
+        idx > 0 && 
+        leg.origin === outboundMain.destination
+      );
+    }
+
+    if (splitIdx === -1) {
+      splitIdx = actualLegs.findIndex((leg, idx) => 
+        idx > 0 && 
+        leg.destination === outboundMain.origin
+      );
+    }
+
+    if (splitIdx === -1) {
+      splitIdx = Math.ceil(actualLegs.length / 2);
+    }
+
+    outboundLegs = actualLegs.slice(0, splitIdx);
+    returnLegs = actualLegs.slice(splitIdx);
+  } else if (ticket.returnLeg && flightMode === "round_trip") {
+    returnLegs = [ticket.returnLeg];
+  }
+
+  const passengers = ticket.passengers || ((ticket as any).passengerInfo ? [(ticket as any).passengerInfo] : []);
+  const mainPassenger = passengers.find((p: any) => p.esTitular) || passengers[0];
+
+  const deduplicateLegs = (legsToDedup: any[]) => {
+    const unique = [];
+    const seen = new Set();
+    for (const leg of legsToDedup) {
+      const key = `${leg.origin}-${leg.destination}-${leg.flightNumber}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        unique.push(leg);
+      }
+    }
+    return unique;
+  };
+
+  const allLegs: any[] = [
+    ...deduplicateLegs(outboundLegs).map((l, i) => ({ 
+      ...l, 
+      isStop: i > 0,
+      ticketNumber: i === 0 ? (l.ticketNumber || ticket.ticketNumber || mainPassenger?.nroTiquete || "-") : (l.ticketNumber || "-")
+    })),
+    ...deduplicateLegs(returnLegs).map((l, i) => ({ 
+      ...l, 
+      isStop: i > 0,
+      ticketNumber: i === 0 ? (l.ticketNumber || ticket.ticketNumber || mainPassenger?.nroTiquete || "-") : (l.ticketNumber || "-")
+    }))
+  ];
 
   const legsToRender = allLegs.length > 0 ? allLegs : [{
     origin: '—',
@@ -65,7 +147,6 @@ function FlightBlock({ ticket, idx, airportMap }: { ticket: TicketData; idx: num
             <th>VUELO</th>
             <th>SALIDA</th>
             <th>LLEGADA</th>
-            <th>N° RESERVA</th>
           </tr>
         </thead>
         <tbody>
@@ -84,7 +165,11 @@ function FlightBlock({ ticket, idx, airportMap }: { ticket: TicketData; idx: num
                   <div className="v-f-main">{destStr}</div>
                   {destInfo.name && <div className="v-f-sub">{destInfo.name}</div>}
                 </td>
-                <td><div className="v-f-main">{leg.flightNumber || '—'}</div></td>
+                <td>
+                  <div className="v-f-main">{leg.flightNumber || '—'}</div>
+                  {leg.ticketNumber && <div className="v-f-sub">Tiquete: {leg.ticketNumber}</div>}
+                  {leg.isStop && <div className="v-f-sub text-blue-600 font-bold">(Escala)</div>}
+                </td>
                 <td>
                   <div className="v-f-main">{leg.date ? formatDate(leg.date) : '—'}</div>
                   <div className="v-f-sub">Hora: {formatTimeAMPM((leg as any).time)}</div>
@@ -93,14 +178,13 @@ function FlightBlock({ ticket, idx, airportMap }: { ticket: TicketData; idx: num
                   <div className="v-f-main">{(leg as any).arrivalDate ? formatDate((leg as any).arrivalDate) : (leg.date ? formatDate(leg.date) : '—')}</div>
                   <div className="v-f-sub">Hora: {formatTimeAMPM((leg as any).arrivalTime)}</div>
                 </td>
-                <td><div className="v-f-main">{li === 0 ? (ticket.reservationNumber || '—') : '—'}</div></td>
               </tr>
             );
           })}
         </tbody>
       </table>
 
-      <div className="v-flight-details-box">
+      <div className="v-flight-details-box" style={{ marginBottom: '15px' }}>
         <div className="v-fd-col">
           <span className="v-fd-label">Aerolínea:</span>
           <span className="v-badge-orange">{(ticket as any).airlineName || ticket.airline || '—'}</span>
@@ -109,17 +193,40 @@ function FlightBlock({ ticket, idx, airportMap }: { ticket: TicketData; idx: num
           <span className="v-fd-label">Equipaje:</span>
           <span className="v-fd-val">{ticket.baggagePlan || 'No especificado'}</span>
         </div>
-        <div className="v-fd-col">
-          <span className="v-fd-label">Asiento:</span>
-          <span className="v-fd-val">{ticket.seatNumber || '—'}</span>
-        </div>
-        {ticket.ticketNumber && (
-          <div className="v-fd-col">
-            <span className="v-fd-label">N° Tiquete:</span>
-            <span className="v-fd-val">{ticket.ticketNumber}</span>
-          </div>
-        )}
       </div>
+
+      {ticket.passengers && ticket.passengers.length > 0 && (
+        <div style={{ marginTop: '10px' }}>
+          <div className="v-fd-label" style={{ marginBottom: '6px', fontSize: '11px', color: '#555' }}>PASAJEROS DEL VUELO:</div>
+          <table className="v-flight-table" style={{ width: '100%', marginBottom: '10px' }}>
+            <thead>
+              <tr>
+                <th>NOMBRE</th>
+                <th>DOCUMENTO</th>
+                <th>N° RESERVA</th>
+                <th>N° TIQUETE</th>
+                <th>ASIENTO</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ticket.passengers.map((pax, i) => (
+                <tr key={`pax-${i}`}>
+                  <td>
+                    <div className="v-f-main" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      {pax.name} 
+                      {pax.esTitular && <span style={{ fontSize: '9px', backgroundColor: '#e0f2fe', color: '#0369a1', padding: '2px 6px', borderRadius: '99px', fontWeight: 'bold', whiteSpace: 'nowrap' }}>PASAJERO PRINCIPAL</span>}
+                    </div>
+                  </td>
+                  <td><div className="v-f-main">{pax.docNumber || '—'}</div></td>
+                  <td><div className="v-f-main">{pax.esTitular ? (ticket.reservationNumber || pax.nroReserva || '—') : (pax.nroReserva || '—')}</div></td>
+                  <td><div className="v-f-main">{pax.esTitular ? (ticket.ticketNumber || pax.nroTiquete || '—') : (pax.nroTiquete || '—')}</div></td>
+                  <td><div className="v-f-main">{pax.esTitular ? (ticket.seatNumber || (ticket.legs && ticket.legs[0]?.seat) || pax.asiento || '—') : (pax.asiento || '—')}</div></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
@@ -170,10 +277,10 @@ export const VoucherPDF = forwardRef<HTMLDivElement, VoucherPDFProps>(({ sale, a
           </div>
         </div>
 
-        {/* ══ PASSENGER BAR ═══════════════════════════════════════════ */}
+        {/* ══ TOP BAR ═══════════════════════════════════════════ */}
         <div className="v-top-bar">
           <div className="v-tb-item">
-            <span className="v-tb-label">PASAJERO</span>
+            <span className="v-tb-label">CLIENTE TITULAR</span>
             <span className="v-tb-value">{sale.clientName}</span>
           </div>
           <div className="v-tb-item">

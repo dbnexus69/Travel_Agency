@@ -185,6 +185,7 @@ export interface FlightLeg {
   date: string;
   time?: string;
   arrivalDate?: string;
+  ticketNumber?: string;
 }
 
 export interface GuestInfo {
@@ -267,12 +268,16 @@ export interface TicketData {
   returnStops?: FlightLeg[];
   legs: FlightLeg[];
   returnLeg?: FlightLeg;
-  passengerInfo: {
+  passengers: {
     name: string;
     docType: string;
     docNumber: string;
     birthDate: string;
-  };
+    esTitular?: boolean;
+    asiento?: string;
+    nroReserva?: string;
+    nroTiquete?: string;
+  }[];
 }
 
 export interface CheckInData {

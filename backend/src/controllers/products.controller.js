@@ -97,7 +97,9 @@ const productHandler = (category, tableName, transformData) => ({
             pasajerosDetalleData.push({
               personaId: resolvedPid,
               esTitular: p.esTitular ?? true,
-              asiento: p.asiento || p.seat || null
+              asiento: p.asiento || p.seat || null,
+              nroReserva: p.nroReserva || null,
+              nroTiquete: p.nroTiquete || null
             });
           }
         } else {
@@ -110,7 +112,9 @@ const productHandler = (category, tableName, transformData) => ({
             pasajerosDetalleData.push({
               personaId: resolvedPid,
               esTitular: true,
-              asiento: data.seat || data.seatNumber || null
+              asiento: data.seat || data.seatNumber || null,
+              nroReserva: null,
+              nroTiquete: null
             });
           }
         }
@@ -121,7 +125,9 @@ const productHandler = (category, tableName, transformData) => ({
               detalleVentaId: detalle.id,
               personaId: passengerData.personaId,
               esTitular: passengerData.esTitular,
-              asiento: passengerData.asiento
+              asiento: passengerData.asiento,
+              nroReserva: passengerData.nroReserva,
+              nroTiquete: passengerData.nroTiquete
             }
           });
         }
@@ -166,9 +172,50 @@ const productHandler = (category, tableName, transformData) => ({
       if (!venta) return error(res, 'Venta no encontrada', 404);
 
       const data = req.body;
-      const product = await prisma[tableName].update({
-        where: { id },
-        data: transformData ? transformData(data) : data
+      const product = await prisma.$transaction(async (tx) => {
+        const prod = await tx[tableName].update({
+          where: { id },
+          data: transformData ? transformData(data) : data
+        });
+
+        if (data.passengers || data.passengerInfo || data.guests) {
+          const passengers = data.passengers ? data.passengers : (data.passengerInfo ? [data.passengerInfo] : (data.guests || []));
+          
+          await tx.pasajerosDetalle.deleteMany({ where: { detalleVentaId: prod.detalleVentaId } });
+
+          const cliente = await tx.clientes.findUnique({
+            where: { id: venta.clienteId },
+            select: { personaId: true }
+          });
+          const defaultPersonaId = cliente?.personaId;
+
+          const pasajerosDetalleData = [];
+          for (const p of passengers) {
+            const resolvedPid = await findOrCreatePersona(tx, p.name || p.passengerName || p.fullName, p.docType, p.docNumber, defaultPersonaId);
+            pasajerosDetalleData.push({
+              personaId: resolvedPid,
+              esTitular: p.esTitular ?? true,
+              asiento: p.asiento || p.seat || null,
+              nroReserva: p.nroReserva || null,
+              nroTiquete: p.nroTiquete || null
+            });
+          }
+
+          for (const passengerData of pasajerosDetalleData) {
+            await tx.pasajerosDetalle.create({
+              data: {
+                detalleVentaId: prod.detalleVentaId,
+                personaId: passengerData.personaId,
+                esTitular: passengerData.esTitular,
+                asiento: passengerData.asiento,
+                nroReserva: passengerData.nroReserva,
+                nroTiquete: passengerData.nroTiquete
+              }
+            });
+          }
+        }
+        
+        return prod;
       });
 
       success(res, product);

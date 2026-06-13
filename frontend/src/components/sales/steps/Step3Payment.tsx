@@ -3,6 +3,7 @@ import { CreditCard, Coins, Plus, Trash2, Info, AlertTriangle, CheckCircle } fro
 import { FormField, Input, Select, Textarea, Combobox, CurrencyInput } from "../../ui/Form";
 import { Button } from "../../ui/Button";
 import { DatePicker } from "../forms/TicketForm";
+import { todayStr } from "../../../utils/formatters";
 
 export function Step3Payment({ form, set, data, errors }: any) {
   // Local state for the new payment item being added
@@ -302,7 +303,7 @@ export function Step3Payment({ form, set, data, errors }: any) {
             <DatePicker
               value={form.creditDueDate}
               onChange={(val) => set("creditDueDate", val)}
-              min={new Date().toISOString().split("T")[0]}
+              min={todayStr()}
               fieldName="Fecha límite del crédito"
               popoverDirection="up"
             />

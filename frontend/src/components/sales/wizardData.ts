@@ -88,7 +88,7 @@ export const INITIAL_TICKET = (client?: any): TicketData => ({
   arrivalDate: "",
   supplierCost: 0,
   ta: 0,
-  supplierPaymentMethod: "Efectivo",
+  supplierPaymentMethod: "",
   baggagePlan: "",
   ticketNumber: "",
   seatNumber: "",
@@ -98,12 +98,18 @@ export const INITIAL_TICKET = (client?: any): TicketData => ({
   outboundStops: [],
   returnStops: [],
   legs: [{ origin: "", destination: "", flightNumber: "", seat: "", date: "" }],
-  passengerInfo: {
-    name: client?.name || "",
-    docType: client?.docType || "",
-    docNumber: client?.docNumber || "",
-    birthDate: client?.birthDate ? client.birthDate.split('T')[0] : "",
-  },
+  passengers: [
+    {
+      name: client?.name || "",
+      docType: client?.docType || "",
+      docNumber: client?.docNumber || "",
+      birthDate: client?.birthDate ? client.birthDate.split('T')[0] : "",
+      esTitular: true,
+      asiento: "",
+      nroReserva: "",
+      nroTiquete: ""
+    }
+  ],
 });
 
 export const INITIAL_HOTEL = (client?: any): HotelData => ({
@@ -115,7 +121,7 @@ export const INITIAL_HOTEL = (client?: any): HotelData => ({
   endDate: "",
   supplierCost: 0,
   ta: 0,
-  supplierPaymentMethod: "Efectivo",
+  supplierPaymentMethod: "",
   hotelType: "",
   observations: "",
   guests: [
@@ -133,7 +139,7 @@ export const INITIAL_INSURANCE = (client?: any): InsuranceData => ({
   supplier: "",
   supplierCost: 0,
   ta: 0,
-  supplierPaymentMethod: "Efectivo",
+  supplierPaymentMethod: "",
   members: [
     {
       name: client?.name || "",
@@ -152,7 +158,7 @@ export const INITIAL_PLAN = (client?: any): PlanData => ({
   supplier: "",
   supplierCost: 0,
   ta: 0,
-  supplierPaymentMethod: "Efectivo",
+  supplierPaymentMethod: "",
   reservationNumber: "",
   confirmationNumber: "",
   observations: "",
