@@ -32,6 +32,10 @@ function errorHandler(err, req, res, _next) {
     return error(res, 'El archivo es demasiado grande', 413, 'FILE_TOO_LARGE');
   }
 
+  if (err.statusCode) {
+    return error(res, err.message, err.statusCode, err.code || 'BAD_REQUEST');
+  }
+
   const msg = process.env.NODE_ENV === 'development'
     ? `Error interno: ${err.message || err}`
     : 'Error interno del servidor';

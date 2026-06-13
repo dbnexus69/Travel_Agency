@@ -1274,7 +1274,25 @@ exports.create = async (req, res, next) => {
         where: { id: data.clientId },
         select: { personaId: true }
       });
-      const personaId = cliente?.personaId;
+      if (!cliente) {
+        const err = new Error('El cliente seleccionado no existe o fue eliminado');
+        err.statusCode = 400;
+        err.code = 'CLIENT_NOT_FOUND';
+        throw err;
+      }
+      const personaId = cliente.personaId;
+
+      if (data.commissionAgentId) {
+        const comisionista = await tx.comisionistas.findUnique({
+          where: { id: data.commissionAgentId }
+        });
+        if (!comisionista) {
+          const err = new Error('El comisionista seleccionado no existe o fue eliminado');
+          err.statusCode = 400;
+          err.code = 'COMMISSION_AGENT_NOT_FOUND';
+          throw err;
+        }
+      }
 
       const detalleVentasData = [];
 
@@ -1588,6 +1606,15 @@ exports.update = async (req, res, next) => {
 
     const venta = await prisma.ventas.findUnique({ where: { id } });
     if (!venta) return error(res, 'Venta no encontrada', 404);
+
+    if (data.commissionAgentId) {
+      const comisionista = await prisma.comisionistas.findUnique({
+        where: { id: data.commissionAgentId }
+      });
+      if (!comisionista) {
+        return error(res, 'El comisionista seleccionado no existe o fue eliminado', 400, 'COMMISSION_AGENT_NOT_FOUND');
+      }
+    }
 
     const updateData = {};
     if (data.total !== undefined) updateData.montoTotal = data.total;

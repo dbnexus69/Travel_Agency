@@ -341,6 +341,13 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
       if (!form.clientId) errs.clientId = "El cliente es obligatorio";
       if (form.commissionAgentName && !form.commissionAgentId) {
         errs.commissionAgent = "El comisionista ingresado no está registrado";
+      } else if (form.commissionAgentId) {
+        const agentExists = (data.commissionAgents || []).some(
+          (a: any) => String(a.id) === String(form.commissionAgentId)
+        );
+        if (!agentExists) {
+          errs.commissionAgent = "El comisionista seleccionado ya no existe en el sistema";
+        }
       }
     }
     if (s === 2) {
@@ -1591,7 +1598,17 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
   };
 
   const handleSubmit = async () => {
-    if (!validateStep(3)) return;
+    if (!validateStep(1)) {
+      setStep(1);
+      return;
+    }
+    if (!validateStep(2)) {
+      setStep(2);
+      return;
+    }
+    if (!validateStep(3)) {
+      return;
+    }
     if (isSubmitting) return;
     setIsSubmitting(true);
     const client = data.clients.find((c: any) => c.name === form.clientId);
