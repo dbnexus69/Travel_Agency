@@ -755,7 +755,7 @@ export default function Sales() {
       </Modal>
 
       {/* COMPONENTE OCULTO PARA GENERAR PDF - usa la venta completa cargada del API */}
-      <VoucherPDF ref={voucherRef} sale={voucherFullSale} airportMap={airportMap} />
+      <VoucherPDF ref={voucherRef} sale={voucherFullSale} airportMap={airportMap} baggageList={data.config.baggage} />
     </div>
   );
 }

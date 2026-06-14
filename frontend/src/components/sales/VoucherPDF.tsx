@@ -7,6 +7,15 @@ import './VoucherPDF.css';
 interface VoucherPDFProps {
   sale: Sale | null;
   airportMap?: Record<string, AirportInfo>;
+  baggageList?: {
+    id: number;
+    airlineName: string;
+    fareType: string;
+    personalItem: string;
+    carryOn: string;
+    checkedBag: string;
+    notes: string;
+  }[];
 }
 
 function DataCell({ label, value, highlight, fullWidth }: { label: string; value: React.ReactNode; highlight?: boolean; fullWidth?: boolean }) {
@@ -27,7 +36,7 @@ function ProductCard({ emoji, title, children }: { emoji: string; title: string;
   );
 }
 
-function FlightBlock({ ticket, idx, airportMap }: { ticket: TicketData; idx: number; airportMap?: Record<string, AirportInfo> }) {
+function FlightBlock({ ticket, idx, airportMap, baggageList }: { ticket: TicketData; idx: number; airportMap?: Record<string, AirportInfo>; baggageList?: any[] }) {
   // Helper to filter out summary legs if layovers exist
   const filterSummaryLegs = (legsToFilter: any[]) => {
     if (legsToFilter.length <= 1) return legsToFilter;
@@ -191,13 +200,42 @@ function FlightBlock({ ticket, idx, airportMap }: { ticket: TicketData; idx: num
         </div>
         <div className="v-fd-col">
           <span className="v-fd-label">Equipaje:</span>
-          <span className="v-fd-val">{ticket.baggagePlan || 'No especificado'}</span>
+          <span className="v-fd-val">
+            <div>{ticket.baggagePlan || 'No especificado'}</div>
+            {(() => {
+              if (!ticket.baggagePlan || !baggageList) return null;
+              const b = baggageList.find(x => {
+                const planStr = ticket.baggagePlan?.toLowerCase() || '';
+                const fareStr = x.fareType.toLowerCase();
+                const airlineStr = x.airlineName.toLowerCase();
+                const tAirline = ((ticket as any).airlineName || ticket.airline || '').toLowerCase();
+                
+                // Si el plan es exactamente "Aerolínea - Tarifa"
+                if (`${airlineStr} - ${fareStr}` === planStr) return true;
+                
+                // Si solo dice la tarifa, verificar que la aerolínea coincida
+                if (planStr.includes(fareStr) || fareStr.includes(planStr)) {
+                  if (tAirline && (tAirline.includes(airlineStr) || airlineStr.includes(tAirline))) {
+                    return true;
+                  }
+                }
+                return false;
+              });
+              if (!b) return null;
+              const details = [];
+              if (b.personalItem && b.personalItem.toLowerCase() !== 'no' && b.personalItem.toLowerCase() !== 'no incluye') details.push(`Personal: ${b.personalItem}`);
+              if (b.carryOn && b.carryOn.toLowerCase() !== 'no' && b.carryOn.toLowerCase() !== 'no incluye') details.push(`Cabina: ${b.carryOn}`);
+              if (b.checkedBag && b.checkedBag.toLowerCase() !== 'no' && b.checkedBag.toLowerCase() !== 'no incluye') details.push(`Bodega: ${b.checkedBag}`);
+              if (details.length === 0) return null;
+              return <div style={{ fontSize: '0.95em', color: '#64748b', marginTop: '2px', fontWeight: 'normal' }}>{details.join(' • ')}</div>;
+            })()}
+          </span>
         </div>
       </div>
 
       {ticket.passengers && ticket.passengers.length > 0 && (
         <div style={{ marginTop: '10px' }}>
-          <div className="v-fd-label" style={{ marginBottom: '6px', fontSize: '11px', color: '#555' }}>PASAJEROS DEL VUELO:</div>
+          <div className="v-fd-label" style={{ marginBottom: '6px', fontSize: '13px', color: '#555' }}>PASAJEROS DEL VUELO:</div>
           <table className="v-flight-table" style={{ width: '100%', marginBottom: '10px' }}>
             <thead>
               <tr>
@@ -214,7 +252,7 @@ function FlightBlock({ ticket, idx, airportMap }: { ticket: TicketData; idx: num
                   <td>
                     <div className="v-f-main" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       {pax.name} 
-                      {pax.esTitular && <span style={{ fontSize: '9px', color: '#0369a1', fontWeight: 'bold', whiteSpace: 'nowrap' }}>PASAJERO PRINCIPAL</span>}
+                      {pax.esTitular && <span style={{ fontSize: '11px', color: '#0369a1', fontWeight: 'bold', whiteSpace: 'nowrap' }}>PASAJERO PRINCIPAL</span>}
                     </div>
                   </td>
                   <td><div className="v-f-main">{pax.docNumber || '—'}</div></td>
@@ -231,7 +269,7 @@ function FlightBlock({ ticket, idx, airportMap }: { ticket: TicketData; idx: num
   );
 }
 
-export const VoucherPDF = forwardRef<HTMLDivElement, VoucherPDFProps>(({ sale, airportMap }, ref) => {
+export const VoucherPDF = forwardRef<HTMLDivElement, VoucherPDFProps>(({ sale, airportMap, baggageList }, ref) => {
   if (!sale) {
     return <div className="itea-voucher"><div ref={ref} /></div>;
   }
@@ -313,7 +351,7 @@ export const VoucherPDF = forwardRef<HTMLDivElement, VoucherPDFProps>(({ sale, a
         </div>
 
         {/* ══ TIQUETERÍA ══════════════════════════════════════════════ */}
-        {tickets.map((ticket, i) => <FlightBlock key={`ticket-${i}`} ticket={ticket} idx={i} airportMap={airportMap} />)}
+        {tickets.map((ticket, i) => <FlightBlock key={`ticket-${i}`} ticket={ticket} idx={i} airportMap={airportMap} baggageList={baggageList} />)}
 
         {/* ══ SECTION TITLE FOR OTHER PRODUCTS ════════════════════════ */}
         {hasOtherProducts && (
@@ -645,7 +683,7 @@ export const VoucherPDF = forwardRef<HTMLDivElement, VoucherPDFProps>(({ sale, a
 
         {/* Sin productos */}
         {!hasAnyProduct && (
-          <div style={{ padding: '32px', textAlign: 'center', color: '#64748b', fontSize: '11px', fontStyle: 'italic' }}>
+          <div style={{ padding: '32px', textAlign: 'center', color: '#64748b', fontSize: '13px', fontStyle: 'italic' }}>
             Esta venta no tiene servicios detallados disponibles para mostrar.
           </div>
         )}
@@ -693,11 +731,19 @@ export const VoucherPDF = forwardRef<HTMLDivElement, VoucherPDFProps>(({ sale, a
           No olvide reconfirmar el horario de los vuelos y servicios entre 24 y 48 horas antes de la salida.
           Verifique que cuente con todos los documentos necesarios para viajar.<br /><br />
           <strong>Samtur</strong> agradece que haya elegido nuestros servicios y le desea un excelente viaje.<br /><br />
-          <strong>1.</strong> En vuelos nacionales, llegue como mínimo tres horas antes del vuelo para el chequeo y embarque.<br /><br />
-          <strong>2.</strong> Todo pasajero deberá exhibir el documento de identidad pertinente ante la aerolínea y autoridades que lo requieran.
+          <strong>1.</strong> En vuelos nacionales, llegue como mínimo dos horas antes del vuelo para el chequeo y embarque.<br /><br />
+          <strong>2.</strong> En vuelos internacionales, llegue como mínimo cuatro horas antes del vuelo para el chequeo y embarque.<br /><br />
+          <strong>3.</strong> El checkin o pase de abordar es valor agregado a los servicios prestados,se enviara el checkin 1 dia antes del vuelo, este servicio se brinda dentro del tiempo segun la aerolinea. <br />
+          Se habilitará 24 horas antes de la salida del vuelo y se cerrará 4 horas antes del vuelo.Si no se realiza el check-in en este periodo, Samtur no se hace responsable por los gastos o inconvenientes que esto pueda generar.<br /><br />
+          <strong>4.</strong> Todo pasajero deberá exhibir el documento de identidad pertinente ante la aerolínea y autoridades que lo requieran.
           <div className="v-company">
             Samtur Travel Agency &nbsp;|&nbsp; calle 18 # 18 143 mall estación de servicios medrano &nbsp;|&nbsp; Comercial@samturtravel.com
           </div>
+        </div>
+
+        {/* ══ ALERT ═══════════════════════════════════════════════════ */}
+        <div style={{ margin: '12px 36px', padding: '12px 20px', backgroundColor: '#fffbeb', borderLeft: '4px solid #f59e0b', color: '#92400e', fontSize: '13.5px', fontWeight: '600', borderRadius: '4px', lineHeight: '1.5' }}>
+          ⚠️ ATENCIÓN: Por favor revise detenidamente todos los datos de este voucher (nombres, fechas, horarios y servicios). Cualquier inconsistencia debe ser reportada de inmediato a su asesor.
         </div>
 
         {/* ══ FOOTER ══════════════════════════════════════════════════ */}
