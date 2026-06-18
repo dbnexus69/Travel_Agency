@@ -28,7 +28,7 @@ function ProductCard({ emoji, title, children }: { emoji: string; title: string;
   );
 }
 
-function FlightBlock({ ticket, idx, airportMap }: { ticket: TicketData; idx: number; airportMap?: Record<string, AirportInfo> }) {
+function FlightBlock({ ticket, idx, airportMap, baggageList }: { ticket: TicketData; idx: number; airportMap?: Record<string, AirportInfo>; baggageList?: any[] }) {
   const mainLegs = ticket.legs && ticket.legs.length > 0 ? ticket.legs : [];
   const returnLeg = ticket.returnLeg ? [ticket.returnLeg] : [];
   const allLegs = [...mainLegs, ...returnLeg];
@@ -58,6 +58,7 @@ function FlightBlock({ ticket, idx, airportMap }: { ticket: TicketData; idx: num
       <div className="v-flight-header">✈&nbsp;&nbsp;RECIBO DE TIQUETE ELECTRÓNICO</div>
       <div className="v-flight-notice">Hemos realizado las reservas requeridas y ya se encuentran emitidas. Agradecemos la compra realizada.</div>
       
+      {/* Flight table */}
       <table className="v-flight-table">
         <thead>
           <tr>
@@ -101,23 +102,38 @@ function FlightBlock({ ticket, idx, airportMap }: { ticket: TicketData; idx: num
         </tbody>
       </table>
 
-      <div className="v-flight-details-box">
-        <div className="v-fd-col">
+      <div className="v-flight-details-box" style={{ alignItems: 'flex-start' }}>
+        <div className="v-fd-col" style={{ minWidth: '150px' }}>
           <span className="v-fd-label">Aerolínea:</span>
           <span className="v-badge-orange">{(ticket as any).airlineName || ticket.airline || '—'}</span>
         </div>
-        <div className="v-fd-col">
+        <div className="v-fd-col" style={{ flex: 1 }}>
           <span className="v-fd-label">Equipaje:</span>
-          <span className="v-fd-val">{ticket.baggagePlan || 'No especificado'}</span>
+          <span className="v-fd-val">
+            {(() => {
+              const airlineName = (ticket as any).airlineName || ticket.airline;
+              const bg = baggageList?.find(b => b.fareType === ticket.baggagePlan && (b.airlineName === airlineName || !airlineName));
+              return (
+                <>
+                  <strong style={{ display: 'block', color: '#111827' }}>{ticket.baggagePlan || 'No especificado'}</strong>
+                  {bg && (
+                    <span style={{ fontSize: '0.85em', color: '#6b7280', display: 'block', marginTop: '2px' }}>
+                      Personal: {bg.personalItem || 'N/A'} &bull; Cabina: {bg.carryOn || 'N/A'} &bull; Bodega: {bg.checkedBag || 'N/A'}
+                    </span>
+                  )}
+                </>
+              );
+            })()}
+          </span>
         </div>
         <div className="v-fd-col">
           <span className="v-fd-label">Asiento:</span>
           <span className="v-fd-val">{ticket.seatNumber || '—'}</span>
         </div>
-        {ticket.ticketNumber && (
+        {(ticket.ticketNumber || (ticket.passengers && ticket.passengers[0]?.nroTiquete)) && (
           <div className="v-fd-col">
             <span className="v-fd-label">N° Tiquete:</span>
-            <span className="v-fd-val">{ticket.ticketNumber}</span>
+            <span className="v-fd-val"><strong style={{ color: '#111827' }}>{ticket.ticketNumber || (ticket.passengers && ticket.passengers[0]?.nroTiquete)}</strong></span>
           </div>
         )}
       </div>
@@ -125,7 +141,7 @@ function FlightBlock({ ticket, idx, airportMap }: { ticket: TicketData; idx: num
   );
 }
 
-export const VoucherPDF = forwardRef<HTMLDivElement, VoucherPDFProps>(({ sale, airportMap }, ref) => {
+export const VoucherPDF = forwardRef<HTMLDivElement, VoucherPDFProps>(({ sale, airportMap, baggageList }, ref) => {
   if (!sale) {
     return <div className="itea-voucher"><div ref={ref} /></div>;
   }
@@ -163,9 +179,12 @@ export const VoucherPDF = forwardRef<HTMLDivElement, VoucherPDFProps>(({ sale, a
             <img className="v-logo-img" src="/samtur_nuevo.png.png" alt="Samtur Logo" crossOrigin="anonymous" />
           </div>
           <div className="v-header-right">
-            <strong>Samtur Travel Agency</strong><br />
-            MEDELLÍN, ANTIOQUIA<br />
-            Teléfono: +57 (312) 875 15 89<br />
+            <strong>Samtur Travel Agency</strong>
+            <br />
+            NIT: 902062715-5<br />
+            
+            Direccioón: Calle 18 #18 143 Mall Estación de Servicios Medrano<br />
+            Teléfono: +57 (312) 633 99 19<br />
             <strong>Fecha de Impresión:</strong> {currentDate}<br />
             <strong>Fecha de Venta:</strong> {formatDate(sale.date)}
           </div>
@@ -207,7 +226,7 @@ export const VoucherPDF = forwardRef<HTMLDivElement, VoucherPDFProps>(({ sale, a
         </div>
 
         {/* ══ TIQUETERÍA ══════════════════════════════════════════════ */}
-        {tickets.map((ticket, i) => <FlightBlock key={`ticket-${i}`} ticket={ticket} idx={i} airportMap={airportMap} />)}
+        {tickets.map((ticket, i) => <FlightBlock key={`ticket-${i}`} ticket={ticket} idx={i} airportMap={airportMap} baggageList={baggageList} />)}
 
         {/* ══ SECTION TITLE FOR OTHER PRODUCTS ════════════════════════ */}
         {hasOtherProducts && (
@@ -536,7 +555,7 @@ export const VoucherPDF = forwardRef<HTMLDivElement, VoucherPDFProps>(({ sale, a
         {/* ══ FOOTNOTES ═══════════════════════════════════════════════ */}
         <div className="v-footnotes">
           Orden <strong>#{sale.id}</strong>
-          {sale.observations && ` — Obs: ${sale.observations}`}
+          
         </div>
 
         {/* ══ PAYMENT ═════════════════════════════════════════════════ */}
@@ -572,14 +591,19 @@ export const VoucherPDF = forwardRef<HTMLDivElement, VoucherPDFProps>(({ sale, a
 
         {/* ══ LEGAL ═══════════════════════════════════════════════════ */}
         <div className="v-legal">
-          <h4>Términos y Condiciones</h4>
-          No olvide reconfirmar el horario de los vuelos y servicios entre 24 y 48 horas antes de la salida.
-          Verifique que cuente con todos los documentos necesarios para viajar.<br /><br />
-          <strong>Samtur</strong> agradece que haya elegido nuestros servicios y le desea un excelente viaje.<br /><br />
-          <strong>1.</strong> En vuelos nacionales, llegue como mínimo tres horas antes del vuelo para el chequeo y embarque.<br /><br />
-          <strong>2.</strong> Todo pasajero deberá exhibir el documento de identidad pertinente ante la aerolínea y autoridades que lo requieran.
-          <div className="v-company">
-            Samtur Travel &nbsp;|&nbsp; Carrera 65A 13-157, Aeropuerto Olaya Herrera, Medellín &nbsp;|&nbsp; info@samturtravel.com
+          <h4>TÉRMINOS Y CONDICIONES</h4>
+          No olvide reconfirmar el horario de los vuelos y servicios entre 24 y 48 horas antes de la salida. Verifique que cuente con todos los documentos necesarios para viajar.<br /><br />
+          Samtur agradece que haya elegido nuestros servicios y le desea un excelente viaje.<br /><br />
+          <strong>1.</strong> En vuelos nacionales, llegue como mínimo dos horas antes del vuelo para el chequeo y embarque.<br /><br />
+          <strong>2.</strong> En vuelos internacionales, llegue como mínimo cuatro horas antes del vuelo para el chequeo y embarque.<br /><br />
+          <strong>3.</strong> El checkin o pase de abordar es valor agregado a los servicios prestados, este servicio se brinda dentro del tiempo segun la aereolinea.<br />
+          Se habilitará 24 horas antes de la salida del vuelo y se cerrará 4 horas antes del vuelo. Si no se realiza el check-in en este periodo, Samtur no se hace responsable por los gastos o inconvenientes que esto pueda generar.<br /><br />
+          <strong>4.</strong> Todo pasajero deberá exhibir el documento de identidad pertinente ante la aerolínea y autoridades que lo requieran.
+          <div className="v-company" style={{ marginTop: '12px' }}>
+            Samtur Travel Agency | calle 18 # 18 143 mall estación de servicios medrano | Comercial@samturtravel.com
+          </div>
+          <div style={{ marginTop: '15px', padding: '10px', backgroundColor: '#fff3cd', color: '#856404', border: '1px solid #ffeeba', borderRadius: '4px', fontSize: '11px' }}>
+            <strong>▲ ATENCIÓN:</strong> Por favor revise detenidamente todos los datos de este voucher (nombres, fechas, horarios y servicios). Cualquier inconsistencia debe ser reportada de inmediato a su asesor.
           </div>
         </div>
 
