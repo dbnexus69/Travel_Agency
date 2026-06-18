@@ -29,6 +29,7 @@ import { useData } from "../context/DataContext";
 import { Modal } from "../components/ui/Modal";
 import { Button } from "../components/ui/Button";
 import { AlertCircle } from "lucide-react";
+import LoadingScreen from "../components/ui/LoadingScreen";
 
 export default function Dashboard() {
   const { dashboardData, dashboardLoading, fetchDashboard } = useData();
@@ -106,6 +107,10 @@ export default function Dashboard() {
       ],
     };
   }, [dashboardData]);
+
+  if (dashboardLoading && !dashboardData) {
+    return <LoadingScreen fullScreen={false} />;
+  }
 
   const CARTERA_COLORS = ["#10b981", "#3b82f6", "#f59e0b"];
 

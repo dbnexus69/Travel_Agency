@@ -27,10 +27,12 @@ import { useData } from "../context/DataContext";
 import { usePermissions } from "../context/PermissionsContext";
 import { formatCurrency, capitalizeName, todayStr } from "../utils/formatters";
 import StatCard from "../components/ui/StatCard";
+import LoadingScreen from "../components/ui/LoadingScreen";
 
 export default function CommissionAgents() {
   const { data, addCommissionAgent, updateCommissionAgent, deleteCommissionAgent, settleCommissions, refreshSettlements, fetchCommissionAgents, fetchSettlements } = useData();
   const { canCreate, canEdit, canDelete } = usePermissions();
+  const [isLoading, setIsLoading] = useState(true);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -56,8 +58,10 @@ export default function CommissionAgents() {
 
   // Lazy Load Fetch
   useEffect(() => {
-    fetchCommissionAgents();
-    fetchSettlements();
+    Promise.all([
+      fetchCommissionAgents(),
+      fetchSettlements()
+    ]).finally(() => setIsLoading(false));
   }, [fetchCommissionAgents, fetchSettlements]);
 
   const notifySuccess = (msg: string) => {
@@ -217,6 +221,10 @@ export default function CommissionAgents() {
     { id: "settlements", label: "Pendientes", icon: Wallet },
     { id: "history", label: "Historial", icon: History },
   ] as const;
+
+  if (isLoading && data.commissionAgents.length === 0) {
+    return <LoadingScreen fullScreen={false} />;
+  }
 
   return (
     <div className="space-y-6 relative pb-10">

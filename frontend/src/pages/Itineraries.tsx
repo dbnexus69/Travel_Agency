@@ -13,13 +13,15 @@ import { Modal } from '../components/ui/Modal';
 import { FormField } from '../components/ui/Form';
 import { formatDate } from '../utils/formatters';
 import { Flight } from '../types';
+import LoadingScreen from '../components/ui/LoadingScreen';
 
 const MONTHS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 const DAYS = ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab'];
 
 export default function Itineraries() {
-  const { data, updateFlight, fetchFlights } = useData();
+  const { data, updateFlight, fetchFlights, fetchClients } = useData();
   const { canEdit: canEditItinerary, canView } = usePermissions();
+  const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'calendar' | 'checkin'>('calendar');
   const [calendarTab, setCalendarTab] = useState<'ida' | 'regreso'>('ida');
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
@@ -37,8 +39,9 @@ export default function Itineraries() {
 
   // Lazy Load Fetch
   useEffect(() => {
-    fetchFlights();
-  }, [fetchFlights]);
+    fetchFlights().finally(() => setIsLoading(false));
+    fetchClients().catch(() => {});
+  }, [fetchFlights, fetchClients]);
 
   // Estadísticas y filtros
   const pendingCheckins = useMemo(() => {
@@ -173,6 +176,10 @@ export default function Itineraries() {
         <p className="text-sm">No tiene permisos para ver itinerarios.</p>
       </div>
     );
+  }
+
+  if (isLoading && data.flights.length === 0) {
+    return <LoadingScreen fullScreen={false} />;
   }
 
   return (

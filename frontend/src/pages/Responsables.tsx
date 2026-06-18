@@ -15,16 +15,16 @@ import { useAuth } from '../context/AuthContext';
 import { usePermissions } from '../context/PermissionsContext';
 import { formatDate, capitalizeName, formatId, todayStr } from '../utils/formatters';
 import { Responsable } from '../types';
+import LoadingScreen from '../components/ui/LoadingScreen';
 
 import AvatarPicker, { AVATARS } from '../components/ui/AvatarPicker';
 import { DatePicker } from '../components/sales/forms/TicketForm';
-
-
 
 export default function Responsables() {
   const { data, addResponsable, updateResponsable, deleteResponsable, fetchResponsables, fetchSales } = useData();
   const { user } = useAuth();
   const { permissions, canCreate, canEdit } = usePermissions();
+  const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [editingResponsable, setEditingResponsable] = useState<Responsable | null>(null);
@@ -111,13 +111,6 @@ export default function Responsables() {
         if (!value.trim()) errorMsg = 'El correo es obligatorio';
         else if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value)) errorMsg = 'El correo no es válido';
         else if (value.length > 40) errorMsg = 'El correo no puede exceder 40 caracteres';
-        
-        if (!errorMsg) {
-          const isDuplicateEmail = data.responsables.some(c => 
-            c.email.toLowerCase() === value.toLowerCase() && (!editingResponsable || c.id !== editingResponsable.id)
-          );
-          if (isDuplicateEmail) errorMsg = 'Este correo ya esta registrado';
-        }
         break;
       case 'birthDate':
         if (!value) {
@@ -141,9 +134,11 @@ export default function Responsables() {
 
   // Lazy Load Fetch
   useEffect(() => {
-    fetchResponsables();
-    fetchSales();
-  }, [fetchResponsables, fetchSales]);  const [formData, setFormData] = useState({
+    fetchResponsables().finally(() => setIsLoading(false));
+    fetchSales().catch(() => {});
+  }, [fetchResponsables, fetchSales]);
+
+  const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     docType: '',
@@ -239,11 +234,6 @@ export default function Responsables() {
     else if (formData.email.length > 40) newErrors.email = 'El correo no puede exceder 40 caracteres';
     
     if (!formData.birthDate) newErrors.birthDate = 'La fecha de nacimiento es obligatoria';
-
-    const isDuplicateEmail = data.responsables.some(c => 
-      c.email.toLowerCase() === formData.email.toLowerCase() && (!editingResponsable || c.id !== editingResponsable.id)
-    );
-    if (isDuplicateEmail) newErrors.email = 'Este correo ya esta registrado';
 
     const isDuplicateDoc = data.responsables.some(c => 
       c.docNumber === formData.docNumber && (!editingResponsable || c.id !== editingResponsable.id)
@@ -414,6 +404,10 @@ export default function Responsables() {
       : [];
   }, [selectedResponsable, data.flights]);
 
+  if (isLoading && data.responsables.length === 0) {
+    return <LoadingScreen fullScreen={false} />;
+  }
+
   return (
     <div className="space-y-6 relative">
       {showConfetti && (
@@ -512,12 +506,12 @@ export default function Responsables() {
 
       <Card className="animate-fade-in">
         <CardHeader actions={
-          <div className="flex gap-3 items-center flex-wrap">
-            <div className="relative">
+          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center flex-wrap w-full sm:w-auto">
+            <div className="relative w-full sm:w-72">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <Input 
                 placeholder="Buscar por nombre, doc o correo..." 
-                className="pl-10 pr-9 w-72"
+                className="pl-10 pr-9 w-full"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
               />
@@ -530,16 +524,16 @@ export default function Responsables() {
             <select
               value={statusFilter}
               onChange={e => setStatusFilter(e.target.value as 'all' | 'active' | 'inactive')}
-              className="text-sm border border-gray-border rounded-lg px-3 py-2 bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="text-sm border border-gray-border rounded-lg px-3 py-2 bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/20 w-full sm:w-auto"
             >
               <option value="all">Todos los estados</option>
               <option value="active">Solo Activos</option>
               <option value="inactive">Solo Inactivos</option>
             </select>
             {canCreate('responsables') && (
-              <Button onClick={() => handleOpenModal()}>
+              <Button onClick={() => handleOpenModal()} className="w-full sm:w-auto justify-center">
                 <Plus size={18} />
-                Nuevo Responsablee
+                Nuevo Responsable
               </Button>
             )}
           </div>
@@ -673,7 +667,7 @@ export default function Responsables() {
             <h3 className="text-sm font-semibold text-primary uppercase tracking-wide mb-3 pb-2 border-b border-gray-border flex items-center gap-2">
               <UserCheck size={16} className="text-accent" /> Información Personal
             </h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField label="Nombres" error={errors.firstName}>
                 <Input
                   value={formData.firstName}
@@ -703,7 +697,7 @@ export default function Responsables() {
                 />
               </FormField>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField label="Tipo de Documento" error={errors.docType}>
                 <Select
                   value={formData.docType}
@@ -747,7 +741,7 @@ export default function Responsables() {
                 />
               </FormField>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField label="Teléfono" error={errors.phone}>
                 <Input
                   value={formData.phone}
@@ -783,7 +777,7 @@ export default function Responsables() {
             <h3 className="text-sm font-semibold text-primary uppercase tracking-wide mb-3 pb-2 border-b border-gray-border flex items-center gap-2">
               <Search size={16} className="text-accent" /> Información de Contacto y Estado
             </h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField label="Correo Electrónico" error={errors.email}>
                 <Input
                   type="email"

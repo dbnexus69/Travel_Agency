@@ -14,14 +14,12 @@ import Users from './pages/Users';
 import Config from './pages/Config';
 import CommissionAgents from './pages/CommissionAgents';
 
+import { LoadingScreen } from './components/ui/LoadingScreen';
+
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-light">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
   if (!user) return <Navigate to="/login" replace />;
   return <PermissionsProvider user={user}>{children}</PermissionsProvider>;

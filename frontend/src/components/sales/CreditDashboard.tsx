@@ -7,7 +7,9 @@ import {
   Clock, 
   CheckCircle, 
   Wallet, 
-  AlertCircle 
+  AlertCircle,
+  Search,
+  X
 } from "lucide-react";
 import { 
   getClientsWithCredit, 
@@ -28,6 +30,7 @@ interface CreditDashboardProps {
 export default function CreditDashboard({ clients, sales }: CreditDashboardProps) {
   const [creditFilter, setCreditFilter] = useState<'all' | 'overdue' | 'urgent' | 'pending'>('all');
   const [selectedCreditClient, setSelectedCreditClient] = useState<ClientCreditSummary | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const clientsWithCredit = useMemo(() => 
     getClientsWithCredit(clients, sales), 
@@ -38,9 +41,33 @@ export default function CreditDashboard({ clients, sales }: CreditDashboardProps
   [clients, sales]);
 
   const filteredCreditClients = useMemo(() => {
-    if (creditFilter === 'all') return clientsWithCredit;
-    return clientsWithCredit.filter(c => c.status === creditFilter);
-  }, [clientsWithCredit, creditFilter]);
+    let result = clientsWithCredit;
+    if (creditFilter !== 'all') {
+      result = result.filter(c => c.status === creditFilter);
+    }
+
+    if (searchTerm.trim()) {
+      const q = searchTerm.toLowerCase().trim();
+      result = result.filter(c => {
+        if (c.client.name?.toLowerCase().includes(q)) return true;
+        if (c.client.docNumber?.toLowerCase().includes(q)) return true;
+        
+        const statusMap: Record<string, string> = { 'overdue': 'vencido', 'urgent': 'pronto', 'pending': 'pendiente' };
+        if (statusMap[c.status]?.includes(q)) return true;
+
+        const clientSales = getClientCreditSales(c.client.id, sales);
+        return clientSales.some(cs => {
+          if (String(cs.sale.id).includes(q)) return true;
+          if (formatDate(cs.sale.date).toLowerCase().includes(q)) return true;
+          if (cs.sale.status?.toLowerCase().includes(q)) return true;
+          if (cs.status?.toLowerCase().includes(q)) return true;
+          return false;
+        });
+      });
+    }
+
+    return result;
+  }, [clientsWithCredit, creditFilter, searchTerm, sales]);
 
   const selectedClientCreditSales = useMemo(() => {
     if (!selectedCreditClient) return [];
@@ -53,7 +80,21 @@ export default function CreditDashboard({ clients, sales }: CreditDashboardProps
         <div className="lg:col-span-2 space-y-4">
           <Card className="border-none shadow-lg">
             <CardHeader actions={
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 items-center">
+                <div className="relative w-full sm:w-64 shrink-0">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                  <input 
+                    placeholder="Buscar por documento, nombre, ID de venta..." 
+                    className="text-sm border border-gray-border rounded-lg pl-9 pr-8 py-1.5 bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/20 w-full"
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                  />
+                  {searchTerm && (
+                    <button onClick={() => setSearchTerm('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-0.5 rounded">
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
                 <button onClick={() => setCreditFilter('all')} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${creditFilter === 'all' ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
                   Todos ({clientsWithCredit.length})
                 </button>
@@ -103,6 +144,12 @@ export default function CreditDashboard({ clients, sales }: CreditDashboardProps
                       </div>
                     );
                   })}
+                </div>
+              ) : searchTerm.trim() ? (
+                <div className="flex flex-col items-center justify-center p-12 text-gray-400">
+                  <div className="w-16 h-16 bg-gray-50 text-gray-400 rounded-full flex items-center justify-center mb-4"><Search size={32} /></div>
+                  <p className="font-bold text-gray-600">No se encontró ningún crédito</p>
+                  <p className="text-sm">Intenta con otros términos de búsqueda.</p>
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center p-12 text-gray-400">

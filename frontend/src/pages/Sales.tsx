@@ -34,6 +34,8 @@ import StatCard from "../components/ui/StatCard";
 import CreditDashboard from "../components/sales/CreditDashboard";
 import { VoucherPDF } from "../components/sales/VoucherPDF";
 import { useRef } from "react";
+import LoadingScreen from "../components/ui/LoadingScreen";
+
 export default function Sales() {
   const { data, addSale, updateSale, voidSale, registerCreditPayment, deleteSalePayment, updateReviewStatus, salesLoading, fetchSales, fetchClients } = useData();
   const { user, isAdmin } = useAuth();
@@ -348,6 +350,10 @@ export default function Sales() {
       setIsVoiding(false);
     }
   };
+
+  if (salesLoading && data.sales.length === 0) {
+    return <LoadingScreen fullScreen={false} />;
+  }
 
   return (
     <div className="space-y-6 relative">

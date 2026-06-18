@@ -41,6 +41,7 @@ import PermissionsGrid from "../components/users/PermissionsGrid";
 import UserDetailModal from "../components/users/UserDetailModal";
 import Avatar from "../components/ui/Avatar";
 import SortIcon from "../components/ui/SortIcon";
+import LoadingScreen from "../components/ui/LoadingScreen";
 
 import AvatarPicker, { AVATARS } from "../components/ui/AvatarPicker";
 import { capitalizeName, formatId, todayStr } from "../utils/formatters";
@@ -68,6 +69,7 @@ export default function Users() {
   } = useData();
   const { user: currentUser } = useAuth();
 
+  const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"users" | "permissions">("users");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -226,8 +228,10 @@ export default function Users() {
 
   // Lazy Load Fetch
   useEffect(() => {
-    fetchUsers();
-    fetchSales();
+    Promise.all([
+      fetchUsers(),
+      fetchSales()
+    ]).finally(() => setIsLoading(false));
   }, [fetchUsers, fetchSales]);
 
   const [formData, setFormData] = useState({
@@ -589,6 +593,10 @@ export default function Users() {
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, filterRole, filterStatus]);
+
+  if (isLoading && data.users.length === 0) {
+    return <LoadingScreen fullScreen={false} />;
+  }
 
   return (
     <div className="space-y-6 relative animate-fade-in">

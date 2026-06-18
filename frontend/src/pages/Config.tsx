@@ -32,6 +32,7 @@ import { ConfigData } from '../types';
 import ConfigForms from '../components/config/ConfigForms';
 import ConfigGrids from '../components/config/ConfigGrids';
 import { formatCurrency } from '../utils/formatters';
+import LoadingScreen from '../components/ui/LoadingScreen';
 
 type ConfigSection = 'cards' | 'paymentMethods' | 'documentTypes' | 'airlines' | 'suppliers' | 'airports' | 'baggage' | 'packages';
 
@@ -55,6 +56,7 @@ const isOptimisticId = (item: any): boolean => {
 
 export default function Config() {
   const { data, addConfigItem, updateConfigItem, deleteConfigItem, fetchConfig } = useData();
+  const [isLoading, setIsLoading] = useState(true);
   const [currentSection, setCurrentSection] = useState<SectionId>('cards');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
@@ -67,7 +69,7 @@ export default function Config() {
 
   // Lazy Load Fetch
   useEffect(() => {
-    fetchConfig();
+    fetchConfig().finally(() => setIsLoading(false));
   }, [fetchConfig]);
 
   const currentData = ((data.config[currentSection as keyof ConfigData] || []) as any[])
@@ -244,6 +246,10 @@ export default function Config() {
     { label: 'Aerolíneas de Viaje', count: data.config.airlines?.length || 0, icon: <PlaneTakeoff className="text-success" size={18} /> },
     { label: 'Formas de Pago', count: data.config.paymentMethods?.length || 0, icon: <Coins className="text-warning" size={18} /> },
   ];
+
+  if (isLoading && (!data.config.suppliers || data.config.suppliers.length === 0)) {
+    return <LoadingScreen fullScreen={false} />;
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">

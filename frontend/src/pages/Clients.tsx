@@ -111,13 +111,6 @@ export default function Clients() {
         if (!value.trim()) errorMsg = 'El correo es obligatorio';
         else if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value)) errorMsg = 'El correo no es válido';
         else if (value.length > 40) errorMsg = 'El correo no puede exceder 40 caracteres';
-        
-        if (!errorMsg) {
-          const isDuplicateEmail = data.clients.some(c => 
-            c.email.toLowerCase() === value.toLowerCase() && (!editingClient || c.id !== editingClient.id)
-          );
-          if (isDuplicateEmail) errorMsg = 'Este correo ya esta registrado';
-        }
         break;
       case 'birthDate':
         if (!value) {
@@ -242,11 +235,6 @@ export default function Clients() {
     else if (formData.email.length > 40) newErrors.email = 'El correo no puede exceder 40 caracteres';
     
     if (!formData.birthDate) newErrors.birthDate = 'La fecha de nacimiento es obligatoria';
-
-    const isDuplicateEmail = data.clients.some(c => 
-      c.email.toLowerCase() === formData.email.toLowerCase() && (!editingClient || c.id !== editingClient.id)
-    );
-    if (isDuplicateEmail) newErrors.email = 'Este correo ya esta registrado';
 
     const isDuplicateDoc = data.clients.some(c => 
       c.docNumber === formData.docNumber && (!editingClient || c.id !== editingClient.id)

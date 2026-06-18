@@ -145,6 +145,22 @@ export default function SaleDetailModal({
     { key: "petServiceData", label: "Mascotas", summaryType: "mascotas" },
   ];
 
+  const suppliersList = (() => {
+    const suppliers = new Set<string>();
+    productSections.forEach(({ key }) => {
+      const dataArr = (sale as any)[key];
+      if (Array.isArray(dataArr)) {
+        dataArr.forEach((item: any) => {
+          const name = item.supplier || item.supplierName;
+          if (name && typeof name === "string" && name.trim()) {
+            suppliers.add(name.trim());
+          }
+        });
+      }
+    });
+    return Array.from(suppliers).join(", ") || "No especificado";
+  })();
+
   const hasAnyProduct = (sale.servicesSummary && sale.servicesSummary.length > 0) || productSections.some(
     ({ key }) => (sale as any)[key] && (sale as any)[key].length > 0
   );
@@ -278,13 +294,21 @@ export default function SaleDetailModal({
           <h4 className="text-sm font-bold text-primary border-b border-gray-200 pb-2 mb-3">
             Detalles Operativos y Financieros
           </h4>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
             <div>
               <span className="text-gray-500 text-xs block">
                 Asesor
               </span>
               <span className="font-medium text-gray-800">
                 {sale.asesorName}
+              </span>
+            </div>
+            <div>
+              <span className="text-gray-500 text-xs block">
+                Proveedor(es)
+              </span>
+              <span className="font-medium text-gray-800 break-words" title={suppliersList}>
+                {suppliersList}
               </span>
             </div>
             <div>
