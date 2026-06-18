@@ -49,10 +49,10 @@ export function Modal({
         onClick={onClose}
       />
       <div
-        className={`relative z-[101] w-full ${maxWidth} bg-white rounded-xl shadow-2xl overflow-hidden animate-scale-in flex flex-col max-h-[95vh] sm:max-h-[90vh]`}
+        className={`relative z-[101] w-full ${maxWidth} bg-white rounded-xl shadow-2xl animate-scale-in flex flex-col max-h-[95vh] sm:max-h-[90vh]`}
       >
         {/* Header con color primary */}
-        <div className="bg-primary px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between flex-shrink-0">
+        <div className="bg-primary px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between flex-shrink-0 rounded-t-xl">
           <h2 className="text-base sm:text-lg font-heading font-semibold text-white truncate">
             {title}
           </h2>
@@ -65,13 +65,13 @@ export function Modal({
         </div>
 
         {/* Content */}
-        <div className={`p-4 sm:p-6 bg-gray-light flex-1 ${contentClassName ? "" : "overflow-y-auto"} ${contentClassName}`}>
+        <div className={`p-4 sm:p-6 bg-gray-light flex-1 ${contentClassName ? "" : "overflow-y-auto"} ${footer ? "" : "rounded-b-xl"} ${contentClassName}`}>
           {children}
         </div>
 
         {/* Footer */}
         {footer && (
-          <div className="px-4 sm:px-6 py-3 sm:py-4 bg-white border-t border-gray-border flex justify-end gap-2 sm:gap-3 flex-shrink-0">
+          <div className="px-4 sm:px-6 py-3 sm:py-4 bg-white border-t border-gray-border flex justify-end gap-2 sm:gap-3 flex-shrink-0 rounded-b-xl">
             {footer}
           </div>
         )}

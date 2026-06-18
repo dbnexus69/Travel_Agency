@@ -1657,6 +1657,7 @@ export default function NewSaleWizard({ onClose, onSuccess }: Props) {
         reference: p.reference
       })),
       status: finalStatus as Sale["status"],
+      responsableId: form.responsableId ? Number(form.responsableId) : undefined,
       observations: fullObservations,
       products: form.selectedProducts,
       ticketData: mappedTickets.length > 0 ? mappedTickets : undefined,

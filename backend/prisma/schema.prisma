@@ -202,6 +202,7 @@ model Personas {
   usuario           Usuarios?
   cliente           Clientes?
   comisionista      Comisionistas?
+  responsable       Responsables?
   pasajerosDetalle  PasajerosDetalle[]
 
   @@map("personas")
@@ -300,6 +301,19 @@ model Comisionistas {
   @@map("comisionistas")
 }
 
+model Responsables {
+  id            Int         @id @default(autoincrement())
+  personaId     Int         @unique @map("persona_id")
+  persona       Personas    @relation(fields: [personaId], references: [id])
+  status        UserStatus  @default(active)
+  creadoAt      DateTime    @default(now()) @map("creado_at")
+  deletedAt     DateTime?   @map("deleted_at")
+
+  ventas        Ventas[]    @relation("venta_responsable")
+
+  @@map("responsables")
+}
+
 // =========================================================
 // VENTAS Y COBROS
 // =========================================================
@@ -315,6 +329,8 @@ model Ventas {
   taTotal                 Float?      @default(0) @map("ta_total")
   comisionistaId          Int?        @map("comisionista_id")
   comisionista            Comisionistas? @relation(fields: [comisionistaId], references: [id])
+  responsableId           Int?        @map("responsable_id")
+  responsable             Responsables? @relation("venta_responsable", fields: [responsableId], references: [id])
   montoComisionBruto      Float?      @default(0) @map("monto_comision_bruto")
   porcentajeRetencionComision Float?   @default(0) @map("porcentaje_retencion_comision")
   montoComisionNeto       Float?      @default(0) @map("monto_comision_neto")

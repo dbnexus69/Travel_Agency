@@ -11,6 +11,7 @@ import {
   Database,
   Coins,
   X,
+  UserCheck,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { usePermissions } from "../../context/PermissionsContext";
@@ -55,12 +56,13 @@ export function Sidebar({ isMobileOpen = false, onClose }: SidebarProps) {
 
   const adminLinks = [
     { to: "/users", icon: UserCog, label: "Usuarios", permission: 'users' as const },
+    { to: "/responsables", icon: UserCheck, label: "Responsables", permission: 'responsables' as const },
     { to: "/config", icon: Database, label: "Gestión Interna", permission: 'config' as const },
   ];
 
   const filteredMainLinks = mainLinks.filter(link => canView(link.permission));
   const filteredAdminLinks = (adminLinks as any[]).filter(link => {
-    if (link.permission === 'users' || link.permission === 'config') {
+    if (link.permission === 'users' || link.permission === 'config' || link.permission === 'responsables') {
       return isAdmin;
     }
     return canView(link.permission);

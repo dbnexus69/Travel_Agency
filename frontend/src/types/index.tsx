@@ -25,6 +25,7 @@ export interface RolePermissions {
   dashboard: { view: "all" | "own" | "none" };
   sales: { view: "all" | "own" | "none"; create: boolean; edit: boolean };
   clients: { view: "all" | "own" | "none"; create: boolean; edit: boolean };
+  responsables: { view: "all" | "own" | "none"; create: boolean; edit: boolean };
   itineraries: { view: "all" | "own" | "none"; edit: boolean };
   commissions: { view: boolean; create: boolean; edit: boolean; delete: boolean };
 }
@@ -33,6 +34,7 @@ export const DEFAULT_ASESOR_PERMISSIONS: RolePermissions = {
   dashboard: { view: "own" },
   sales: { view: "own", create: true, edit: true },
   clients: { view: "own", create: true, edit: true },
+  responsables: { view: "own", create: true, edit: true },
   itineraries: { view: "own", edit: false },
   commissions: { view: false, create: false, edit: false, delete: false },
 };
@@ -40,6 +42,7 @@ export const DEFAULT_FREELANCER_PERMISSIONS: RolePermissions = {
   dashboard: { view: "own" },
   sales: { view: "own", create: true, edit: true },
   clients: { view: "own", create: true, edit: true },
+  responsables: { view: "own", create: true, edit: true },
   itineraries: { view: "own", edit: false },
   commissions: { view: false, create: false, edit: false, delete: false },
 };
@@ -48,11 +51,12 @@ export const ADMIN_PERMISSIONS: RolePermissions = {
   dashboard: { view: "all" },
   sales: { view: "all", create: true, edit: true },
   clients: { view: "all", create: true, edit: true },
+  responsables: { view: "all", create: true, edit: true },
   itineraries: { view: "all", edit: true },
   commissions: { view: true, create: true, edit: true, delete: true },
 };
 
-const SCOPED_VIEW_MODULES = ['dashboard', 'sales', 'clients', 'itineraries'];
+const SCOPED_VIEW_MODULES = ['dashboard', 'sales', 'clients', 'responsables', 'itineraries'];
 
 export function normalizeRolePermissions(perms: Partial<RolePermissions>, baseTemplate: RolePermissions = DEFAULT_ASESOR_PERMISSIONS): RolePermissions {
   const normalized = JSON.parse(JSON.stringify(baseTemplate)) as RolePermissions;
@@ -91,6 +95,23 @@ export interface Client {
   avatar?: string;
   registrationDate: string;
   createdBy?: number;
+}
+
+export interface Responsable {
+  id: number;
+  personaId: number;
+  firstName: string;
+  lastName: string;
+  name: string;
+  docType: string | null;
+  docNumber: string;
+  phone: string;
+  email: string;
+  birthDate?: string;
+  status: "active" | "inactive";
+  creadoAt: string;
+  deudaTotal: number;
+  ventas?: any[];
 }
 
 export type SaleProductId =
@@ -509,6 +530,8 @@ export interface Sale {
   clientAvatar?: string;
   asesorId: number;
   asesorName: string;
+  responsableId?: number;
+  responsableName?: string;
   date: string;
   total: number;
   status: "credito" | "abonado" | "pagado" | "anulado";
@@ -689,6 +712,7 @@ export interface ConfigData {
 export interface AppData {
   users: User[];
   clients: Client[];
+  responsables: Responsable[];
   sales: Sale[];
   flights: Flight[];
   commissionAgents: CommissionAgent[];

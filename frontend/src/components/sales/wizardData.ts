@@ -41,6 +41,7 @@ export interface WizardFormData {
   clientId: string;
   commissionAgentId: string;
   commissionAgentName: string;
+  responsableId?: string;
   commissionAgentPercentage: string;
   commissionAgentAmount: string;
   commissionAgentRetentionPercentage: string;
@@ -391,6 +392,7 @@ export const INITIAL_FORM: WizardFormData = {
   clientId: "",
   commissionAgentId: "",
   commissionAgentName: "",
+  responsableId: "",
   commissionAgentPercentage: "",
   commissionAgentAmount: "",
   commissionAgentRetentionPercentage: "0",

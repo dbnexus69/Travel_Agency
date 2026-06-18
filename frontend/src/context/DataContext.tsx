@@ -66,6 +66,7 @@ interface DataContextType {
   fetchDashboard: (params?: Record<string, unknown>, isBackgroundRefresh?: boolean) => Promise<void>;
   fetchSales: () => Promise<void>;
   fetchClients: () => Promise<void>;
+  fetchResponsables: () => Promise<void>;
   fetchUsers: () => Promise<void>;
   fetchConfig: () => Promise<void>;
   fetchFlights: () => Promise<void>;
@@ -79,6 +80,9 @@ interface DataContextType {
   addClient: (client: Omit<Client, 'id'>) => Promise<Client>;
   updateClient: (id: number, client: Partial<Client>) => Promise<void>;
   toggleClientStatus: (id: number) => Promise<void>;
+  addResponsable: (responsable: any) => Promise<any>;
+  updateResponsable: (id: number, responsable: any) => Promise<void>;
+  deleteResponsable: (id: number) => Promise<void>;
   addSale: (sale: Omit<Sale, 'id'>) => Promise<Sale>;
   updateSale: (id: number, sale: Partial<Sale>) => Promise<void>;
   deleteSale: (id: number) => Promise<void>;
@@ -99,15 +103,15 @@ interface DataContextType {
 }
 
 const emptyData: AppData = {
-  users: [], clients: [], sales: [], flights: [],
+  users: [], clients: [], responsables: [], sales: [], flights: [],
   commissionAgents: [], commissionSettlements: [],
   config: {
     cards: [], paymentMethods: [], documentTypes: [],
     airlines: [], suppliers: [], airports: [],
     baggage: [], packages: [],
     rolePermissions: {
-      asesor: { dashboard: { view: 'own' }, sales: { view: 'own', create: true, edit: true }, clients: { view: 'own', create: true, edit: false }, itineraries: { view: 'own', edit: false }, commissions: { view: false, create: false, edit: false, delete: false } },
-      freelancer: { dashboard: { view: 'own' }, sales: { view: 'own', create: true, edit: true }, clients: { view: 'own', create: true, edit: false }, itineraries: { view: 'own', edit: false }, commissions: { view: false, create: false, edit: false, delete: false } },
+      asesor: { dashboard: { view: 'own' }, sales: { view: 'own', create: true, edit: true }, clients: { view: 'own', create: true, edit: false }, responsables: { view: 'own', create: true, edit: true }, itineraries: { view: 'own', edit: false }, commissions: { view: false, create: false, edit: false, delete: false } },
+      freelancer: { dashboard: { view: 'own' }, sales: { view: 'own', create: true, edit: true }, clients: { view: 'own', create: true, edit: false }, responsables: { view: 'own', create: true, edit: true }, itineraries: { view: 'own', edit: false }, commissions: { view: false, create: false, edit: false, delete: false } },
     },
   },
   salesHistory: [],
@@ -198,6 +202,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
         saveSalesAndClientsCache(prev.sales, freshClients);
         return { ...prev, clients: freshClients };
       });
+    } catch {}
+  }, []);
+
+  const fetchResponsables = useCallback(async () => {
+    try {
+      const res = await api.listResponsables({ perPage: 100 }).catch(() => null);
+      const freshResponsables = res?.data || [];
+      setData(prev => ({ ...prev, responsables: freshResponsables }));
     } catch {}
   }, []);
 
@@ -358,11 +370,23 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
 
   const toggleClientStatus = async (id: number) => {
-    const result = await api.toggleClientStatus(id);
-    setData(prev => ({
-      ...prev,
-      clients: prev.clients.map(c => c.id === id ? { ...c, status: result.status } : c)
-    }));
+    // Optimistic toggle implemented in component if needed, else refetch
+    await fetchClients();
+  };
+
+  const addResponsable = async (responsable: any) => {
+    await api.createResponsable(responsable);
+    await fetchResponsables();
+  };
+
+  const updateResponsable = async (id: number, responsable: any) => {
+    await api.updateResponsable(id, responsable);
+    await fetchResponsables();
+  };
+
+  const deleteResponsable = async (id: number) => {
+    await api.deleteResponsable(id);
+    await fetchResponsables();
   };
 
   const addSale = async (sale: Omit<Sale, 'id'>): Promise<Sale> => {
@@ -647,6 +671,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       fetchUsers,
       fetchConfig,
       fetchFlights,
+      fetchResponsables,
       fetchCommissionAgents,
       fetchSettlements,
       refreshData,
@@ -657,6 +682,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
       addClient,
       updateClient,
       toggleClientStatus,
+      addResponsable,
+      updateResponsable,
+      deleteResponsable,
       addSale,
       updateSale,
       deleteSale,

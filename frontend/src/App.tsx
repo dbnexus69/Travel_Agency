@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard';
 import StatsView from './pages/StatsView';
 import Sales from './pages/Sales';
 import Clients from './pages/Clients';
+import Responsables from './pages/Responsables';
 import Itineraries from './pages/Itineraries';
 import Users from './pages/Users';
 import Config from './pages/Config';
@@ -43,6 +44,7 @@ function AppRoutes() {
         <Route path="stats" element={<StatsView />} />
         <Route path="sales" element={<Sales />} />
         <Route path="clients" element={<Clients />} />
+        <Route path="responsables" element={<AdminRoute><Responsables /></AdminRoute>} />
         <Route path="itineraries" element={<Itineraries />} />
         <Route path="users" element={<AdminRoute><Users /></AdminRoute>} />
         <Route path="config" element={<AdminRoute><Config /></AdminRoute>} />

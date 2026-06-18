@@ -64,6 +64,7 @@ exports.list = async (req, res, next) => {
           v.costo_proveedor_total as "costoProveedorTotal",
           v.ta_total as "taTotal",
           v.comision_liquidada as "comisionLiquidada",
+          v.responsable_id as "responsableId",
           cp.nombres || ' ' || cp.apellidos as "clientName",
           cp.email as "clientEmail",
           cp.avatar_url as "clientAvatar",
@@ -164,6 +165,7 @@ exports.list = async (req, res, next) => {
         clientName: v.clientName,
         clientEmail: v.clientEmail,
         clientAvatar: v.clientAvatar,
+        responsableId: v.responsableId,
         asesorId: v.usuarioId,
         asesorName: v.asesorName,
         date: v.creadoAt,
@@ -626,6 +628,7 @@ exports.getById = async (req, res, next) => {
           cliente: { include: { persona: true } },
           usuario: { include: { persona: true } },
           comisionista: { include: { persona: true } },
+          responsable: { include: { persona: true } },
           metodoPagoPrincipal: true,
           pagosVenta: { include: { metodoPago: true } }
         }
@@ -1459,6 +1462,7 @@ exports.create = async (req, res, next) => {
         costoProveedorTotal: data.supplierCost || 0,
         taTotal: data.ta || 0,
         comisionistaId: data.commissionAgentId || null,
+        responsableId: data.responsableId || null,
         montoComisionBruto: data.commissionAgentAmount || 0,
         porcentajeRetencionComision: data.commissionAgentRetentionPercentage || 0,
         montoComisionNeto: data.commissionAgentNetPayment || 0,
@@ -1626,6 +1630,7 @@ exports.update = async (req, res, next) => {
     if (data.creditDueDate) updateData.fechaVenceCredito = new Date(data.creditDueDate);
     if (data.paymentMethod) updateData.metodoPagoPrincipalId = await resolvePaymentMethodId(prisma, data.paymentMethod);
     if (data.commissionAgentId !== undefined) updateData.comisionistaId = data.commissionAgentId || null;
+    if (data.responsableId !== undefined) updateData.responsableId = data.responsableId || null;
     if (data.commissionAgentAmount !== undefined) updateData.montoComisionBruto = data.commissionAgentAmount;
     if (data.commissionAgentRetentionPercentage !== undefined) updateData.porcentajeRetencionComision = data.commissionAgentRetentionPercentage;
     if (data.commissionAgentNetPayment !== undefined) updateData.montoComisionNeto = data.commissionAgentNetPayment;

@@ -157,6 +157,7 @@ export function Step3Payment({ form, set, data, errors }: any) {
         />
       </FormField>
 
+
       {/* PANEL DE PAGOS MÚLTIPLES */}
       <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-4">
         <div className="flex justify-between items-center pb-2 border-b border-slate-200">
@@ -306,6 +307,23 @@ export function Step3Payment({ form, set, data, errors }: any) {
               min={todayStr()}
               fieldName="Fecha límite del crédito"
               popoverDirection="up"
+            />
+          </FormField>
+        )}
+
+        {/* Responsable (Sólo si es crédito o abonado) */}
+        {(form.status === "credito" || form.status === "abonado") && (
+          <FormField label="Responsable del Crédito (Opcional)">
+            <Combobox
+              value={form.responsableId || ""}
+              onChange={(val) => set("responsableId", val)}
+              options={data.responsables
+                .filter((r: any) => r.status === 'active')
+                .map((r: any) => ({
+                  value: String(r.id),
+                  label: r.name,
+                }))}
+              placeholder="Seleccione el responsable de la deuda..."
             />
           </FormField>
         )}
