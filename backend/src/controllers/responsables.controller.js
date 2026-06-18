@@ -8,7 +8,7 @@ exports.list = async (req, res, next) => {
     const { search, sortBy, sortOrder } = req;
     const { status } = req.query;
 
-    const where = {};
+    const where = { deletedAt: null };
     if (search) {
       where.persona = {
         OR: [
