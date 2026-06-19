@@ -49,7 +49,12 @@ export default function ResponsableDetailModal({ isOpen, onClose, responsable, r
             <h4 className="font-semibold">Historial de Crédito ({responsableSales.length})</h4>
             {responsableSales.length > 0 && (
               <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-1 rounded-lg">
-                Total Deuda: {formatCurrency(responsableSales.reduce((acc, s) => acc + (s.total - (s.creditPaidAmount || 0)), 0))}
+                Total Deuda: {formatCurrency(
+                  responsableSales.reduce((acc, s) => {
+                    if (s.status === 'pagado' || s.status === 'anulado') return acc;
+                    return acc + (s.total - (s.creditPaidAmount || 0));
+                  }, 0)
+                )}
               </span>
             )}
           </div>
