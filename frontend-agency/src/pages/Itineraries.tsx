@@ -226,25 +226,25 @@ export default function Itineraries() {
       {/* Header y Navegación Principal */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 animate-fade-in">
         <div>
-          <h1 className="text-3xl font-bold text-primary flex items-center gap-3">
-            <CalendarIcon className="text-accent w-8 h-8" /> Itinerarios de Vuelo
+          <h1 className="text-3xl font-bold text-[#1a1a2e] flex items-center gap-3">
+            <CalendarIcon className="text-[#512DDB] w-8 h-8" /> Itinerarios de Vuelo
           </h1>
           <p className="text-gray-500 text-sm mt-1">Seguimiento de salidas, regresos y gestión de check-in.</p>
         </div>
         <div className="flex bg-white p-1 rounded-xl shadow-sm border border-gray-border w-fit h-fit">
           <button
             onClick={() => setActiveTab('calendar')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'calendar' ? 'bg-primary text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'calendar' ? 'bg-[#512DDB] text-white shadow-md' : 'text-gray-500 hover:bg-[#D2C3F7]/20 hover:text-[#4E30B2]'}`}
           >
             <CalendarIcon size={16} /> Calendario
           </button>
           <button
             onClick={() => setActiveTab('checkin')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all relative ${activeTab === 'checkin' ? 'bg-primary text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all relative ${activeTab === 'checkin' ? 'bg-[#512DDB] text-white shadow-md' : 'text-gray-500 hover:bg-[#D2C3F7]/20 hover:text-[#4E30B2]'}`}
           >
             <UserCheck size={16} /> Check-in
             {pendingCheckins.length > 0 && (
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-accent text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white">
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#512DDB] text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white">
                 {pendingCheckins.length}
               </span>
             )}
@@ -258,13 +258,13 @@ export default function Itineraries() {
           <div className="flex bg-gray-100/50 p-1 rounded-xl w-full sm:w-fit mx-auto border border-gray-border">
             <button
               onClick={() => setCalendarTab('ida')}
-              className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all ${calendarTab === 'ida' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-blue-400'}`}
+              className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all ${calendarTab === 'ida' ? 'bg-white text-[#512DDB] shadow-sm' : 'text-gray-500 hover:text-[#512DDB]'}`}
             >
               <PlaneTakeoff size={15} /> Vuelos de Ida ({flightsIda.length})
             </button>
             <button
               onClick={() => setCalendarTab('regreso')}
-              className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all ${calendarTab === 'regreso' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-indigo-400'}`}
+              className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all ${calendarTab === 'regreso' ? 'bg-white text-[#4E30B2] shadow-sm' : 'text-gray-500 hover:text-[#4E30B2]'}`}
             >
               <PlaneLanding size={15} /> Vuelos de Regreso ({flightsRegreso.length})
             </button>
@@ -308,7 +308,7 @@ export default function Itineraries() {
               </div>
               <div className="flex items-center justify-end text-xs font-medium text-gray-500">
                 <div className="flex items-center gap-1.5">
-                  <div className={`w-3 h-3 rounded-full ${calendarTab === 'ida' ? 'bg-blue-500' : 'bg-indigo-600'}`}></div> 
+                  <div className={`w-3 h-3 rounded-full ${calendarTab === 'ida' ? 'bg-[#512DDB]' : 'bg-[#4E30B2]'}`}></div>
                   Mostrando {calendarTab === 'ida' ? 'Salidas' : 'Regresos'}
                 </div>
               </div>
@@ -355,8 +355,8 @@ export default function Itineraries() {
                                 isPlan
                                   ? 'bg-emerald-50 border-emerald-100 text-emerald-700'
                                   : flight.type === 'ida' 
-                                    ? 'bg-blue-50 border-blue-100 text-blue-700' 
-                                    : 'bg-indigo-50 border-indigo-100 text-indigo-800'
+                                    ? 'bg-[#D2C3F7]/30 border-[#D2C3F7] text-[#512DDB]' 
+                                    : 'bg-[#512DDB]/10 border-[#512DDB]/30 text-[#4E30B2]'
                               }`}
                             >
                               {isPlan ? <Package size={10} className="shrink-0" /> : flight.type === 'ida' ? <PlaneTakeoff size={10} className="shrink-0" /> : <PlaneLanding size={10} className="shrink-0" />}
@@ -537,7 +537,7 @@ export default function Itineraries() {
                               <Button 
                                 size="sm" 
                                 onClick={() => handleMarkCheckin(flight.id, flight.passenger)}
-                                className="shadow-md shadow-primary/10 w-full sm:w-auto justify-center"
+                                className="shadow-md shadow-[#512DDB]/20 bg-[#512DDB] hover:bg-[#4E30B2] text-white w-full sm:w-auto justify-center"
                               >
                                 <UserCheck size={16} /> Realizar Check-in
                               </Button>
@@ -623,7 +623,7 @@ export default function Itineraries() {
             <Button 
               onClick={confirmCheckin} 
               disabled={isSending}
-              className="relative"
+              className="relative bg-[#512DDB] hover:bg-[#4E30B2] text-white"
             >
               {isSending ? (
                 <>

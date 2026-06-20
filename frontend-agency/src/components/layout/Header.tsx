@@ -22,7 +22,7 @@ interface HeaderProps {
 
 export function Header({ onMenuToggle }: HeaderProps) {
   const location = useLocation();
-  const title = pageTitles[location.pathname] || 'iTea';
+  const title = pageTitles[location.pathname] || 'Moon Travel Co.';
   const isRootPath = location.pathname === '/' || location.pathname === '/stats';
   const activeNav = location.pathname === '/stats' ? 'stats' : 'dashboard';
   const { refreshData } = useData();
@@ -64,7 +64,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
               <Menu size={20} />
             </button>
             <div className="flex items-center gap-2 text-sm">
-              <span className="text-gray-500 hidden sm:inline">iTea</span>
+              <span className="text-gray-500 hidden sm:inline">Moon Travel Co.</span>
               <span className="text-gray-400 hidden sm:inline">/</span>
               <span className="font-heading font-semibold text-primary">{title}</span>
             </div>

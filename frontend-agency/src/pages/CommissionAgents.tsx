@@ -259,8 +259,8 @@ export default function CommissionAgents() {
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-in relative z-10">
         <div>
-          <h1 className="text-2xl sm:text-4xl font-black text-primary tracking-tight flex items-center gap-3 sm:gap-4">
-            <div className="p-2.5 sm:p-3 bg-primary rounded-xl sm:rounded-2xl shadow-xl shadow-primary/20 text-white shrink-0">
+          <h1 className="text-2xl sm:text-4xl font-black text-[#1a1a2e] tracking-tight flex items-center gap-3 sm:gap-4">
+            <div className="p-2.5 sm:p-3 bg-[#512DDB] rounded-xl sm:rounded-2xl shadow-xl shadow-[#512DDB]/20 text-white shrink-0">
               <Coins size={24} className="sm:hidden" />
               <Coins size={32} className="hidden sm:block" />
             </div>
@@ -272,7 +272,7 @@ export default function CommissionAgents() {
         </div>
         <div className="w-full sm:w-auto">
           {canCreate('commissions') && (
-            <Button onClick={() => handleOpenModal()} className="w-full sm:w-auto h-12 sm:h-14 px-6 sm:px-8 bg-accent hover:bg-accent/90 text-white shadow-lg shadow-accent/20 rounded-xl sm:rounded-2xl transition-all hover:scale-105 active:scale-95 font-bold justify-center text-xs sm:text-sm">
+            <Button onClick={() => handleOpenModal()} className="w-full sm:w-auto h-12 sm:h-14 px-6 sm:px-8 bg-[#512DDB] hover:bg-[#4E30B2] text-white shadow-lg shadow-[#512DDB]/20 rounded-xl sm:rounded-2xl transition-all hover:scale-105 active:scale-95 font-bold justify-center text-xs sm:text-sm">
               <Plus size={20} /> Registrar Comisionista
             </Button>
           )}
@@ -293,8 +293,8 @@ export default function CommissionAgents() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 ${
                   isActive
-                    ? "bg-primary text-white shadow-xl shadow-primary/20 scale-105"
-                    : "text-gray-500 hover:bg-white hover:text-primary"
+                    ? "bg-[#512DDB] text-white shadow-xl shadow-[#512DDB]/20 scale-105"
+                    : "text-gray-500 hover:bg-[#D2C3F7]/20 hover:text-[#4E30B2]"
                 }`}
               >
                 <Icon size={16} className={isActive ? "animate-pulse" : ""} />

@@ -213,7 +213,7 @@ export default function Sales() {
 
     // 4. Crear contenedor temporal para renderizar las páginas paginadas
     const tempContainer = document.createElement('div');
-    tempContainer.className = 'itea-voucher';
+    tempContainer.className = 'moontravel-voucher';
     tempContainer.style.position = 'absolute';
     tempContainer.style.left = '-9999px';
     tempContainer.style.top = '-9999px';
@@ -392,8 +392,8 @@ export default function Sales() {
       {/* Header de Sección */}
       <div className="mb-6 animate-fade-in flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-primary flex items-center gap-3">
-            <ShoppingBag className="text-accent w-8 h-8" /> Gestión de Ventas
+          <h1 className="text-3xl font-bold text-[#1a1a2e] flex items-center gap-3">
+            <ShoppingBag className="text-[#512DDB] w-8 h-8" /> Gestión de Ventas
           </h1>
           <p className="text-gray-500 text-sm mt-1">
             Control de ingresos, facturación y estados de pago de tus clientes.
@@ -403,7 +403,7 @@ export default function Sales() {
           href="https://siigonube.siigo.com/#/sales-management/2044" 
           target="_blank" 
           rel="noopener noreferrer"
-          className="bg-blue-50 text-blue-700 hover:bg-blue-100 px-4 py-2 rounded-xl font-bold text-sm flex items-center justify-center gap-2 border border-blue-200 transition-all shadow-sm shrink-0"
+          className="bg-[#D2C3F7]/30 text-[#4E30B2] hover:bg-[#D2C3F7]/50 px-4 py-2 rounded-xl font-bold text-sm flex items-center justify-center gap-2 border border-[#D2C3F7] transition-all shadow-sm shrink-0"
         >
           <ExternalLink size={16} /> Ir a Siigo Nube
         </a>
@@ -415,8 +415,8 @@ export default function Sales() {
           onClick={() => setActiveTab('list')}
           className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${
             activeTab === 'list' 
-              ? 'bg-primary text-white shadow-md' 
-              : 'text-gray-500 hover:bg-gray-50 hover:text-primary'
+              ? 'bg-[#512DDB] text-white shadow-md' 
+              : 'text-gray-500 hover:bg-[#D2C3F7]/20 hover:text-[#4E30B2]'
           }`}
         >
           <FileText size={18} /> Listado de Ventas
@@ -425,8 +425,8 @@ export default function Sales() {
           onClick={() => setActiveTab('credit')}
           className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${
             activeTab === 'credit' 
-              ? 'bg-primary text-white shadow-md' 
-              : 'text-gray-500 hover:bg-gray-50 hover:text-primary'
+              ? 'bg-[#512DDB] text-white shadow-md' 
+              : 'text-gray-500 hover:bg-[#D2C3F7]/20 hover:text-[#4E30B2]'
           }`}
         >
           <CreditCard size={18} /> Crédito y Cobros
@@ -500,7 +500,7 @@ export default function Sales() {
                     )}
                   </div>
                   {canCreate("sales") && (
-                    <Button onClick={handleOpenNewSale} className="w-full sm:w-auto justify-center">
+                    <Button onClick={handleOpenNewSale} className="w-full sm:w-auto justify-center bg-[#512DDB] hover:bg-[#4E30B2] text-white">
                       <Plus size={18} />
                       Nueva Venta
                     </Button>

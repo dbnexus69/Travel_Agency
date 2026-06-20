@@ -492,8 +492,8 @@ export default function Responsables() {
       <div className="mb-6 animate-fade-in">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-primary flex items-center gap-3">
-              <UsersIcon className="text-accent w-8 h-8" /> Gestión de Responsablees
+            <h1 className="text-3xl font-bold text-[#1a1a2e] flex items-center gap-3">
+              <UsersIcon className="text-[#512DDB] w-8 h-8" /> Gestión de Responsablees
             </h1>
             <p className="text-gray-500 text-sm mt-1">Administra la base de datos de tus viajeros y su historial de compras.</p>
           </div>
@@ -531,7 +531,7 @@ export default function Responsables() {
               <option value="inactive">Solo Inactivos</option>
             </select>
             {canCreate('responsables') && (
-              <Button onClick={() => handleOpenModal()} className="w-full sm:w-auto justify-center">
+              <Button onClick={() => handleOpenModal()} className="w-full sm:w-auto justify-center bg-[#512DDB] hover:bg-[#4E30B2] text-white">
                 <Plus size={18} />
                 Nuevo Responsable
               </Button>

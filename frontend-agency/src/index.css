@@ -2,6 +2,39 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --brand: #512DDB;
+  --brand-dark: #4E30B2;
+  --brand-light: #D2C3F7;
+  --moon-night: #1a1a2e;
+  --moon-deep: #0f172a;
+
+  /* Paleta Claro */
+  --background: #ffffff;
+  --foreground: #1a1a2e;
+  --border: rgba(0, 0, 0, 0.1);
+  --input-background: #f3f3f5;
+  --destructive: #d4183d;
+
+  --brand-gradient: linear-gradient(135deg, #512DDB, #4E30B2);
+  --brand-shadow: 0 4px 16px rgba(81, 45, 219, 0.25);
+
+  /* Tailwind Theme Mappings */
+  --primary: #512DDB;
+  --primary-dark: #4E30B2;
+  --primary-light: #D2C3F7;
+  --accent: #D2C3F7;
+  --accent-dark: #4E30B2;
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --primary: oklch(0.985 0 0);
+  --border: oklch(0.269 0 0);
+}
+
+
 @keyframes slide-in-right {
   0% {
     transform: translateX(100%);
@@ -194,13 +227,14 @@
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Outfit', sans-serif;
+  font-family: 'Nunito', 'Inter', 'Lato', system-ui, sans-serif;
 }
 
+
 body {
-  font-family: 'Inter', sans-serif;
-  color: #1a1a1a;
-  background-color: #fcfcfc;
+  font-family: 'Inter', 'Nunito', 'Lato', system-ui, sans-serif;
+  color: var(--foreground);
+  background-color: var(--background);
 }
 
 .custom-scrollbar::-webkit-scrollbar {
@@ -213,17 +247,17 @@ body {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(7, 129, 142, 0.3); /* Accent color with opacity */
+  background: rgba(81, 45, 219, 0.3); /* Brand color with opacity */
   border-radius: 10px;
   transition: all 0.3s;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(7, 129, 142, 0.6);
+  background: rgba(81, 45, 219, 0.6);
 }
 
 /* For Firefox */
 .custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: rgba(7, 129, 142, 0.3) transparent;
+  scrollbar-color: rgba(81, 45, 219, 0.3) transparent;
 }

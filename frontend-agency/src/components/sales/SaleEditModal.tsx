@@ -245,7 +245,7 @@ export default function SaleEditModal({
           </Button>
           <Button 
             onClick={handleUpdate} 
-            className="px-8 font-medium bg-[#0b396b] hover:bg-[#072445] disabled:bg-slate-400 disabled:hover:bg-slate-400 disabled:cursor-not-allowed disabled:opacity-60"
+            className="px-8 font-medium bg-[#512DDB] hover:bg-[#4E30B2] disabled:bg-slate-400 disabled:hover:bg-slate-400 disabled:cursor-not-allowed disabled:opacity-60 text-white"
             disabled={isSaving || payments.length === 0}
           >
             {isSaving ? "Actualizando..." : "Actualizar"}

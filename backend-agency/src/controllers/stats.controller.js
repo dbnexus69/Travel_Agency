@@ -1,3 +1,4 @@
+const { Prisma } = require('@prisma/client');
 const prisma = require('../config/db');
 const { success } = require('../utils/apiResponse');
 
@@ -5,18 +6,18 @@ exports.dashboard = async (req, res, next) => {
   try {
     const { dateFrom, dateTo } = req.query;
     const currentYear = new Date().getFullYear();
-    let dateCondition = '';
+    let dateCondition = Prisma.empty;
     if (dateFrom && dateTo) {
-      dateCondition = `AND creado_at >= '${new Date(dateFrom).toISOString()}' AND creado_at <= '${new Date(dateTo).toISOString()}'`;
+      dateCondition = Prisma.sql`AND creado_at >= ${new Date(dateFrom)} AND creado_at <= ${new Date(dateTo)}`;
     } else if (dateFrom) {
-      dateCondition = `AND creado_at >= '${new Date(dateFrom).toISOString()}'`;
+      dateCondition = Prisma.sql`AND creado_at >= ${new Date(dateFrom)}`;
     } else if (dateTo) {
-      dateCondition = `AND creado_at <= '${new Date(dateTo).toISOString()}'`;
+      dateCondition = Prisma.sql`AND creado_at <= ${new Date(dateTo)}`;
     }
 
-    let userCondition = '';
+    let userCondition = Prisma.empty;
     if (req.permissionScope === 'own') {
-      userCondition = `AND usuario_id = '${req.user.id}'`;
+      userCondition = Prisma.sql`AND usuario_id = ${req.user.id}`;
     }
 
     const where = {};
@@ -28,24 +29,6 @@ exports.dashboard = async (req, res, next) => {
     if (req.permissionScope === 'own') {
       where.usuarioId = req.user.id;
     }
-
-    const aggregatesSql = `
-      SELECT
-        COUNT(*)::int as "totalOperations",
-        COALESCE(SUM(CASE WHEN status = 'pagado' THEN ta_total WHEN status = 'abonado' AND monto_total > 0 THEN (ta_total * (COALESCE(monto_pagado_credito, 0) / monto_total)) ELSE 0 END), 0) as "totalRevenue",
-        COALESCE(SUM(CASE WHEN status IN ('credito', 'abonado') THEN (monto_total - COALESCE(monto_pagado_credito, 0)) ELSE 0 END), 0) as "pendingBalance",
-        COUNT(CASE WHEN status IN ('credito', 'abonado') THEN 1 END)::int as "pendingCount",
-        COALESCE(SUM(CASE WHEN status = 'pagado' THEN costo_proveedor_total WHEN status = 'abonado' AND monto_total > 0 THEN (costo_proveedor_total * (COALESCE(monto_pagado_credito, 0) / monto_total)) ELSE 0 END), 0) as "suppliersTotal",
-        COALESCE(SUM(CASE WHEN status = 'pagado' THEN monto_total ELSE 0 END), 0) as "paids",
-        COALESCE(SUM(CASE WHEN status = 'credito' THEN monto_total ELSE 0 END), 0) as "credits",
-        COALESCE(SUM(CASE WHEN status = 'abonado' THEN monto_total ELSE 0 END), 0) as "partPaids",
-        COALESCE(SUM(CASE WHEN EXTRACT(YEAR FROM creado_at) = ${currentYear} THEN monto_total ELSE 0 END), 0) as "currentYearSales",
-        COALESCE(SUM(CASE WHEN EXTRACT(YEAR FROM creado_at) = ${currentYear - 1} THEN monto_total ELSE 0 END), 0) as "prevYearSales",
-        COALESCE(SUM(CASE WHEN status IN ('credito', 'abonado') AND monto_total > 0 THEN (costo_proveedor_total * ((monto_total - COALESCE(monto_pagado_credito, 0)) / monto_total)) ELSE 0 END), 0) as "creditProveedores",
-        COALESCE(SUM(CASE WHEN status IN ('credito', 'abonado') AND monto_total > 0 THEN (ta_total * ((monto_total - COALESCE(monto_pagado_credito, 0)) / monto_total)) ELSE 0 END), 0) as "creditTa"
-      FROM ventas
-      WHERE deleted_at IS NULL ${dateCondition} ${userCondition}
-    `;
 
     let clientsWhere = { deletedAt: null };
     if (req.permissionScope === 'own') {
@@ -59,7 +42,23 @@ exports.dashboard = async (req, res, next) => {
 
     // Run all DB queries in parallel
     const [aggregatesRaw, categoryStats, totalClients, activeClients, recentSales, supplierCount] = await Promise.all([
-      prisma.$queryRawUnsafe(aggregatesSql),
+      prisma.$queryRaw`
+        SELECT
+          COUNT(*)::int as "totalOperations",
+          COALESCE(SUM(CASE WHEN status = 'pagado' THEN ta_total WHEN status = 'abonado' AND monto_total > 0 THEN (ta_total * (COALESCE(monto_pagado_credito, 0) / monto_total)) ELSE 0 END), 0) as "totalRevenue",
+          COALESCE(SUM(CASE WHEN status IN ('credito', 'abonado') THEN (monto_total - COALESCE(monto_pagado_credito, 0)) ELSE 0 END), 0) as "pendingBalance",
+          COUNT(CASE WHEN status IN ('credito', 'abonado') THEN 1 END)::int as "pendingCount",
+          COALESCE(SUM(CASE WHEN status = 'pagado' THEN costo_proveedor_total WHEN status = 'abonado' AND monto_total > 0 THEN (costo_proveedor_total * (COALESCE(monto_pagado_credito, 0) / monto_total)) ELSE 0 END), 0) as "suppliersTotal",
+          COALESCE(SUM(CASE WHEN status = 'pagado' THEN monto_total ELSE 0 END), 0) as "paids",
+          COALESCE(SUM(CASE WHEN status = 'credito' THEN monto_total ELSE 0 END), 0) as "credits",
+          COALESCE(SUM(CASE WHEN status = 'abonado' THEN monto_total ELSE 0 END), 0) as "partPaids",
+          COALESCE(SUM(CASE WHEN EXTRACT(YEAR FROM creado_at) = ${currentYear} THEN monto_total ELSE 0 END), 0) as "currentYearSales",
+          COALESCE(SUM(CASE WHEN EXTRACT(YEAR FROM creado_at) = ${currentYear - 1} THEN monto_total ELSE 0 END), 0) as "prevYearSales",
+          COALESCE(SUM(CASE WHEN status IN ('credito', 'abonado') AND monto_total > 0 THEN (costo_proveedor_total * ((monto_total - COALESCE(monto_pagado_credito, 0)) / monto_total)) ELSE 0 END), 0) as "creditProveedores",
+          COALESCE(SUM(CASE WHEN status IN ('credito', 'abonado') AND monto_total > 0 THEN (ta_total * ((monto_total - COALESCE(monto_pagado_credito, 0)) / monto_total)) ELSE 0 END), 0) as "creditTa"
+        FROM ventas
+        WHERE deleted_at IS NULL ${dateCondition} ${userCondition}
+      `,
       prisma.detalleVenta.groupBy({
         by: ['categoria'],
         _sum: { subtotal: true },
@@ -82,8 +81,11 @@ exports.dashboard = async (req, res, next) => {
 
     // Calcular monthly trend para el usuario actual o global
     let monthlyTrend = [];
-    const userConditionTrend = req.permissionScope === 'own' ? `AND usuario_id = ${req.user.id}` : '';
-    const trendSql = `
+    let userConditionTrend = Prisma.empty;
+    if (req.permissionScope === 'own') {
+      userConditionTrend = Prisma.sql`AND usuario_id = ${req.user.id}`;
+    }
+    monthlyTrend = await prisma.$queryRaw`
       SELECT 
         EXTRACT(YEAR FROM creado_at)::int as year,
         EXTRACT(MONTH FROM creado_at)::int as month,
@@ -94,7 +96,6 @@ exports.dashboard = async (req, res, next) => {
       GROUP BY 1, 2
       ORDER BY 1 ASC, 2 ASC
     `;
-    monthlyTrend = await prisma.$queryRawUnsafe(trendSql);
 
     // O(1) properties assignment
     const agg = aggregatesRaw[0];
@@ -204,8 +205,11 @@ exports.salesHistory = async (req, res, next) => {
   try {
     const year = parseInt(req.query.year) || new Date().getFullYear();
     let data = [];
-    const userConditionSql = req.permissionScope === 'own' ? `AND v.usuario_id = ${req.user.id}` : '';
-    const sql = `
+    let userConditionSql = Prisma.empty;
+    if (req.permissionScope === 'own') {
+      userConditionSql = Prisma.sql`AND v.usuario_id = ${req.user.id}`;
+    }
+    const result = await prisma.$queryRaw`
       SELECT 
         EXTRACT(MONTH FROM v.creado_at)::int as month,
         COUNT(v.id)::int as count,
@@ -221,7 +225,6 @@ exports.salesHistory = async (req, res, next) => {
       GROUP BY 1
       ORDER BY 1 ASC
     `;
-    const result = await prisma.$queryRawUnsafe(sql);
     data = result.map(d => ({ ...d, year }));
     success(res, data.map(d => ({
       id: d.id,
@@ -245,21 +248,21 @@ exports.salesHistory = async (req, res, next) => {
 exports.asesorPerformance = async (req, res, next) => {
   try {
     const { dateFrom, dateTo } = req.query;
-    let dateCondition = '';
+    let dateCondition = Prisma.empty;
     if (dateFrom && dateTo) {
-      dateCondition = `AND v.creado_at >= '${new Date(dateFrom).toISOString()}' AND v.creado_at <= '${new Date(dateTo).toISOString()}'`;
+      dateCondition = Prisma.sql`AND v.creado_at >= ${new Date(dateFrom)} AND v.creado_at <= ${new Date(dateTo)}`;
     } else if (dateFrom) {
-      dateCondition = `AND v.creado_at >= '${new Date(dateFrom).toISOString()}'`;
+      dateCondition = Prisma.sql`AND v.creado_at >= ${new Date(dateFrom)}`;
     } else if (dateTo) {
-      dateCondition = `AND v.creado_at <= '${new Date(dateTo).toISOString()}'`;
+      dateCondition = Prisma.sql`AND v.creado_at <= ${new Date(dateTo)}`;
     }
 
-    let userCondition = '';
+    let userCondition = Prisma.empty;
     if (req.permissionScope === 'own') {
-      userCondition = `AND v.usuario_id = '${req.user.id}'`;
+      userCondition = Prisma.sql`AND v.usuario_id = ${req.user.id}`;
     }
 
-    const sql = `
+    const result = await prisma.$queryRaw`
       SELECT 
         v.usuario_id as "asesorId",
         p.nombres || ' ' || p.apellidos as "asesorName",
@@ -272,8 +275,6 @@ exports.asesorPerformance = async (req, res, next) => {
       WHERE v.deleted_at IS NULL ${dateCondition} ${userCondition}
       GROUP BY v.usuario_id, p.nombres, p.apellidos
     `;
-
-    const result = await prisma.$queryRawUnsafe(sql);
 
     success(res, result.map(g => ({
       ...g,
@@ -289,21 +290,21 @@ exports.topClients = async (req, res, next) => {
   try {
     const limit = parseInt(req.query.limit) || 10;
     const { dateFrom, dateTo } = req.query;
-    let dateCondition = '';
+    let dateCondition = Prisma.empty;
     if (dateFrom && dateTo) {
-      dateCondition = `AND v.creado_at >= '${new Date(dateFrom).toISOString()}' AND v.creado_at <= '${new Date(dateTo).toISOString()}'`;
+      dateCondition = Prisma.sql`AND v.creado_at >= ${new Date(dateFrom)} AND v.creado_at <= ${new Date(dateTo)}`;
     } else if (dateFrom) {
-      dateCondition = `AND v.creado_at >= '${new Date(dateFrom).toISOString()}'`;
+      dateCondition = Prisma.sql`AND v.creado_at >= ${new Date(dateFrom)}`;
     } else if (dateTo) {
-      dateCondition = `AND v.creado_at <= '${new Date(dateTo).toISOString()}'`;
+      dateCondition = Prisma.sql`AND v.creado_at <= ${new Date(dateTo)}`;
     }
 
-    let userCondition = '';
+    let userCondition = Prisma.empty;
     if (req.permissionScope === 'own') {
-      userCondition = `AND v.usuario_id = '${req.user.id}'`;
+      userCondition = Prisma.sql`AND v.usuario_id = ${req.user.id}`;
     }
 
-    const sql = `
+    const result = await prisma.$queryRaw`
       SELECT 
         c.id as "clienteId",
         p.nombres || ' ' || p.apellidos as "clientName",
@@ -317,8 +318,6 @@ exports.topClients = async (req, res, next) => {
       ORDER BY "totalPagado" DESC
       LIMIT ${limit}
     `;
-
-    const result = await prisma.$queryRawUnsafe(sql);
 
     success(res, result.map(g => ({
       ...g,

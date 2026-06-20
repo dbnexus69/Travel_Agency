@@ -85,8 +85,8 @@ export function TrendChart({
         >
           <defs>
             <linearGradient id="gradientCurrent" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#032650" stopOpacity={1}/>
-              <stop offset="95%" stopColor="#1e3a5f" stopOpacity={0.85}/>
+              <stop offset="5%" stopColor="#512DDB" stopOpacity={1}/>
+              <stop offset="95%" stopColor="#4E30B2" stopOpacity={0.85}/>
             </linearGradient>
             <linearGradient id="gradientPrevious" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="#94a3b8" stopOpacity={1}/>

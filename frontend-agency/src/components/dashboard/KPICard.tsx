@@ -5,8 +5,8 @@ import { formatCurrency } from '../../utils/formatters';
 type KPIColor = 'primary' | 'accent' | 'success' | 'warning' | 'neutral';
 
 const COLOR_MAP: Record<KPIColor, string> = {
-  primary: '#032650',
-  accent: '#07818e',
+  primary: '#512DDB',
+  accent: '#4E30B2',
   success: '#16a34a',
   warning: '#f59e0b',
   neutral: '#6b7280',

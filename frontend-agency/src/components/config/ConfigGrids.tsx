@@ -67,7 +67,7 @@ export default function ConfigGrids({ section, filteredData, handleOpenModal, ha
                   {card.description || 'Sin descripción corporativa.'}
                 </p>
                 <div className="flex justify-between items-center border-t border-white/10 pt-3">
-                  <span className="text-[9px] font-mono opacity-60">{isOptimistic ? 'PROCESANDO EN BASE DE DATOS...' : 'SISTEMA DE FACTURACIÓN ITEA'}</span>
+                  <span className="text-[9px] font-mono opacity-60">{isOptimistic ? 'PROCESANDO EN BASE DE DATOS...' : 'SISTEMA DE FACTURACIÓN MOON TRAVEL CO.'}</span>
                   <div className="flex gap-1.5 relative z-10">
                     <button 
                       onClick={() => handleOpenModal(card)}

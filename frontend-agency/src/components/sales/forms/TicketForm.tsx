@@ -206,7 +206,7 @@ export function DateTimePicker({
         onChange={handleTextChange}
         onBlur={handleBlur}
         placeholder="DD/MM/AAAA HH:MM"
-        className="w-full px-3 py-2 pr-10 border border-gray-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00828a]/50 text-xs bg-white text-gray-700"
+        className="w-full px-3 py-2 pr-10 border border-gray-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#512DDB]/50 text-xs bg-white text-gray-700"
       />
       
       {/* Icono de calendario decorativo */}
@@ -266,7 +266,7 @@ export function DateTimePicker({
               <select
                 value={tempHour}
                 onChange={(e) => setTempHour(e.target.value)}
-                className="border rounded px-1.5 py-0.5 text-xs focus:ring-1 focus:ring-[#00828a] focus:outline-none bg-white"
+                className="border rounded px-1.5 py-0.5 text-xs focus:ring-1 focus:ring-[#512DDB] focus:outline-none bg-white"
               >
                 {Array.from({ length: 12 }).map((_, i) => {
                   const h = String(i + 1).padStart(2, "0");
@@ -280,7 +280,7 @@ export function DateTimePicker({
               <select
                 value={tempMin}
                 onChange={(e) => setTempMin(e.target.value)}
-                className="border rounded px-1.5 py-0.5 text-xs focus:ring-1 focus:ring-[#00828a] focus:outline-none bg-white"
+                className="border rounded px-1.5 py-0.5 text-xs focus:ring-1 focus:ring-[#512DDB] focus:outline-none bg-white"
               >
                 {Array.from({ length: 60 }).map((_, i) => {
                   const m = String(i).padStart(2, "0");
@@ -293,7 +293,7 @@ export function DateTimePicker({
               <select
                 value={tempPeriod}
                 onChange={(e) => setTempPeriod(e.target.value as "AM" | "PM")}
-                className="border rounded px-1.5 py-0.5 text-xs focus:ring-1 focus:ring-[#00828a] focus:outline-none bg-white"
+                className="border rounded px-1.5 py-0.5 text-xs focus:ring-1 focus:ring-[#512DDB] focus:outline-none bg-white"
               >
                 <option value="AM">AM</option>
                 <option value="PM">PM</option>
@@ -330,7 +330,7 @@ export function DateTimePicker({
                 }
                 setShowTimePopover(false);
               }}
-              className="flex-1 py-1 rounded bg-[#00828a] text-white hover:bg-[#00828a]/90 transition-colors font-semibold text-[10px]"
+              className="flex-1 py-1 rounded bg-[#512DDB] text-white hover:bg-[#4E30B2] transition-colors font-semibold text-[10px]"
             >
               Aceptar
             </button>
@@ -454,7 +454,7 @@ export function DatePicker({
         onChange={handleTextChange}
         onBlur={handleBlur}
         placeholder="DD/MM/AAAA"
-        className="w-full px-3 py-2 pr-10 border border-gray-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00828a]/50 text-xs bg-white text-gray-700"
+        className="w-full px-3 py-2 pr-10 border border-gray-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#512DDB]/50 text-xs bg-white text-gray-700"
       />
       <div className="absolute right-2 text-gray-400 p-1 pointer-events-none z-10">
         <Calendar size={15} />

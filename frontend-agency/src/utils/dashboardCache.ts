@@ -9,13 +9,13 @@ const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos
 function getCacheKey(): string {
   try {
     // Obtener el userId del token guardado en localStorage
-    const token = localStorage.getItem('itea_token');
-    if (!token) return 'itea_dashboard_cache_anonymous';
+    const token = localStorage.getItem('moontravel_token');
+    if (!token) return 'moontravel_dashboard_cache_anonymous';
     // Decodificar el payload del JWT (sin verificar firma, solo para obtener userId)
     const payload = JSON.parse(atob(token.split('.')[1]));
-    return `itea_dashboard_cache_${payload.userId || 'unknown'}`;
+    return `moontravel_dashboard_cache_${payload.userId || 'unknown'}`;
   } catch {
-    return 'itea_dashboard_cache_anonymous';
+    return 'moontravel_dashboard_cache_anonymous';
   }
 }
 

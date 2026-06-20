@@ -26,7 +26,7 @@ import {
 } from '../utils/configCache';
 
 // Limpiar caché de permisos de rol si quedó de versiones anteriores
-try { localStorage.removeItem('itea_role_permissions_cache'); } catch {}
+try { localStorage.removeItem('moontravel_role_permissions_cache'); } catch {}
 
 type ConfigSection = 'cards' | 'paymentMethods' | 'documentTypes' | 'airlines' | 'suppliers' | 'airports' | 'baggage' | 'packages';
 

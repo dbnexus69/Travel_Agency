@@ -178,7 +178,7 @@ function FlightBlock({ ticket, idx, airportMap, baggageList }: { ticket: TicketD
 
 export const VoucherPDF = forwardRef<HTMLDivElement, VoucherPDFProps>(({ sale, airportMap, baggageList }, ref) => {
   if (!sale) {
-    return <div className="itea-voucher"><div ref={ref} /></div>;
+    return <div className="moontravel-voucher"><div ref={ref} /></div>;
   }
 
   const currentDate = new Date().toLocaleDateString('es-CO', {
@@ -205,7 +205,7 @@ export const VoucherPDF = forwardRef<HTMLDivElement, VoucherPDFProps>(({ sale, a
   const hasAnyProduct = tickets.length > 0 || hasOtherProducts;
 
   return (
-    <div className="itea-voucher">
+    <div className="moontravel-voucher">
       <div className="v-page" ref={ref}>
 
         {/* ══ HEADER ══════════════════════════════════════════════════ */}

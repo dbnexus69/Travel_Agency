@@ -1,11 +1,11 @@
 /* ============================================================
-   iTea Travel Agency — Voucher PDF Styles v2.0
-   Fully scoped under .itea-voucher to prevent global leakage
+   Moon Travel Co. Travel Agency — Voucher PDF Styles v2.0
+   Fully scoped under .moontravel-voucher to prevent global leakage
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap');
 
-.itea-voucher {
+.moontravel-voucher {
   font-family: "Inter", "Segoe UI", Arial, sans-serif;
   font-size: 14px;
   color: #1e293b;
@@ -16,21 +16,21 @@
   pointer-events: none;
 }
 
-.itea-voucher * {
+.moontravel-voucher * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
 /* PAGE */
-.itea-voucher .v-page {
+.moontravel-voucher .v-page {
   width: 820px;
   background: #f8fafc;
   border-top: 6px solid #102846;
 }
 
 /* ── HEADER ── */
-.itea-voucher .v-header {
+.moontravel-voucher .v-header {
   background: #ffffff;
   padding: 24px 36px;
   display: flex;
@@ -39,13 +39,13 @@
   border-bottom: 3px solid #f2892f;
 }
 
-.itea-voucher .v-logo-block {
+.moontravel-voucher .v-logo-block {
   display: flex;
   align-items: center;
   gap: 14px;
 }
 
-.itea-voucher .v-logo-img {
+.moontravel-voucher .v-logo-img {
   max-width: 240px;
   max-height: 90px;
   width: auto;
@@ -54,19 +54,19 @@
   display: block;
 }
 
-.itea-voucher .v-header-right {
+.moontravel-voucher .v-header-right {
   text-align: right;
   color: #334155;
   font-size: 13px;
   line-height: 2;
 }
 
-.itea-voucher .v-header-right strong {
+.moontravel-voucher .v-header-right strong {
   color: #102846;
 }
 
 /* ── TOP BAR (Passenger & Order) ── */
-.itea-voucher .v-top-bar {
+.moontravel-voucher .v-top-bar {
   background: linear-gradient(135deg, #102846 0%, #163863 60%, #081423 100%);
   padding: 16px 36px;
   display: flex;
@@ -74,7 +74,7 @@
   align-items: stretch;
 }
 
-.itea-voucher .v-tb-item {
+.moontravel-voucher .v-tb-item {
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -82,16 +82,16 @@
   border-right: 1px solid rgba(255,255,255,0.12);
 }
 
-.itea-voucher .v-tb-item:first-child {
+.moontravel-voucher .v-tb-item:first-child {
   padding-left: 0;
 }
 
-.itea-voucher .v-tb-item:last-child {
+.moontravel-voucher .v-tb-item:last-child {
   border-right: none;
   padding-right: 0;
 }
 
-.itea-voucher .v-tb-label {
+.moontravel-voucher .v-tb-label {
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
@@ -101,19 +101,19 @@
   margin-bottom: 5px;
 }
 
-.itea-voucher .v-tb-value {
+.moontravel-voucher .v-tb-value {
   font-size: 15px;
   font-weight: 700;
   color: #ffffff;
 }
 
-.itea-voucher .v-tb-order {
+.moontravel-voucher .v-tb-order {
   display: inline-flex;
   align-items: center;
   vertical-align: middle;
 }
 
-.itea-voucher .v-badge-status {
+.moontravel-voucher .v-badge-status {
   display: inline;
   font-weight: 900;
   font-size: 13px;
@@ -123,24 +123,24 @@
   vertical-align: middle;
 }
 
-.itea-voucher .v-status-pagado {
+.moontravel-voucher .v-status-pagado {
   color: #4ade80;
 }
 
-.itea-voucher .v-status-abonado {
+.moontravel-voucher .v-status-abonado {
   color: #fbbf24;
 }
 
-.itea-voucher .v-status-credito {
+.moontravel-voucher .v-status-credito {
   color: #f5832a;
 }
 
-.itea-voucher .v-status-anulado {
+.moontravel-voucher .v-status-anulado {
   color: #f87171;
 }
 
 /* ── SECTION TITLE (Otros Servicios) ── */
-.itea-voucher .v-section-title {
+.moontravel-voucher .v-section-title {
   background: linear-gradient(90deg, #081423 0%, #102846 50%, #163863 100%);
   padding: 12px 36px;
   font-size: 13px;
@@ -155,7 +155,7 @@
 }
 
 /* ── NOTICE ── */
-.itea-voucher .v-notice {
+.moontravel-voucher .v-notice {
   padding: 8px 36px;
   font-style: italic;
   color: #334155;
@@ -166,7 +166,7 @@
 /* ═══════════════════════════════════════
    FLIGHT BLOCK
 ═══════════════════════════════════════ */
-.itea-voucher .v-flight-block {
+.moontravel-voucher .v-flight-block {
   margin: 12px 16px;
   background: #ffffff;
   border-radius: 8px;
@@ -175,7 +175,7 @@
   box-shadow: 0 2px 8px rgba(3,38,80,0.08);
 }
 
-.itea-voucher .v-flight-header {
+.moontravel-voucher .v-flight-header {
   background: linear-gradient(135deg, #102846 0%, #163863 100%);
   padding: 12px 20px;
   font-size: 13px;
@@ -188,7 +188,7 @@
   gap: 8px;
 }
 
-.itea-voucher .v-flight-notice {
+.moontravel-voucher .v-flight-notice {
   padding: 10px 20px;
   font-style: italic;
   color: #334155;
@@ -197,16 +197,16 @@
   border-bottom: 1px solid #e2e8f0;
 }
 
-.itea-voucher .v-flight-table {
+.moontravel-voucher .v-flight-table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.itea-voucher .v-flight-table thead tr {
+.moontravel-voucher .v-flight-table thead tr {
   background: linear-gradient(90deg, #f2892f 0%, #f49e54 100%);
 }
 
-.itea-voucher .v-flight-table thead th {
+.moontravel-voucher .v-flight-table thead th {
   padding: 10px 12px;
   text-align: center;
   font-size: 11px;
@@ -216,52 +216,52 @@
   color: #ffffff;
 }
 
-.itea-voucher .v-flight-table thead th:nth-child(1),
-.itea-voucher .v-flight-table thead th:nth-child(2) {
+.moontravel-voucher .v-flight-table thead th:nth-child(1),
+.moontravel-voucher .v-flight-table thead th:nth-child(2) {
   text-align: left;
 }
 
-.itea-voucher .v-flight-table thead th:first-child {
+.moontravel-voucher .v-flight-table thead th:first-child {
   padding-left: 20px;
 }
 
-.itea-voucher .v-flight-table tbody tr {
+.moontravel-voucher .v-flight-table tbody tr {
   background: #ffffff;
   border-bottom: 1px solid #f1f5f9;
 }
 
-.itea-voucher .v-flight-table tbody tr:nth-child(even) {
+.moontravel-voucher .v-flight-table tbody tr:nth-child(even) {
   background: #f8fafc;
 }
 
-.itea-voucher .v-flight-table tbody td {
+.moontravel-voucher .v-flight-table tbody td {
   padding: 14px 12px;
   vertical-align: middle;
   text-align: center;
 }
 
-.itea-voucher .v-flight-table tbody td:nth-child(1),
-.itea-voucher .v-flight-table tbody td:nth-child(2) {
+.moontravel-voucher .v-flight-table tbody td:nth-child(1),
+.moontravel-voucher .v-flight-table tbody td:nth-child(2) {
   text-align: left;
 }
 
-.itea-voucher .v-flight-table tbody td:first-child {
+.moontravel-voucher .v-flight-table tbody td:first-child {
   padding-left: 20px;
 }
 
-.itea-voucher .v-f-main {
+.moontravel-voucher .v-f-main {
   font-weight: 700;
   font-size: 14px;
   color: #102846;
 }
 
-.itea-voucher .v-f-sub {
+.moontravel-voucher .v-f-sub {
   font-size: 11.5px;
   color: #334155;
   margin-top: 3px;
 }
 
-.itea-voucher .v-flight-details-box {
+.moontravel-voucher .v-flight-details-box {
   background: linear-gradient(90deg, #eef6f7 0%, #f0f7f8 100%);
   padding: 14px 20px;
   border-top: 1px solid #cce8eb;
@@ -270,25 +270,25 @@
   align-items: center;
 }
 
-.itea-voucher .v-fd-col {
+.moontravel-voucher .v-fd-col {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.itea-voucher .v-fd-label {
+.moontravel-voucher .v-fd-label {
   font-size: 12px;
   color: #334155;
   font-weight: 500;
 }
 
-.itea-voucher .v-fd-val {
+.moontravel-voucher .v-fd-val {
   font-size: 13px;
   font-weight: 700;
   color: #102846;
 }
 
-.itea-voucher .v-badge-orange {
+.moontravel-voucher .v-badge-orange {
   display: inline;
   color: #f5832a;
   font-weight: 700;
@@ -301,7 +301,7 @@
 /* ═══════════════════════════════════════
    PRODUCT CARD (other services)
 ═══════════════════════════════════════ */
-.itea-voucher .v-product-block {
+.moontravel-voucher .v-product-block {
   margin: 10px 16px;
   background: #ffffff;
   border-radius: 8px;
@@ -310,7 +310,7 @@
   box-shadow: 0 2px 8px rgba(3,38,80,0.06);
 }
 
-.itea-voucher .v-product-label {
+.moontravel-voucher .v-product-label {
   background: linear-gradient(135deg, #102846 0%, #163863 100%);
   color: #ffffff;
   font-size: 12px;
@@ -324,35 +324,35 @@
 }
 
 /* ── Data Grid inside product cards ── */
-.itea-voucher .v-data-grid {
+.moontravel-voucher .v-data-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 0;
 }
 
-.itea-voucher .v-data-grid.cols-2 {
+.moontravel-voucher .v-data-grid.cols-2 {
   grid-template-columns: repeat(2, 1fr);
 }
 
-.itea-voucher .v-data-grid.cols-4 {
+.moontravel-voucher .v-data-grid.cols-4 {
   grid-template-columns: repeat(4, 1fr);
 }
 
-.itea-voucher .v-data-cell {
+.moontravel-voucher .v-data-cell {
   padding: 14px 18px;
   border-right: 1px solid #f1f5f9;
   border-bottom: 1px solid #f1f5f9;
 }
 
-.itea-voucher .v-data-cell:nth-child(3n) {
+.moontravel-voucher .v-data-cell:nth-child(3n) {
   border-right: none;
 }
 
-.itea-voucher .v-data-cell.cols-2-last:nth-child(2n) {
+.moontravel-voucher .v-data-cell.cols-2-last:nth-child(2n) {
   border-right: none;
 }
 
-.itea-voucher .v-data-cell-label {
+.moontravel-voucher .v-data-cell-label {
   font-size: 10.5px;
   font-weight: 700;
   text-transform: uppercase;
@@ -361,35 +361,35 @@
   margin-bottom: 5px;
 }
 
-.itea-voucher .v-data-cell-value {
+.moontravel-voucher .v-data-cell-value {
   font-size: 14px;
   font-weight: 600;
   color: #1e293b;
   line-height: 1.4;
 }
 
-.itea-voucher .v-data-cell-value.highlight {
+.moontravel-voucher .v-data-cell-value.highlight {
   color: #102846;
   font-weight: 700;
 }
 
 /* divider between items in same product category */
-.itea-voucher .v-item-divider {
+.moontravel-voucher .v-item-divider {
   border-top: 2px dashed #e2e8f0;
   margin: 0;
 }
 
 /* ── OLD TABLE kept for flight compatibility ── */
-.itea-voucher .v-table {
+.moontravel-voucher .v-table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.itea-voucher .v-table thead tr {
+.moontravel-voucher .v-table thead tr {
   background: linear-gradient(90deg, #f2892f 0%, #f49e54 100%);
 }
 
-.itea-voucher .v-table thead th {
+.moontravel-voucher .v-table thead th {
   padding: 9px 12px;
   text-align: center;
   font-size: 11px;
@@ -400,18 +400,18 @@
   border-right: 1px solid rgba(255,255,255,0.15);
 }
 
-.itea-voucher .v-table thead th.text-left { text-align: left; }
-.itea-voucher .v-table thead th:last-child { border-right: none; }
+.moontravel-voucher .v-table thead th.text-left { text-align: left; }
+.moontravel-voucher .v-table thead th:last-child { border-right: none; }
 
-.itea-voucher .v-table tbody tr {
+.moontravel-voucher .v-table tbody tr {
   border-bottom: 1px solid #e2e8f0;
 }
 
-.itea-voucher .v-table tbody tr:nth-child(even) {
+.moontravel-voucher .v-table tbody tr:nth-child(even) {
   background: #f8fafc;
 }
 
-.itea-voucher .v-table tbody td {
+.moontravel-voucher .v-table tbody td {
   padding: 10px 12px;
   vertical-align: middle;
   text-align: center;
@@ -420,23 +420,23 @@
   color: #334155;
 }
 
-.itea-voucher .v-table tbody td.text-left { text-align: left; }
-.itea-voucher .v-table tbody td:last-child { border-right: none; }
+.moontravel-voucher .v-table tbody td.text-left { text-align: left; }
+.moontravel-voucher .v-table tbody td:last-child { border-right: none; }
 
-.itea-voucher .v-cell-main {
+.moontravel-voucher .v-cell-main {
   font-weight: 700;
   font-size: 14px;
   color: #102846;
 }
 
-.itea-voucher .v-cell-sub {
+.moontravel-voucher .v-cell-sub {
   font-size: 12px;
   color: #334155;
   margin-top: 2px;
 }
 
 /* ── BADGES ── */
-.itea-voucher .v-badge {
+.moontravel-voucher .v-badge {
   display: inline;
   color: #102846;
   font-size: 13px;
@@ -445,12 +445,12 @@
   vertical-align: middle;
 }
 
-.itea-voucher .v-badge-accent {
+.moontravel-voucher .v-badge-accent {
   color: #f2892f;
 }
 
 /* ── FOOTNOTES ── */
-.itea-voucher .v-footnotes {
+.moontravel-voucher .v-footnotes {
   margin: 8px 16px;
   padding: 10px 16px;
   font-size: 11.5px;
@@ -462,27 +462,27 @@
 }
 
 /* ── PAYMENT SECTION ── */
-.itea-voucher .v-payment {
+.moontravel-voucher .v-payment {
   display: grid;
   grid-template-columns: 1fr 1fr;
   border-top: 3px solid #102846;
   margin-top: 8px;
 }
 
-.itea-voucher .v-payment-col {
+.moontravel-voucher .v-payment-col {
   padding: 20px 28px;
 }
 
-.itea-voucher .v-payment-col:first-child {
+.moontravel-voucher .v-payment-col:first-child {
   border-right: 3px solid #e2e8f0;
   background: #f8fafc;
 }
 
-.itea-voucher .v-payment-col:last-child {
+.moontravel-voucher .v-payment-col:last-child {
   background: #ffffff;
 }
 
-.itea-voucher .v-payment-col h4 {
+.moontravel-voucher .v-payment-col h4 {
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 1.5px;
@@ -493,7 +493,7 @@
   padding-left: 8px;
 }
 
-.itea-voucher .v-payment-row {
+.moontravel-voucher .v-payment-row {
   display: flex;
   justify-content: space-between;
   padding: 6px 0;
@@ -501,20 +501,20 @@
   font-size: 12.5px;
 }
 
-.itea-voucher .v-payment-row:last-child {
+.moontravel-voucher .v-payment-row:last-child {
   border-bottom: none;
 }
 
-.itea-voucher .v-payment-row label {
+.moontravel-voucher .v-payment-row label {
   color: #334155;
 }
 
-.itea-voucher .v-payment-row span {
+.moontravel-voucher .v-payment-row span {
   color: #1e293b;
   font-weight: 600;
 }
 
-.itea-voucher .v-payment-grand {
+.moontravel-voucher .v-payment-grand {
   background: linear-gradient(135deg, #081423 0%, #102846 100%);
   margin: 12px -28px -20px;
   padding: 12px 28px;
@@ -523,15 +523,15 @@
   align-items: center;
 }
 
-.itea-voucher .v-payment-grand label,
-.itea-voucher .v-payment-grand span {
+.moontravel-voucher .v-payment-grand label,
+.moontravel-voucher .v-payment-grand span {
   color: #f2892f;
   font-weight: 800;
   font-size: 17px;
   font-family: "Montserrat", sans-serif;
 }
 
-.itea-voucher .v-endorsements {
+.moontravel-voucher .v-endorsements {
   font-size: 11px;
   color: #ffffff;
   font-weight: 700;
@@ -543,7 +543,7 @@
 }
 
 /* ── LEGAL ── */
-.itea-voucher .v-legal {
+.moontravel-voucher .v-legal {
   background: linear-gradient(180deg, #f5f5f5 0%, #e8eef5 100%);
   padding: 18px 36px;
   font-size: 11.5px;
@@ -552,7 +552,7 @@
   border-top: 3px solid #102846;
 }
 
-.itea-voucher .v-legal h4 {
+.moontravel-voucher .v-legal h4 {
   font-size: 12px;
   font-weight: 800;
   color: #102846;
@@ -564,7 +564,7 @@
   padding-bottom: 3px;
 }
 
-.itea-voucher .v-legal .v-company {
+.moontravel-voucher .v-legal .v-company {
   margin-top: 12px;
   font-weight: 700;
   color: #102846;
@@ -574,7 +574,7 @@
 }
 
 /* ── FOOTER ── */
-.itea-voucher .v-footer {
+.moontravel-voucher .v-footer {
   background: linear-gradient(135deg, #081423 0%, #102846 50%, #163863 100%);
   border-top: 4px solid #f2892f;
   padding: 16px 36px;
@@ -583,7 +583,7 @@
   align-items: center;
 }
 
-.itea-voucher .v-footer-brand {
+.moontravel-voucher .v-footer-brand {
   font-weight: 900;
   font-size: 24px;
   color: #ffffff;
@@ -591,11 +591,11 @@
   font-family: "Montserrat", sans-serif;
 }
 
-.itea-voucher .v-footer-brand span {
+.moontravel-voucher .v-footer-brand span {
   color: #f2892f;
 }
 
-.itea-voucher .v-footer-tagline {
+.moontravel-voucher .v-footer-tagline {
   font-size: 11px;
   color: rgba(255,255,255,0.5);
   letter-spacing: 4px;
@@ -603,7 +603,7 @@
   margin-top: 3px;
 }
 
-.itea-voucher .v-footer-right {
+.moontravel-voucher .v-footer-right {
   text-align: right;
   color: rgba(255,255,255,0.6);
   font-size: 11.5px;
@@ -611,19 +611,19 @@
 }
 
 /* HELPER CLASSES */
-.itea-voucher .text-center { text-align: center !important; }
-.itea-voucher .text-left   { text-align: left !important; }
-.itea-voucher .text-right  { text-align: right !important; }
+.moontravel-voucher .text-center { text-align: center !important; }
+.moontravel-voucher .text-left   { text-align: left !important; }
+.moontravel-voucher .text-right  { text-align: right !important; }
 
 /* PAGINATION CLASSES */
-.itea-voucher .v-page-temp {
+.moontravel-voucher .v-page-temp {
   height: 1160px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
 }
 
-.itea-voucher .v-page-content-temp {
+.moontravel-voucher .v-page-content-temp {
   flex-grow: 1;
   display: flex;
   flex-direction: column;

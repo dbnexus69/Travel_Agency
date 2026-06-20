@@ -9,7 +9,7 @@ const CACHE_TTL_MS = 3 * 60 * 1000; // 3 minutos
 
 function getCacheKey(baseKey: string): string {
   try {
-    const token = localStorage.getItem('itea_token');
+    const token = localStorage.getItem('moontravel_token');
     if (!token) return `${baseKey}_anonymous`;
     const payload = JSON.parse(atob(token.split('.')[1]));
     return `${baseKey}_${payload.userId || 'unknown'}`;
@@ -59,15 +59,15 @@ function deleteCache(key: string): void {
 /** Guarda la lista de usuarios en caché */
 /** Guarda la lista de usuarios en caché */
 export function saveUsersCache(users: unknown[]): void {
-  writeCache(getCacheKey('itea_users_cache'), users);
+  writeCache(getCacheKey('moontravel_users_cache'), users);
 }
 
 /** Retorna usuarios desde caché si TTL no expiró, null si expirado */
 export function loadUsersCache(): unknown[] | null {
-  return readCache<unknown[]>(getCacheKey('itea_users_cache'));
+  return readCache<unknown[]>(getCacheKey('moontravel_users_cache'));
 }
 
 /** Invalida el caché de usuarios. Usar al crear/editar/eliminar. */
 export function invalidateUsersCache(): void {
-  deleteCache(getCacheKey('itea_users_cache'));
+  deleteCache(getCacheKey('moontravel_users_cache'));
 }

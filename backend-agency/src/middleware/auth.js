@@ -10,7 +10,10 @@ async function auth(req, res, next) {
   try {
     const header = req.headers.authorization;
     if (!header || !header.startsWith('Bearer ')) {
-      // BYPASS PARA PRUEBAS
+      // BYPASS SOLO PARA DESARROLLO/PRUEBAS LOCALES
+      if (process.env.NODE_ENV === 'production') {
+        return error(res, 'No autenticado. Token requerido', 401, 'TOKEN_REQUIRED');
+      }
       req.user = { id: 1, role: 'admin' };
       req.permissionScope = 'all';
       return next();

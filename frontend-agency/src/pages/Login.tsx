@@ -172,23 +172,23 @@ export default function Login() {
           backgroundImage: 'url("/business_travel_bg.png")',
         }}
       />
-      <div className="absolute inset-0 z-10 bg-gradient-to-br from-primary/90 via-primary/70 to-transparent" />
+      <div className="absolute inset-0 z-10 bg-gradient-to-br from-[#512DDB]/80 via-[#1a1a2e]/90 to-[#1a1a2e]/95" />
       
       {/* Círculos de luz decorativos */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-accent/20 rounded-full blur-[120px] z-10 animate-pulse" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary-dark/40 rounded-full blur-[120px] z-10" />
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#D2C3F7]/20 rounded-full blur-[120px] z-10 animate-pulse" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[#512DDB]/30 rounded-full blur-[120px] z-10" />
 
       {/* Contenedor del Login */}
       <div className="relative z-20 w-full max-w-md animate-fade-in-up">
         {/* Tarjeta de Login Glassmorphism */}
-        <div className="bg-white/65 backdrop-blur-xl rounded-3xl shadow-[0_25px_60px_-15px_rgba(0,130,138,0.15)] p-6 border border-white/40 text-[#002855]">
+        <div className="bg-white/75 backdrop-blur-xl rounded-3xl shadow-[0_25px_60px_-15px_rgba(81,45,219,0.2)] p-6 border border-white/50 text-[#1a1a2e]">
           {/* Logo Corporativo */}
           <div className="text-center mb-3 flex flex-col items-center">
-            <img src="/itea logo.png" className="w-40 h-auto object-contain drop-shadow-md" alt="iCTea Logo" />
+            <img src="/moon-logo.png" className="w-40 h-auto object-contain drop-shadow-md" alt="Moon Travel Co." />
           </div>
 
           <div className="mb-4 text-center">
-            <h2 className="text-xl font-bold text-[#002855]">
+            <h2 className="text-xl font-bold text-[#1a1a2e]">
               {view === 'login' && 'Bienvenido de nuevo'}
               {view === 'forgot' && 'Recuperar contraseña'}
               {view === 'verify' && 'Verificar código'}
@@ -211,10 +211,10 @@ export default function Login() {
                   required
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  placeholder="usuario@itea.com"
+                  placeholder="usuario@moontravel.com"
                   disabled={isLoading}
                   autoComplete="email"
-                  className="transition-all focus:border-[#00828a] focus:ring-[#00828a]/20"
+                  className="transition-all focus:border-[#512DDB] focus:ring-[#512DDB]/20"
                 />
               </FormField>
 
@@ -228,12 +228,12 @@ export default function Login() {
                     placeholder="••••••••"
                     disabled={isLoading}
                     autoComplete="current-password"
-                    className="transition-all focus:border-[#00828a] focus:ring-[#00828a]/20"
+                    className="transition-all focus:border-[#512DDB] focus:ring-[#512DDB]/20"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#00828a] transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#512DDB] transition-colors"
                     tabIndex={-1}
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -245,7 +245,7 @@ export default function Login() {
                 <button 
                   type="button" 
                   onClick={() => { setView('forgot'); setErrorToastMessage(''); setResetEmail(email); }}
-                  className="text-sm text-[#00828a] font-bold hover:underline"
+                  className="text-sm text-[#512DDB] font-bold hover:underline"
                 >
                   ¿Olvidaste tu contraseña?
                 </button>
@@ -253,7 +253,7 @@ export default function Login() {
 
               <button 
                 type="submit" 
-                className="w-full h-11 text-base font-bold text-white bg-gradient-to-r from-[#002855] to-[#00828a] rounded-xl shadow-lg shadow-[#00828a]/15 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2" 
+                className="w-full h-11 text-base font-bold text-white bg-gradient-to-r from-[#512DDB] to-[#4E30B2] rounded-xl shadow-lg shadow-[#512DDB]/25 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2" 
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -280,10 +280,10 @@ export default function Login() {
                   required
                   value={resetEmail}
                   onChange={e => setResetEmail(e.target.value)}
-                  placeholder="usuario@itea.com"
+                  placeholder="usuario@moontravel.com"
                   disabled={isLoading}
                   maxLength={41}
-                  className="transition-all focus:border-[#00828a] focus:ring-[#00828a]/20"
+                  className="transition-all focus:border-[#512DDB] focus:ring-[#512DDB]/20"
                 />
                 {resetEmail.length > 40 && (
                   <p className="text-xs text-red-500 mt-1">El correo no puede exceder los 40 caracteres.</p>
@@ -292,7 +292,7 @@ export default function Login() {
 
               <button 
                 type="submit" 
-                className="w-full h-11 text-base font-bold text-white bg-gradient-to-r from-[#002855] to-[#00828a] rounded-xl shadow-lg shadow-[#00828a]/15 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100" 
+                className="w-full h-11 text-base font-bold text-white bg-gradient-to-r from-[#512DDB] to-[#4E30B2] rounded-xl shadow-lg shadow-[#512DDB]/25 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100" 
                 disabled={isLoading || !isEmailValid}
               >
                 {isLoading ? (
@@ -311,7 +311,7 @@ export default function Login() {
               <button
                 type="button"
                 onClick={() => { setView('login'); setErrorToastMessage(''); }}
-                className="w-full h-11 text-sm font-bold text-gray-500 hover:text-[#00828a] flex items-center justify-center gap-2 transition-colors"
+                className="w-full h-11 text-sm font-bold text-gray-500 hover:text-[#512DDB] flex items-center justify-center gap-2 transition-colors"
                 disabled={isLoading}
               >
                 <ArrowLeft size={16} />
@@ -332,13 +332,13 @@ export default function Login() {
                   onChange={e => setCode(e.target.value.replace(/\D/g, ''))}
                   placeholder="123456"
                   disabled={isLoading}
-                  className="transition-all tracking-[0.25em] text-center font-bold text-lg focus:border-[#00828a] focus:ring-[#00828a]/20"
+                  className="transition-all tracking-[0.25em] text-center font-bold text-lg focus:border-[#512DDB] focus:ring-[#512DDB]/20"
                 />
               </FormField>
 
               <button 
                 type="submit" 
-                className="w-full h-11 text-base font-bold text-white bg-gradient-to-r from-[#002855] to-[#00828a] rounded-xl shadow-lg shadow-[#00828a]/15 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100" 
+                className="w-full h-11 text-base font-bold text-white bg-gradient-to-r from-[#512DDB] to-[#4E30B2] rounded-xl shadow-lg shadow-[#512DDB]/25 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100" 
                 disabled={isLoading || code.length !== 6}
               >
                 {isLoading ? (
@@ -357,7 +357,7 @@ export default function Login() {
               <button
                 type="button"
                 onClick={() => { setView('forgot'); setErrorToastMessage(''); setCode(''); }}
-                className="w-full h-11 text-sm font-bold text-gray-500 hover:text-[#00828a] flex items-center justify-center gap-2 transition-colors"
+                className="w-full h-11 text-sm font-bold text-gray-500 hover:text-[#512DDB] flex items-center justify-center gap-2 transition-colors"
                 disabled={isLoading}
               >
                 <ArrowLeft size={16} />
@@ -378,12 +378,12 @@ export default function Login() {
                     onChange={e => setNewPassword(e.target.value)}
                     placeholder="Escribe tu nueva contraseña"
                     disabled={isLoading}
-                    className="transition-all focus:border-[#00828a] focus:ring-[#00828a]/20"
+                    className="transition-all focus:border-[#512DDB] focus:ring-[#512DDB]/20"
                   />
                   <button
                     type="button"
                     onClick={() => setShowNewPassword(!showNewPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#00828a] transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#512DDB] transition-colors"
                     tabIndex={-1}
                   >
                     {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -417,12 +417,12 @@ export default function Login() {
                     onChange={e => setConfirmPassword(e.target.value)}
                     placeholder="Repite la contraseña"
                     disabled={isLoading}
-                    className="transition-all focus:border-[#00828a] focus:ring-[#00828a]/20"
+                    className="transition-all focus:border-[#512DDB] focus:ring-[#512DDB]/20"
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#00828a] transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#512DDB] transition-colors"
                     tabIndex={-1}
                   >
                     {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -436,7 +436,7 @@ export default function Login() {
 
               <button 
                 type="submit" 
-                className="w-full h-11 text-base font-bold text-white bg-gradient-to-r from-[#002855] to-[#00828a] rounded-xl shadow-lg shadow-[#00828a]/15 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100" 
+                className="w-full h-11 text-base font-bold text-white bg-gradient-to-r from-[#512DDB] to-[#4E30B2] rounded-xl shadow-lg shadow-[#512DDB]/25 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100" 
                 disabled={isLoading || !allCriteriaMet || newPassword !== confirmPassword}
               >
                 {isLoading ? (
@@ -458,7 +458,7 @@ export default function Login() {
 
         {/* Footer del Login */}
         <p className="text-center mt-4 text-white/40 text-xs">
-          &copy; {new Date().getFullYear()} iTea Sistema Exclusivo Para Agencias de Viajes 
+          &copy; {new Date().getFullYear()} Moon Travel Co. Sistema Exclusivo Para Agencias de Viajes 
           <br></br>
           Todos los derechos reservados.
         </p>

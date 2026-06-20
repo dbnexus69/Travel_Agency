@@ -17,7 +17,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('itea_token');
+    const token = localStorage.getItem('moontravel_token');
 
     if (token) {
       getMe()
@@ -25,8 +25,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(userData);
         })
         .catch(() => {
-          localStorage.removeItem('itea_token');
-          localStorage.removeItem('itea_session_expiry');
+          localStorage.removeItem('moontravel_token');
+          localStorage.removeItem('moontravel_session_expiry');
         })
         .finally(() => setIsLoading(false));
     } else {
@@ -39,12 +39,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await apiLogin(email, password, remember);
 
       // Limpiar caché vieja antes de guardar el nuevo token
-      localStorage.removeItem('itea_dashboard_cache');
+      localStorage.removeItem('moontravel_dashboard_cache');
 
       setUser(data.user);
 
-      localStorage.setItem('itea_token', data.token);
-      localStorage.setItem('itea_remember', String(remember));
+      localStorage.setItem('moontravel_token', data.token);
+      localStorage.setItem('moontravel_remember', String(remember));
 
       return { success: true };
     } catch (err: any) {
@@ -56,10 +56,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     apiLogout().catch(() => {});
     setUser(null);
-    localStorage.removeItem('itea_token');
-    localStorage.removeItem('itea_user');
-    localStorage.removeItem('itea_session_expiry');
-    localStorage.removeItem('itea_remember');
+    localStorage.removeItem('moontravel_token');
+    localStorage.removeItem('moontravel_user');
+    localStorage.removeItem('moontravel_session_expiry');
+    localStorage.removeItem('moontravel_remember');
   };
 
   return (

@@ -256,8 +256,8 @@ export default function Config() {
       {/* Dynamic Header */}
       <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-primary flex items-center gap-3">
-            <Database className="text-accent w-8 h-8" /> Gestión Interna
+          <h1 className="text-3xl font-bold text-[#1a1a2e] flex items-center gap-3">
+            <Database className="text-[#512DDB] w-8 h-8" /> Gestión Interna
           </h1>
           <p className="text-gray-500 text-xs mt-1">
             Administración central de tablas maestras, catálogos base y parámetros para la facturación.
@@ -301,12 +301,12 @@ export default function Config() {
                     }}
                     className={`shrink-0 lg:w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all ${
                       isActive
-                        ? 'bg-primary text-white shadow-md shadow-primary/10'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                        ? 'bg-[#512DDB] text-white shadow-md shadow-[#512DDB]/10'
+                        : 'text-gray-600 hover:bg-[#D2C3F7]/20 hover:text-[#4E30B2]'
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className={isActive ? 'text-accent' : 'text-gray-400'}>
+                      <div className={isActive ? 'text-white' : 'text-gray-400'}>
                         {section.icon}
                       </div>
                       <div className="text-left min-w-0">
@@ -360,7 +360,7 @@ export default function Config() {
                   </button>
                 </div>
                 {/* Add new button */}
-                <Button onClick={() => handleOpenModal()} size="sm">
+                <Button onClick={() => handleOpenModal()} size="sm" className="bg-[#512DDB] hover:bg-[#4E30B2] text-white">
                   <Plus size={14} />
                   Agregar Nuevo
                 </Button>

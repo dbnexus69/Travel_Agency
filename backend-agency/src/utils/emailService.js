@@ -1,6 +1,15 @@
 const { Resend } = require('resend');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let resend = null;
+try {
+  if (process.env.RESEND_API_KEY) {
+    resend = new Resend(process.env.RESEND_API_KEY);
+  } else {
+    console.warn('⚠️ Advertencia: RESEND_API_KEY no está definida en las variables de entorno. El envío de correos electrónicos estará desactivado.');
+  }
+} catch (error) {
+  console.error('❌ Error al inicializar el cliente Resend:', error);
+}
 
 /**
  * Enviar un correo electrónico usando Resend
@@ -13,6 +22,11 @@ const resend = new Resend(process.env.RESEND_API_KEY);
  */
 const sendEmail = async ({ to, subject, html, attachments = [] }) => {
   try {
+    if (!resend) {
+      console.warn('⚠️ Envío de correo omitido: El cliente Resend no está inicializado porque falta RESEND_API_KEY.');
+      return { success: false, error: new Error('Resend API key missing') };
+    }
+
     const fromEmail = process.env.EMAIL_FROM || 'onboarding@resend.dev';
     
     const data = await resend.emails.send({

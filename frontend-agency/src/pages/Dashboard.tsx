@@ -117,20 +117,20 @@ export default function Dashboard() {
   return (
     <div className="space-y-8 pb-8">
       {/* Header Premium con Gradient */}
-      <div className="relative rounded-2xl bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 p-8 shadow-2xl z-10">
+      <div className="relative rounded-2xl bg-gradient-to-r from-[#1a1a2e] via-[#4E30B2] to-[#512DDB] p-8 shadow-2xl z-10">
         {/* Capa de fondo con overflow-hidden para no recortar el contenido interactivo como el Datepicker */}
         <div className="absolute inset-0 overflow-hidden rounded-2xl z-0 pointer-events-none">
           <div className="absolute top-0 left-0 w-full h-full opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mix-blend-overlay"></div>
-          <div className="absolute -top-24 -right-24 w-64 h-64 bg-blue-500 rounded-full mix-blend-screen filter blur-[80px] opacity-40"></div>
-          <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-indigo-500 rounded-full mix-blend-screen filter blur-[80px] opacity-40"></div>
+          <div className="absolute -top-24 -right-24 w-64 h-64 bg-[#D2C3F7] rounded-full mix-blend-screen filter blur-[80px] opacity-20"></div>
+          <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-[#512DDB] rounded-full mix-blend-screen filter blur-[80px] opacity-40"></div>
         </div>
         
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div>
-            <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white to-blue-200 drop-shadow-sm flex items-center gap-3">
+            <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white to-[#D2C3F7] drop-shadow-sm flex items-center gap-3">
               Panel de Control
             </h1>
-            <p className="text-blue-100/80 text-sm mt-2 max-w-xl font-medium">
+            <p className="text-[#D2C3F7]/80 text-sm mt-2 max-w-xl font-medium">
               Supervisa el rendimiento financiero y operativo en tiempo real. Todos los indicadores estratégicos de tu agencia, en un solo vistazo.
             </p>
           </div>
@@ -140,7 +140,7 @@ export default function Dashboard() {
                 value={dateRange as any}
                 onChange={(newValue: any) => setDateRange(newValue)}
                 showShortcuts={true}
-                primaryColor={"indigo"}
+                primaryColor={"violet"}
                 displayFormat={"DD/MMM/YYYY"}
                 placeholder={"Selecciona un periodo"}
                 separator={" - "}
@@ -238,7 +238,7 @@ export default function Dashboard() {
               key={i}
               onClick={kpi.onClick}
               className={`relative group bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 overflow-hidden ${
-                kpi.onClick ? "cursor-pointer hover:border-orange-200" : ""
+                kpi.onClick ? "cursor-pointer hover:border-[#512DDB]" : ""
               }`}
             >
               <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${kpi.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
@@ -273,7 +273,7 @@ export default function Dashboard() {
       {/* Advanced Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6 relative overflow-hidden">
-          <div className="absolute -right-20 -top-20 w-40 h-40 bg-blue-50 rounded-full blur-3xl"></div>
+          <div className="absolute -right-20 -top-20 w-40 h-40 bg-[#D2C3F7]/30 rounded-full blur-3xl"></div>
           <h2 className="text-lg font-black text-gray-800 mb-6">Comparativa de Ingresos</h2>
           <div className="h-72 w-full">
             {dashboardLoading && !dashboardData ? (
@@ -286,12 +286,12 @@ export default function Dashboard() {
                 >
                   <defs>
                     <linearGradient id="colorCurrent" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#4f46e5" stopOpacity={0} />
+                      <stop offset="5%" stopColor="#512DDB" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#512DDB" stopOpacity={0} />
                     </linearGradient>
                     <linearGradient id="colorPrev" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#94a3b8" stopOpacity={0.2} />
-                      <stop offset="95%" stopColor="#94a3b8" stopOpacity={0} />
+                      <stop offset="5%" stopColor="#D2C3F7" stopOpacity={0.4} />
+                      <stop offset="95%" stopColor="#D2C3F7" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -311,8 +311,8 @@ export default function Dashboard() {
                     contentStyle={{ borderRadius: "16px", border: "1px solid #f1f5f9", boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)", padding: "12px", fontWeight: "bold" }} 
                   />
                   <Legend iconType="circle" wrapperStyle={{ fontSize: "12px", fontWeight: 600, paddingTop: "20px" }} />
-                  <Area type="monotone" dataKey="current" name="Año Actual" stroke="#4f46e5" strokeWidth={4} fillOpacity={1} fill="url(#colorCurrent)" activeDot={{ r: 8, fill: "#4f46e5", stroke: "#fff", strokeWidth: 3, className: "drop-shadow-md" }} />
-                  <Area type="monotone" dataKey="previous" name="Año Anterior" stroke="#94a3b8" strokeWidth={2} strokeDasharray="5 5" fillOpacity={1} fill="url(#colorPrev)" />
+                  <Area type="monotone" dataKey="current" name="Año Actual" stroke="#512DDB" strokeWidth={4} fillOpacity={1} fill="url(#colorCurrent)" activeDot={{ r: 8, fill: "#512DDB", stroke: "#fff", strokeWidth: 3, className: "drop-shadow-md" }} />
+                  <Area type="monotone" dataKey="previous" name="Año Anterior" stroke="#D2C3F7" strokeWidth={2} strokeDasharray="5 5" fillOpacity={1} fill="url(#colorPrev)" />
                 </AreaChart>
               </ResponsiveContainer>
             )}
