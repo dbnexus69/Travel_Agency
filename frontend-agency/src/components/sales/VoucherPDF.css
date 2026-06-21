@@ -26,7 +26,7 @@
 .moontravel-voucher .v-page {
   width: 820px;
   background: #f8fafc;
-  border-top: 6px solid #102846;
+  border-top: 6px solid #1a1a2e;
 }
 
 /* ── HEADER ── */
@@ -36,7 +36,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 3px solid #f2892f;
+  border-bottom: 3px solid #512DDB;
 }
 
 .moontravel-voucher .v-logo-block {
@@ -46,8 +46,8 @@
 }
 
 .moontravel-voucher .v-logo-img {
-  max-width: 240px;
-  max-height: 90px;
+  max-width: 350px;
+  max-height: 140px;
   width: auto;
   height: auto;
   object-fit: contain;
@@ -62,12 +62,12 @@
 }
 
 .moontravel-voucher .v-header-right strong {
-  color: #102846;
+  color: #1a1a2e;
 }
 
 /* ── TOP BAR (Passenger & Order) ── */
 .moontravel-voucher .v-top-bar {
-  background: linear-gradient(135deg, #102846 0%, #163863 60%, #081423 100%);
+  background: linear-gradient(135deg, #1a1a2e 0%, #2d2d44 60%, #0f172a 100%);
   padding: 16px 36px;
   display: flex;
   gap: 0;
@@ -95,7 +95,7 @@
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
-  color: #f2892f;
+  color: #512DDB;
   letter-spacing: 1.5px;
   display: block;
   margin-bottom: 5px;
@@ -132,7 +132,7 @@
 }
 
 .moontravel-voucher .v-status-credito {
-  color: #f5832a;
+  color: #4E30B2;
 }
 
 .moontravel-voucher .v-status-anulado {
@@ -141,7 +141,7 @@
 
 /* ── SECTION TITLE (Otros Servicios) ── */
 .moontravel-voucher .v-section-title {
-  background: linear-gradient(90deg, #081423 0%, #102846 50%, #163863 100%);
+  background: linear-gradient(90deg, #0f172a 0%, #1a1a2e 50%, #2d2d44 100%);
   padding: 12px 36px;
   font-size: 13px;
   font-weight: 800;
@@ -176,7 +176,7 @@
 }
 
 .moontravel-voucher .v-flight-header {
-  background: linear-gradient(135deg, #102846 0%, #163863 100%);
+  background: linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%);
   padding: 12px 20px;
   font-size: 13px;
   font-weight: 800;
@@ -203,7 +203,7 @@
 }
 
 .moontravel-voucher .v-flight-table thead tr {
-  background: linear-gradient(90deg, #f2892f 0%, #f49e54 100%);
+  background: linear-gradient(90deg, #512DDB 0%, #D2C3F7 100%);
 }
 
 .moontravel-voucher .v-flight-table thead th {
@@ -252,7 +252,7 @@
 .moontravel-voucher .v-f-main {
   font-weight: 700;
   font-size: 14px;
-  color: #102846;
+  color: #1a1a2e;
 }
 
 .moontravel-voucher .v-f-sub {
@@ -285,12 +285,12 @@
 .moontravel-voucher .v-fd-val {
   font-size: 13px;
   font-weight: 700;
-  color: #102846;
+  color: #1a1a2e;
 }
 
 .moontravel-voucher .v-badge-orange {
   display: inline;
-  color: #f5832a;
+  color: #4E30B2;
   font-weight: 700;
   font-size: 13px;
   text-transform: uppercase;
@@ -311,7 +311,7 @@
 }
 
 .moontravel-voucher .v-product-label {
-  background: linear-gradient(135deg, #102846 0%, #163863 100%);
+  background: linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%);
   color: #ffffff;
   font-size: 12px;
   font-weight: 800;
@@ -369,7 +369,7 @@
 }
 
 .moontravel-voucher .v-data-cell-value.highlight {
-  color: #102846;
+  color: #1a1a2e;
   font-weight: 700;
 }
 
@@ -386,7 +386,7 @@
 }
 
 .moontravel-voucher .v-table thead tr {
-  background: linear-gradient(90deg, #f2892f 0%, #f49e54 100%);
+  background: linear-gradient(90deg, #512DDB 0%, #D2C3F7 100%);
 }
 
 .moontravel-voucher .v-table thead th {
@@ -426,7 +426,7 @@
 .moontravel-voucher .v-cell-main {
   font-weight: 700;
   font-size: 14px;
-  color: #102846;
+  color: #1a1a2e;
 }
 
 .moontravel-voucher .v-cell-sub {
@@ -438,7 +438,7 @@
 /* ── BADGES ── */
 .moontravel-voucher .v-badge {
   display: inline;
-  color: #102846;
+  color: #1a1a2e;
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.5px;
@@ -446,7 +446,7 @@
 }
 
 .moontravel-voucher .v-badge-accent {
-  color: #f2892f;
+  color: #512DDB;
 }
 
 /* ── FOOTNOTES ── */
@@ -458,14 +458,14 @@
   background: #ffffff;
   border-radius: 6px;
   border: 1px solid #e2e8f0;
-  border-left: 4px solid #102846;
+  border-left: 4px solid #1a1a2e;
 }
 
 /* ── PAYMENT SECTION ── */
 .moontravel-voucher .v-payment {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  border-top: 3px solid #102846;
+  border-top: 3px solid #1a1a2e;
   margin-top: 8px;
 }
 
@@ -487,9 +487,9 @@
   font-weight: 800;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: #102846;
+  color: #1a1a2e;
   margin-bottom: 14px;
-  border-left: 4px solid #f2892f;
+  border-left: 4px solid #512DDB;
   padding-left: 8px;
 }
 
@@ -515,7 +515,7 @@
 }
 
 .moontravel-voucher .v-payment-grand {
-  background: linear-gradient(135deg, #081423 0%, #102846 100%);
+  background: linear-gradient(135deg, #0f172a 0%, #1a1a2e 100%);
   margin: 12px -28px -20px;
   padding: 12px 28px;
   display: flex;
@@ -525,7 +525,7 @@
 
 .moontravel-voucher .v-payment-grand label,
 .moontravel-voucher .v-payment-grand span {
-  color: #f2892f;
+  color: #512DDB;
   font-weight: 800;
   font-size: 17px;
   font-family: "Montserrat", sans-serif;
@@ -536,7 +536,7 @@
   color: #ffffff;
   font-weight: 700;
   margin-top: 12px;
-  background: linear-gradient(135deg, #f2892f 0%, #f49e54 100%);
+  background: linear-gradient(135deg, #512DDB 0%, #D2C3F7 100%);
   padding: 7px 12px;
   border-radius: 4px;
   letter-spacing: 0.5px;
@@ -549,17 +549,17 @@
   font-size: 11.5px;
   color: #1e293b;
   line-height: 1.8;
-  border-top: 3px solid #102846;
+  border-top: 3px solid #1a1a2e;
 }
 
 .moontravel-voucher .v-legal h4 {
   font-size: 12px;
   font-weight: 800;
-  color: #102846;
+  color: #1a1a2e;
   margin-bottom: 10px;
   text-transform: uppercase;
   letter-spacing: 1px;
-  border-bottom: 2px solid #f2892f;
+  border-bottom: 2px solid #512DDB;
   display: inline-block;
   padding-bottom: 3px;
 }
@@ -567,7 +567,7 @@
 .moontravel-voucher .v-legal .v-company {
   margin-top: 12px;
   font-weight: 700;
-  color: #102846;
+  color: #1a1a2e;
   padding-top: 10px;
   border-top: 1px solid #cbd5e1;
   font-size: 11px;
@@ -575,8 +575,8 @@
 
 /* ── FOOTER ── */
 .moontravel-voucher .v-footer {
-  background: linear-gradient(135deg, #081423 0%, #102846 50%, #163863 100%);
-  border-top: 4px solid #f2892f;
+  background: linear-gradient(135deg, #0f172a 0%, #1a1a2e 50%, #2d2d44 100%);
+  border-top: 4px solid #512DDB;
   padding: 16px 36px;
   display: flex;
   justify-content: space-between;
@@ -592,7 +592,7 @@
 }
 
 .moontravel-voucher .v-footer-brand span {
-  color: #f2892f;
+  color: #512DDB;
 }
 
 .moontravel-voucher .v-footer-tagline {
