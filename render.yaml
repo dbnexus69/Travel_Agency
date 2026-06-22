@@ -3,6 +3,7 @@ services:
     name: moontravel-backend
     env: node
     plan: free
+    rootDir: backend-agency
     buildCommand: npm install && npm run build
     startCommand: npm run start
     envVars:
