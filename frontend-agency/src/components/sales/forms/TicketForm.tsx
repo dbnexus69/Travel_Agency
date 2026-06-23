@@ -70,6 +70,7 @@ export function DateTimePicker({
   const [tempHour, setTempHour] = useState("12");
   const [tempMin, setTempMin] = useState("00");
   const [tempPeriod, setTempPeriod] = useState<"AM" | "PM">("AM");
+  const [isFocused, setIsFocused] = useState(false);
 
   const isoToDisplay = (iso: string): string => {
     if (!iso) return "";
@@ -111,12 +112,14 @@ export function DateTimePicker({
   };
 
   useEffect(() => {
-    if (value) {
-      setDisplayValue(isoToDisplay(value));
-    } else {
-      setDisplayValue("");
+    if (!isFocused) {
+      if (value) {
+        setDisplayValue(isoToDisplay(value));
+      } else {
+        setDisplayValue("");
+      }
     }
-  }, [value]);
+  }, [value, isFocused]);
 
   const formatAsDateTime = (val: string) => {
     // Buscar si ya escribieron algo de AM o PM al final
@@ -161,7 +164,20 @@ export function DateTimePicker({
   };
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const formatted = formatAsDateTime(e.target.value);
+    const val = e.target.value;
+    if (val === "") {
+      setDisplayValue("");
+      onChange("");
+      return;
+    }
+
+    const isDeleting = val.length < displayValue.length;
+    if (isDeleting) {
+      setDisplayValue(val);
+      return;
+    }
+
+    const formatted = formatAsDateTime(val);
     setDisplayValue(formatted);
 
     if (formatted.length === 19) {
@@ -178,6 +194,7 @@ export function DateTimePicker({
   };
 
   const handleBlur = () => {
+    setIsFocused(false);
     if (!displayValue) {
       onChange("");
       return;
@@ -204,6 +221,7 @@ export function DateTimePicker({
         type="text"
         value={displayValue}
         onChange={handleTextChange}
+        onFocus={() => setIsFocused(true)}
         onBlur={handleBlur}
         placeholder="DD/MM/AAAA HH:MM"
         className="w-full px-3 py-2 pr-10 border border-gray-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#512DDB]/50 text-xs bg-white text-gray-700"
@@ -363,6 +381,7 @@ export function DatePicker({
   popoverDirection,
 }: DatePickerProps) {
   const [displayValue, setDisplayValue] = useState("");
+  const [isFocused, setIsFocused] = useState(false);
 
   const isoToDisplay = (iso: string): string => {
     if (!iso) return "";
@@ -380,12 +399,14 @@ export function DatePicker({
   };
 
   useEffect(() => {
-    if (value) {
-      setDisplayValue(isoToDisplay(value));
-    } else {
-      setDisplayValue("");
+    if (!isFocused) {
+      if (value) {
+        setDisplayValue(isoToDisplay(value));
+      } else {
+        setDisplayValue("");
+      }
     }
-  }, [value]);
+  }, [value, isFocused]);
 
   const formatAsDate = (val: string) => {
     const digits = val.replace(/\D/g, "").slice(0, 8);
@@ -407,7 +428,20 @@ export function DatePicker({
   };
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const formatted = formatAsDate(e.target.value);
+    const val = e.target.value;
+    if (val === "") {
+      setDisplayValue("");
+      onChange("");
+      return;
+    }
+
+    const isDeleting = val.length < displayValue.length;
+    if (isDeleting) {
+      setDisplayValue(val);
+      return;
+    }
+
+    const formatted = formatAsDate(val);
     setDisplayValue(formatted);
 
     if (formatted.length === 10) {
@@ -425,6 +459,7 @@ export function DatePicker({
   };
 
   const handleBlur = () => {
+    setIsFocused(false);
     if (!displayValue) {
       onChange("");
       return;
@@ -452,6 +487,7 @@ export function DatePicker({
         type="text"
         value={displayValue}
         onChange={handleTextChange}
+        onFocus={() => setIsFocused(true)}
         onBlur={handleBlur}
         placeholder="DD/MM/AAAA"
         className="w-full px-3 py-2 pr-10 border border-gray-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#512DDB]/50 text-xs bg-white text-gray-700"

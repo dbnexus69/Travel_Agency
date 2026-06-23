@@ -1,6 +1,11 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:3000/api';
+let API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:3000/api';
+
+// Si la URL no termina en /api, la normalizamos agregándoselo automáticamente
+if (API_URL && !API_URL.endsWith('/api') && !API_URL.endsWith('/api/')) {
+  API_URL = API_URL.replace(/\/$/, '') + '/api';
+}
 
 const api = axios.create({
   baseURL: API_URL,

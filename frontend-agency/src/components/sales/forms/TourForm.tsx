@@ -49,6 +49,8 @@ export function TourForm({ tour, client, suppliers, paymentMethods, onChange, tr
               min={minDateTime}
               triggerError={triggerError}
               fieldName="Tour guiado"
+              popoverDirection="down"
+              className="z-30"
             />
           </FormField>
           <FormField label="Número de Adultos">
