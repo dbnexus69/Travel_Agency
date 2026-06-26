@@ -450,6 +450,7 @@ model Aerolineas {
   prodTiqueteria    ProdTiqueteria[]
   prodPlanes        ProdPlanes[]
   paqueteVuelo      PaqueteVuelo[]
+  tramosVuelo       TramosVuelo[]
 
   @@map("aerolineas")
 }
@@ -480,6 +481,7 @@ model PoliticasEquipaje {
   notas          String?
 
   prodTiqueteria ProdTiqueteria[]
+  tramosVuelo    TramosVuelo[]
 
   @@map("politicas_equipaje")
 }
@@ -608,6 +610,11 @@ model TramosVuelo {
   orden              Int            @default(1)
   checkinStatus      CheckinStatus? @default(pendiente) @map("checkin_status")
   nroTiquete         String?        @map("nro_tiquete")
+  aerolineaId        Int?           @map("aerolinea_id")
+  aerolinea          Aerolineas?    @relation(fields: [aerolineaId], references: [id])
+  planEquipajeId     Int?           @map("plan_equipaje_id")
+  planEquipaje       PoliticasEquipaje? @relation(fields: [planEquipajeId], references: [id])
+  nroReserva         String?        @map("nro_reserva")
 
   @@map("tramos_vuelo")
   @@index([prodTiqueteriaId])

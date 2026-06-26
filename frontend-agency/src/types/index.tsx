@@ -207,6 +207,9 @@ export interface FlightLeg {
   time?: string;
   arrivalDate?: string;
   ticketNumber?: string;
+  airline?: string;
+  baggagePlan?: string;
+  reservationNumber?: string;
 }
 
 export interface GuestInfo {

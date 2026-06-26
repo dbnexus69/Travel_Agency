@@ -289,9 +289,7 @@ export function useNewSaleWizard({
             const ticket = form.tickets[i];
             const isStrictlyValid = (() => {
               if (!ticket) return false;
-              if (!ticket.airline?.trim()) return false;
               if (!ticket.supplier?.trim()) return false;
-              if (!ticket.reservationNumber || ticket.reservationNumber.length !== 6 || !/^[A-Z0-9]+$/.test(ticket.reservationNumber)) return false;
               
               const paxList = ticket.passengers || ((ticket as any).passengerInfo ? [(ticket as any).passengerInfo] : []);
               if (paxList.length === 0) return false;
@@ -303,6 +301,9 @@ export function useNewSaleWizard({
                 if (!leg.origin?.trim() || !leg.destination?.trim() || !leg.flightNumber?.trim() || leg.flightNumber.length < 3 || leg.flightNumber.length > 6 || !leg.date?.trim() || !leg.arrivalDate?.trim()) {
                   return false;
                 }
+                if (!leg.airline?.trim() || !leg.reservationNumber || leg.reservationNumber.length !== 6 || !/^[A-Z0-9]+$/.test(leg.reservationNumber) || !leg.baggagePlan?.trim()) {
+                  return false;
+                }
                 if (leg.seat && (leg.seat.length < 2 || leg.seat.length > 5)) return false;
               }
               
@@ -310,6 +311,9 @@ export function useNewSaleWizard({
                 if (!ticket.outboundStops || ticket.outboundStops.length === 0) return false;
                 for (const stop of ticket.outboundStops) {
                   if (!stop.origin?.trim() || !stop.destination?.trim() || !stop.flightNumber?.trim() || stop.flightNumber.length < 3 || stop.flightNumber.length > 6 || !stop.date?.trim() || !stop.arrivalDate?.trim()) {
+                    return false;
+                  }
+                  if (!stop.airline?.trim() || !stop.reservationNumber || stop.reservationNumber.length !== 6 || !/^[A-Z0-9]+$/.test(stop.reservationNumber) || !stop.baggagePlan?.trim()) {
                     return false;
                   }
                   if (stop.seat && (stop.seat.length < 2 || stop.seat.length > 5)) return false;
@@ -322,12 +326,18 @@ export function useNewSaleWizard({
                 if (!ret.origin?.trim() || !ret.destination?.trim() || !ret.flightNumber?.trim() || ret.flightNumber.length < 3 || ret.flightNumber.length > 6 || !ret.date?.trim() || !ret.arrivalDate?.trim()) {
                   return false;
                 }
+                if (!ret.airline?.trim() || !ret.reservationNumber || ret.reservationNumber.length !== 6 || !/^[A-Z0-9]+$/.test(ret.reservationNumber) || !ret.baggagePlan?.trim()) {
+                  return false;
+                }
                 if (ret.seat && (ret.seat.length < 2 || ret.seat.length > 5)) return false;
                 
                 if (ticket.returnHasStops) {
                   if (!ticket.returnStops || ticket.returnStops.length === 0) return false;
                   for (const stop of ticket.returnStops) {
                     if (!stop.origin?.trim() || !stop.destination?.trim() || !stop.flightNumber?.trim() || stop.flightNumber.length < 3 || stop.flightNumber.length > 6 || !stop.date?.trim() || !stop.arrivalDate?.trim()) {
+                      return false;
+                    }
+                    if (!stop.airline?.trim() || !stop.reservationNumber || stop.reservationNumber.length !== 6 || !/^[A-Z0-9]+$/.test(stop.reservationNumber) || !stop.baggagePlan?.trim()) {
                       return false;
                     }
                     if (stop.seat && (stop.seat.length < 2 || stop.seat.length > 5)) return false;
@@ -706,7 +716,7 @@ export function useNewSaleWizard({
             if (!tour) errorsList.push("Tour inválido");
             else {
               if (!tour.passengerName || tour.passengerName.trim().length === 0) errorsList.push("Nombre del Pasajero (requerido)");
-              if (!tour.selectedTour || tour.selectedTour.trim().length < 3 || tour.selectedTour.length > 50) errorsList.push("Tour Seleccionado (3-50 caracteres)");
+              if (!tour.selectedTour || tour.selectedTour.trim().length < 3 || tour.selectedTour.length > 1000) errorsList.push("Tour Seleccionado (3-1000 caracteres)");
               if (!tour.pickupPoint || tour.pickupPoint.trim().length === 0 || tour.pickupPoint.length > 30) errorsList.push("Punto de Recogida (1-30 caracteres)");
               if (!tour.preferredDate) errorsList.push("Fecha y Hora Preferida (requerida)");
               
@@ -1159,6 +1169,7 @@ export function useNewSaleWizard({
       asesorId: Number(form.asesorId) || user!.id,
       asesorName: form.asesorName || user!.name,
       date: todayStr(),
+      createdAt: form.createdAt || undefined,
       total: Number(form.total),
       paymentMethod: calculatedPaymentMethod,
       payments: form.payments?.map(p => ({

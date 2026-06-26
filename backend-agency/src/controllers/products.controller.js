@@ -1,4 +1,5 @@
 const prisma = require('../config/db');
+const { resolveAirlineId, resolveBaggagePlanId } = require('../utils/salesHelpers');
 const { success, error } = require('../utils/apiResponse');
 
 const CATEGORIES = {
@@ -141,6 +142,10 @@ const productHandler = (category, tableName, transformData) => ({
             const originAirport = await tx.aeropuertos.findFirst({ where: { codigoIata: leg.origin } });
             const destAirport = await tx.aeropuertos.findFirst({ where: { codigoIata: leg.destination } });
             if (!originAirport || !destAirport) continue;
+            const [legAirlineId, legBaggagePlanId] = await Promise.all([
+              leg.airline ? resolveAirlineId(tx, leg.airline) : null,
+              leg.baggagePlan ? resolveBaggagePlanId(tx, leg.baggagePlan) : null
+            ]);
             await tx.tramosVuelo.create({
               data: {
                 prodTiqueteriaId: product.id,
@@ -149,6 +154,9 @@ const productHandler = (category, tableName, transformData) => ({
                 salida: leg.date ? new Date(leg.date) : new Date(),
                 llegada: leg.date ? new Date(leg.date) : new Date(),
                 nroVueloTramo: leg.flightNumber || null,
+                aerolineaId: legAirlineId,
+                planEquipajeId: legBaggagePlanId,
+                nroReserva: leg.reservationNumber || null,
                 orden: i + 1
               }
             });

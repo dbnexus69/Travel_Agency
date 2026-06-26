@@ -218,11 +218,16 @@ const PRODUCT_INCLUDES = {
     prodTiqueteria: {
       include: {
         tramosVuelo: { 
-          include: { aeropuertoOrigen: true, aeropuertoDestino: true },
+          include: { 
+            aeropuertoOrigen: true, 
+            aeropuertoDestino: true,
+            aerolinea: true,
+            planEquipaje: { include: { aerolinea: true } }
+          },
           orderBy: { orden: 'asc' }
         },
         aerolinea: true,
-        planEquipaje: true
+        planEquipaje: { include: { aerolinea: true } }
       }
     }
   },
@@ -281,6 +286,10 @@ function mapLegs(legs) {
       flightNumber: l.nroVueloTramo,
       seat: l.asiento || null,
       ticketNumber: l.nroTiquete || null,
+      airline: l.aerolinea?.nombre || null,
+      airlineName: l.aerolinea?.nombre || null,
+      baggagePlan: l.planEquipaje ? `${l.planEquipaje.aerolinea?.nombre || ''} - ${l.planEquipaje.tipoTarifa}` : null,
+      reservationNumber: l.nroReserva || null,
       date: formatColombiaDate(l.salida),
       time: formatColombiaTime(l.salida),
       arrivalDate: formatColombiaDate(l.llegada),
@@ -303,7 +312,7 @@ const PRODUCT_TRANSFORMS = {
       ticketNumber: t.nroTiquete,
       flightMode: t.modoVuelo,
       checkinStatus: t.checkinStatus,
-      baggagePlan: t.planEquipaje ? `${t.planEquipaje.tipoTarifa}` : null,
+      baggagePlan: t.planEquipaje ? `${t.planEquipaje.aerolinea?.nombre || ''} - ${t.planEquipaje.tipoTarifa}` : null,
       seatNumber: passengers.length > 0 ? passengers[0].asiento : null,
       supplier: d.proveedor?.nombre || null,
       supplierCost: d.costoProveedor || 0,

@@ -64,9 +64,11 @@ function FlightBlock({ ticket, idx, airportMap, baggageList }: { ticket: TicketD
           <tr>
             <th>DESDE</th>
             <th>HASTA</th>
+            <th>AEROLÍNEA</th>
             <th>VUELO</th>
             <th>SALIDA</th>
             <th>LLEGADA</th>
+            <th>EQUIPAJE</th>
             <th>N° RESERVA</th>
           </tr>
         </thead>
@@ -76,6 +78,16 @@ function FlightBlock({ ticket, idx, airportMap, baggageList }: { ticket: TicketD
             const destInfo = airportMap?.[leg.destination] || { city: '', name: '' };
             const originStr = leg.origin === '—' ? '—' : `${leg.origin}${originInfo.city ? ` — ${originInfo.city}` : ''}`;
             const destStr = leg.destination === '—' ? '—' : `${leg.destination}${destInfo.city ? ` — ${destInfo.city}` : ''}`;
+            
+            // Resolve airline for this segment
+            const segAirline = (leg as any).airlineName || leg.airline || (li === 0 ? ((ticket as any).airlineName || ticket.airline) : '');
+            
+            // Resolve baggage plan for this segment
+            const segBaggage = leg.baggagePlan || (li === 0 ? ticket.baggagePlan : '');
+
+            // Resolve reservation number for this segment
+            const segReservation = leg.reservationNumber || (li === 0 ? ticket.reservationNumber : '');
+
             return (
               <tr key={`leg-${idx}-${li}`}>
                 <td>
@@ -86,6 +98,9 @@ function FlightBlock({ ticket, idx, airportMap, baggageList }: { ticket: TicketD
                   <div className="v-f-main">{destStr}</div>
                   {destInfo.name && <div className="v-f-sub">{destInfo.name}</div>}
                 </td>
+                <td>
+                  <div className="v-f-main">{segAirline || '—'}</div>
+                </td>
                 <td><div className="v-f-main">{leg.flightNumber || '—'}</div></td>
                 <td>
                   <div className="v-f-main">{leg.date ? formatDate(leg.date) : '—'}</div>
@@ -95,7 +110,10 @@ function FlightBlock({ ticket, idx, airportMap, baggageList }: { ticket: TicketD
                   <div className="v-f-main">{(leg as any).arrivalDate ? formatDate((leg as any).arrivalDate) : (leg.date ? formatDate(leg.date) : '—')}</div>
                   <div className="v-f-sub">Hora: {formatTimeAMPM((leg as any).arrivalTime)}</div>
                 </td>
-                <td><div className="v-f-main">{li === 0 ? (ticket.reservationNumber || '—') : '—'}</div></td>
+                <td>
+                  <div className="v-f-main" style={{ fontSize: '11px', whiteSpace: 'nowrap' }}>{segBaggage || '—'}</div>
+                </td>
+                <td><div className="v-f-main">{segReservation || '—'}</div></td>
               </tr>
             );
           })}
@@ -468,7 +486,7 @@ export const VoucherPDF = forwardRef<HTMLDivElement, VoucherPDFProps>(({ sale, a
                 {i > 0 && <div className="v-item-divider" />}
                 <div className="v-data-grid">
                   <DataCell label="Pasajero" value={tour.passengerName} highlight />
-                  <DataCell label="Tour Seleccionado" value={tour.selectedTour} />
+                  <DataCell label="Tour / Planes Seleccionados" value={<span style={{ whiteSpace: 'pre-wrap' }}>{tour.selectedTour}</span>} fullWidth />
                   <DataCell label="Fecha Preferida" value={tour.preferredDate ? formatDate(tour.preferredDate) : null} />
                   <DataCell label="Adultos" value={tour.adultsCount?.toString()} />
                   <DataCell label="Niños" value={tour.childrenCount?.toString()} />

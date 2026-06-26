@@ -1,4 +1,4 @@
-import { Users } from "lucide-react";
+import { Users, Calendar } from "lucide-react";
 import { FormField, Input, Combobox, Select } from "../../ui/Form";
 import { WizardFormData } from "../wizardData";
 
@@ -85,6 +85,34 @@ export function Step1Client({ form, set, data, errors }: any) {
               placeholder="Venta Directa (Sin Comisionista)"
               error={errors.commissionAgent}
             />
+          </FormField>
+
+          <FormField label="Fecha de la Venta (Temporal)">
+            <div className="relative flex items-center">
+              <input
+                type="date"
+                value={form.createdAt || ""}
+                onChange={(e) => set("createdAt", e.target.value)}
+                max={new Date().toISOString().split("T")[0]}
+                onClick={(e) => {
+                  try {
+                    e.currentTarget.showPicker();
+                  } catch (err) {}
+                }}
+                onFocus={(e) => {
+                  try {
+                    e.currentTarget.showPicker();
+                  } catch (err) {}
+                }}
+                className="w-full px-3 py-2 pr-10 border border-gray-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#512DDB]/50 text-xs bg-white text-gray-700 min-h-[38px] cursor-pointer [&::-webkit-calendar-picker-indicator]:hidden"
+                style={{
+                  colorScheme: "light"
+                }}
+              />
+              <div className="absolute right-2 text-gray-400 p-1 pointer-events-none z-10">
+                <Calendar size={15} />
+              </div>
+            </div>
           </FormField>
         </div>
 

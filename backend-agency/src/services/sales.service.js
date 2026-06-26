@@ -4,8 +4,18 @@ const {
   findOrCreatePersona,
   resolvePaymentMethodId,
   resolveSupplierId,
-  resolveAirportId
+  resolveAirportId,
+  resolveAirlineId,
+  resolveBaggagePlanId
 } = require('../utils/salesHelpers');
+
+const parseLocalDate = (dateStr) => {
+  if (!dateStr) return undefined;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    return new Date(`${dateStr}T12:00:00-05:00`);
+  }
+  return new Date(dateStr);
+};
 
 /**
  * Creates a new sale with its detailed products and payments in a single transaction.
@@ -116,9 +126,11 @@ async function createSale(data, userId) {
           for (let i = 0; i < item.legs.length; i++) {
             const leg = item.legs[i];
             if (!leg.origin && !leg.destination) continue;
-            const [originAirportId, destAirportId] = await Promise.all([
+            const [originAirportId, destAirportId, legAirlineId, legBaggagePlanId] = await Promise.all([
               leg.origin ? resolveAirportId(tx, leg.origin, memCache) : null,
-              leg.destination ? resolveAirportId(tx, leg.destination, memCache) : null
+              leg.destination ? resolveAirportId(tx, leg.destination, memCache) : null,
+              leg.airline ? resolveAirlineId(tx, leg.airline) : null,
+              leg.baggagePlan ? resolveBaggagePlanId(tx, leg.baggagePlan) : null
             ]);
             if (originAirportId && destAirportId) {
               tramosVueloData.push({
@@ -129,6 +141,9 @@ async function createSale(data, userId) {
                 nroVueloTramo: leg.flightNumber || null,
                 asiento: leg.seat || null,
                 nroTiquete: leg.ticketNumber || null,
+                aerolineaId: legAirlineId,
+                planEquipajeId: legBaggagePlanId,
+                nroReserva: leg.reservationNumber || null,
                 orden: i + 1
               });
             }
@@ -136,9 +151,11 @@ async function createSale(data, userId) {
           if (item.hasStops && item.outboundStops && item.outboundStops.length > 0) {
             for (const stop of item.outboundStops) {
               if (!stop.origin && !stop.destination) continue;
-              const [sOriginId, sDestId] = await Promise.all([
+              const [sOriginId, sDestId, stopAirlineId, stopBaggagePlanId] = await Promise.all([
                 stop.origin ? resolveAirportId(tx, stop.origin, memCache) : null,
-                stop.destination ? resolveAirportId(tx, stop.destination, memCache) : null
+                stop.destination ? resolveAirportId(tx, stop.destination, memCache) : null,
+                stop.airline ? resolveAirlineId(tx, stop.airline) : null,
+                stop.baggagePlan ? resolveBaggagePlanId(tx, stop.baggagePlan) : null
               ]);
               if (sOriginId && sDestId) {
                 tramosVueloData.push({
@@ -149,6 +166,9 @@ async function createSale(data, userId) {
                   nroVueloTramo: stop.flightNumber || null,
                   asiento: stop.seat || null,
                   nroTiquete: stop.ticketNumber || null,
+                  aerolineaId: stopAirlineId,
+                  planEquipajeId: stopBaggagePlanId,
+                  nroReserva: stop.reservationNumber || null,
                   orden: tramosVueloData.length + 1
                 });
               }
@@ -157,9 +177,11 @@ async function createSale(data, userId) {
 
           if (item.returnLeg && item.returnLeg.origin && item.returnLeg.destination) {
             const rLeg = item.returnLeg;
-            const [rOriginId, rDestId] = await Promise.all([
+            const [rOriginId, rDestId, rAirlineId, rBaggagePlanId] = await Promise.all([
               resolveAirportId(tx, rLeg.origin, memCache),
-              resolveAirportId(tx, rLeg.destination, memCache)
+              resolveAirportId(tx, rLeg.destination, memCache),
+              rLeg.airline ? resolveAirlineId(tx, rLeg.airline) : null,
+              rLeg.baggagePlan ? resolveBaggagePlanId(tx, rLeg.baggagePlan) : null
             ]);
             if (rOriginId && rDestId) {
               tramosVueloData.push({
@@ -170,6 +192,9 @@ async function createSale(data, userId) {
                 nroVueloTramo: rLeg.flightNumber || null,
                 asiento: rLeg.seat || null,
                 nroTiquete: rLeg.ticketNumber || null,
+                aerolineaId: rAirlineId,
+                planEquipajeId: rBaggagePlanId,
+                nroReserva: rLeg.reservationNumber || null,
                 orden: tramosVueloData.length + 1
               });
             }
@@ -178,9 +203,11 @@ async function createSale(data, userId) {
           if (item.returnHasStops && item.returnStops && item.returnStops.length > 0) {
             for (const stop of item.returnStops) {
               if (!stop.origin && !stop.destination) continue;
-              const [sOriginId, sDestId] = await Promise.all([
+              const [sOriginId, sDestId, stopAirlineId, stopBaggagePlanId] = await Promise.all([
                 stop.origin ? resolveAirportId(tx, stop.origin, memCache) : null,
-                stop.destination ? resolveAirportId(tx, stop.destination, memCache) : null
+                stop.destination ? resolveAirportId(tx, stop.destination, memCache) : null,
+                stop.airline ? resolveAirlineId(tx, stop.airline) : null,
+                stop.baggagePlan ? resolveBaggagePlanId(tx, stop.baggagePlan) : null
               ]);
               if (sOriginId && sDestId) {
                 tramosVueloData.push({
@@ -191,6 +218,9 @@ async function createSale(data, userId) {
                   nroVueloTramo: stop.flightNumber || null,
                   asiento: stop.seat || null,
                   nroTiquete: stop.ticketNumber || null,
+                  aerolineaId: stopAirlineId,
+                  planEquipajeId: stopBaggagePlanId,
+                  nroReserva: stop.reservationNumber || null,
                   orden: tramosVueloData.length + 1
                 });
               }
@@ -226,7 +256,8 @@ async function createSale(data, userId) {
       esCredito: data.isCredit || false,
       fechaVenceCredito: data.creditDueDate ? new Date(data.creditDueDate) : null,
       montoPagadoCredito: data.creditPaidAmount || 0,
-      observaciones: data.observations || ''
+      observaciones: data.observations || '',
+      creadoAt: data.createdAt ? parseLocalDate(data.createdAt) : undefined
     };
 
     if (data.payments && data.payments.length > 0) {
@@ -234,7 +265,8 @@ async function createSale(data, userId) {
         create: data.payments.map(p => ({
           monto: p.amount,
           metodoPagoId: parseInt(p.method) || null,
-          referencia: p.reference || null
+          referencia: p.reference || null,
+          fechaPago: data.createdAt ? parseLocalDate(data.createdAt) : undefined
         }))
       };
     }
@@ -429,8 +461,12 @@ async function updateSale(id, data) {
             for (let i = 0; i < item.legs.length; i++) {
               const leg = item.legs[i];
               if (!leg.origin && !leg.destination) continue;
-              const originAirportId = leg.origin ? await resolveAirportId(tx, leg.origin) : null;
-              const destAirportId = leg.destination ? await resolveAirportId(tx, leg.destination) : null;
+              const [originAirportId, destAirportId, legAirlineId, legBaggagePlanId] = await Promise.all([
+                leg.origin ? await resolveAirportId(tx, leg.origin) : null,
+                leg.destination ? await resolveAirportId(tx, leg.destination) : null,
+                leg.airline ? await resolveAirlineId(tx, leg.airline) : null,
+                leg.baggagePlan ? await resolveBaggagePlanId(tx, leg.baggagePlan) : null
+              ]);
               if (!originAirportId || !destAirportId) continue;
               await tx.tramosVuelo.create({
                 data: {
@@ -441,6 +477,9 @@ async function updateSale(id, data) {
                   llegada: leg.arrivalDate ? new Date(leg.arrivalDate) : (leg.date ? new Date(leg.date) : new Date()),
                   nroVueloTramo: leg.flightNumber || null,
                   asiento: leg.seat || null,
+                  aerolineaId: legAirlineId,
+                  planEquipajeId: legBaggagePlanId,
+                  nroReserva: leg.reservationNumber || null,
                   orden: currentOrden++
                 }
               });
@@ -450,8 +489,12 @@ async function updateSale(id, data) {
           if (item.hasStops && item.outboundStops && item.outboundStops.length > 0) {
             for (const stop of item.outboundStops) {
               if (!stop.origin && !stop.destination) continue;
-              const sOriginId = stop.origin ? await resolveAirportId(tx, stop.origin) : null;
-              const sDestId = stop.destination ? await resolveAirportId(tx, stop.destination) : null;
+              const [sOriginId, sDestId, stopAirlineId, stopBaggagePlanId] = await Promise.all([
+                stop.origin ? await resolveAirportId(tx, stop.origin) : null,
+                stop.destination ? await resolveAirportId(tx, stop.destination) : null,
+                stop.airline ? await resolveAirlineId(tx, stop.airline) : null,
+                stop.baggagePlan ? await resolveBaggagePlanId(tx, stop.baggagePlan) : null
+              ]);
               if (!sOriginId || !sDestId) continue;
               await tx.tramosVuelo.create({
                 data: {
@@ -463,6 +506,9 @@ async function updateSale(id, data) {
                   nroVueloTramo: stop.flightNumber || null,
                   asiento: stop.seat || null,
                   nroTiquete: stop.ticketNumber || null,
+                  aerolineaId: stopAirlineId,
+                  planEquipajeId: stopBaggagePlanId,
+                  nroReserva: stop.reservationNumber || null,
                   orden: currentOrden++
                 }
               });
@@ -471,8 +517,12 @@ async function updateSale(id, data) {
 
           if (item.returnLeg && item.returnLeg.origin && item.returnLeg.destination) {
             const rLeg = item.returnLeg;
-            const rOriginId = await resolveAirportId(tx, rLeg.origin);
-            const rDestId = await resolveAirportId(tx, rLeg.destination);
+            const [rOriginId, rDestId, rAirlineId, rBaggagePlanId] = await Promise.all([
+              resolveAirportId(tx, rLeg.origin),
+              resolveAirportId(tx, rLeg.destination),
+              rLeg.airline ? resolveAirlineId(tx, rLeg.airline) : null,
+              rLeg.baggagePlan ? resolveBaggagePlanId(tx, rLeg.baggagePlan) : null
+            ]);
             if (rOriginId && rDestId) {
               await tx.tramosVuelo.create({
                 data: {
@@ -484,6 +534,9 @@ async function updateSale(id, data) {
                   nroVueloTramo: rLeg.flightNumber || null,
                   asiento: rLeg.seat || null,
                   nroTiquete: rLeg.ticketNumber || null,
+                  aerolineaId: rAirlineId,
+                  planEquipajeId: rBaggagePlanId,
+                  nroReserva: rLeg.reservationNumber || null,
                   orden: currentOrden++
                 }
               });
@@ -493,8 +546,12 @@ async function updateSale(id, data) {
           if (item.returnHasStops && item.returnStops && item.returnStops.length > 0) {
             for (const stop of item.returnStops) {
               if (!stop.origin && !stop.destination) continue;
-              const sOriginId = stop.origin ? await resolveAirportId(tx, stop.origin) : null;
-              const sDestId = stop.destination ? await resolveAirportId(tx, stop.destination) : null;
+              const [sOriginId, sDestId, stopAirlineId, stopBaggagePlanId] = await Promise.all([
+                stop.origin ? await resolveAirportId(tx, stop.origin) : null,
+                stop.destination ? await resolveAirportId(tx, stop.destination) : null,
+                stop.airline ? await resolveAirlineId(tx, stop.airline) : null,
+                stop.baggagePlan ? await resolveBaggagePlanId(tx, stop.baggagePlan) : null
+              ]);
               if (!sOriginId || !sDestId) continue;
               await tx.tramosVuelo.create({
                 data: {
@@ -506,6 +563,9 @@ async function updateSale(id, data) {
                   nroVueloTramo: stop.flightNumber || null,
                   asiento: stop.seat || null,
                   nroTiquete: stop.ticketNumber || null,
+                  aerolineaId: stopAirlineId,
+                  planEquipajeId: stopBaggagePlanId,
+                  nroReserva: stop.reservationNumber || null,
                   orden: currentOrden++
                 }
               });

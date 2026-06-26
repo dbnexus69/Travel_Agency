@@ -31,15 +31,13 @@ export function TourForm({ tour, client, suppliers, paymentMethods, onChange, tr
           <FormField label="Nombre del Pasajero">
             <Input value={tour.passengerName} onChange={(e) => onChange({ passengerName: e.target.value })} placeholder="Nombre completo" />
           </FormField>
-          <FormField label="Tour Seleccionado">
-            <Input 
-              value={tour.selectedTour} 
-              onChange={(e) => {
-                const cleaned = e.target.value.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]/g, "");
-                onChange({ selectedTour: cleaned });
-              }} 
-              placeholder="Nombre del tour" 
-              maxLength={50}
+          <FormField label="Tour / Planes Seleccionados" className="md:col-span-2">
+            <Textarea
+              value={tour.selectedTour || ""}
+              onChange={(e) => onChange({ selectedTour: e.target.value })}
+              placeholder="Detalla los planes o actividades del tour (puedes agregar varios separados por comas o saltos de línea)"
+              rows={3}
+              maxLength={1000}
             />
           </FormField>
           <FormField label="Fecha y Hora Preferida">

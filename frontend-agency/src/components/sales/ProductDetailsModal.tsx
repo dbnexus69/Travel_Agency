@@ -250,15 +250,20 @@ export default function ProductDetailsModal({ product, onClose, airportMap }: Pr
                       </div>
                       <div className="text-gray-600">
                         <span className="font-bold text-[10px] text-gray-400 block uppercase mb-0.5">Vuelo</span>
-                        <span className="font-medium text-gray-800">{leg.flightNumber || "-"}{leg.isStop ? " (Escala)" : ""}</span>
+                        <span className="font-medium text-gray-800 block">{leg.flightNumber || "-"}{leg.isStop ? " (Escala)" : ""}</span>
+                        {(leg.airlineName || leg.airline) && <span className="text-[10px] text-primary font-medium block mt-0.5">{leg.airlineName || leg.airline}</span>}
                       </div>
                       <div className="text-gray-600">
                         <span className="font-bold text-[10px] text-gray-400 block uppercase mb-0.5">Asiento</span>
-                        <span className="font-medium text-gray-800">{leg.seat || "-"}</span>
+                        <span className="font-medium text-gray-800 block">{leg.seat || "-"}</span>
+                        {leg.reservationNumber && leg.reservationNumber !== ticket.reservationNumber && (
+                          <span className="text-[10px] text-amber-600 font-semibold block mt-0.5">Reserva: {leg.reservationNumber}</span>
+                        )}
                       </div>
                       <div className="text-gray-600">
                         <span className="font-bold text-[10px] text-gray-400 block uppercase mb-0.5">N° Tiquete</span>
-                        <span className="font-medium text-gray-800">{leg.ticketNumber || "-"}</span>
+                        <span className="font-medium text-gray-800 block">{leg.ticketNumber || "-"}</span>
+                        {leg.baggagePlan && <span className="text-[10px] text-emerald-600 font-medium block mt-0.5">{leg.baggagePlan}</span>}
                       </div>
                     </div>
                   ))}
@@ -290,15 +295,20 @@ export default function ProductDetailsModal({ product, onClose, airportMap }: Pr
                       </div>
                       <div className="text-gray-600">
                         <span className="font-bold text-[10px] text-gray-400 block uppercase mb-0.5">Vuelo</span>
-                        <span className="font-medium text-blue-800">{leg.flightNumber || "-"}{leg.isStop ? " (Escala)" : ""}</span>
+                        <span className="font-medium text-blue-800 block">{leg.flightNumber || "-"}{leg.isStop ? " (Escala)" : ""}</span>
+                        {(leg.airlineName || leg.airline) && <span className="text-[10px] text-primary font-medium block mt-0.5">{leg.airlineName || leg.airline}</span>}
                       </div>
                       <div className="text-gray-600">
                         <span className="font-bold text-[10px] text-gray-400 block uppercase mb-0.5">Asiento</span>
-                        <span className="font-medium text-blue-800">{leg.seat || "-"}</span>
+                        <span className="font-medium text-blue-800 block">{leg.seat || "-"}</span>
+                        {leg.reservationNumber && leg.reservationNumber !== ticket.reservationNumber && (
+                          <span className="text-[10px] text-amber-600 font-semibold block mt-0.5">Reserva: {leg.reservationNumber}</span>
+                        )}
                       </div>
                       <div className="text-gray-600">
                         <span className="font-bold text-[10px] text-gray-400 block uppercase mb-0.5">N° Tiquete</span>
-                        <span className="font-medium text-blue-800">{leg.ticketNumber || "-"}</span>
+                        <span className="font-medium text-blue-800 block">{leg.ticketNumber || "-"}</span>
+                        {leg.baggagePlan && <span className="text-[10px] text-emerald-600 font-medium block mt-0.5">{leg.baggagePlan}</span>}
                       </div>
                     </div>
                   ))}
@@ -491,7 +501,6 @@ export default function ProductDetailsModal({ product, onClose, airportMap }: Pr
               <Compass size={16} className="text-accent" /> Actividad o Tour #{idx + 1}
             </h4>
             {renderGrid([
-              { label: "Tour Seleccionado", value: item.selectedTour },
               { label: "Fecha Preferida", value: item.preferredDate ? formatDate(item.preferredDate) : "-" },
               { label: "Adultos", value: item.adultsCount },
               { label: "Menores", value: item.childrenCount },
@@ -501,6 +510,10 @@ export default function ProductDetailsModal({ product, onClose, airportMap }: Pr
               { label: "Punto de Encuentro", value: item.pickupPoint },
               { label: "Teléfono", value: item.phone },
             ])}
+            <div className="mt-3 text-xs text-gray-600 bg-gray-50 p-2.5 rounded-lg border border-gray-100">
+              <span className="font-bold block text-[10px] text-gray-400 uppercase mb-1">Tour / Planes Seleccionados</span>
+              <div className="whitespace-pre-wrap font-medium text-gray-800">{item.selectedTour}</div>
+            </div>
             {item.medicalConditions && (
               <div className="mt-2 text-xs text-gray-600 bg-gray-50 p-2.5 rounded-lg border border-gray-100">
                 <span className="font-bold block text-[10px] text-gray-400 uppercase">Condiciones Médicas</span>

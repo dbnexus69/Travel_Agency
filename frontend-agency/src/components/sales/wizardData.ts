@@ -73,6 +73,7 @@ export interface WizardFormData {
   visas: VisaData[];
   passports: PassportData[];
   petServices: PetServiceData[];
+  createdAt?: string;
 }
 
 export interface WizardProps {
@@ -424,4 +425,5 @@ export const INITIAL_FORM: WizardFormData = {
   visas: [],
   passports: [],
   petServices: [],
+  createdAt: "",
 };
