@@ -184,11 +184,11 @@ exports.forgotPassword = async (req, res, next) => {
     // Send email using emailService
     await emailService.sendEmail({
       to: email.toLowerCase(),
-      subject: 'iTea Travel - Código de recuperación de contraseña',
+      subject: 'Moon Travel Co - Código de recuperación de contraseña',
       html: `
         <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eaeaec; border-radius: 8px; overflow: hidden;">
           <div style="background-color: #0f172a; padding: 20px; text-align: center;">
-            <h1 style="color: #ffffff; margin: 0; font-size: 24px;">iTea Travel</h1>
+            <h1 style="color: #ffffff; margin: 0; font-size: 24px;">Moon Travel Co</h1>
           </div>
           <div style="padding: 30px;">
             <p style="font-size: 16px;">Hola <strong>${usuario.persona.nombres}</strong>,</p>

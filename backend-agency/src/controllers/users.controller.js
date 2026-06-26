@@ -140,14 +140,110 @@ exports.create = async (req, res, next) => {
       if (dt) tipoDocumentoId = dt.id;
     }
 
-    // Check if user with this document already exists
+    // 1. Check if user already exists by email (case-insensitive)
+    const existingUserByEmail = await prisma.usuarios.findFirst({
+      where: { email: { equals: data.email.toLowerCase(), mode: 'insensitive' } },
+      include: { persona: true }
+    });
+
+    // 2. Check if user already exists by document
+    let existingUserByDoc = null;
     if (data.docNumber) {
-      const existingUser = await prisma.usuarios.findFirst({
-        where: { persona: { documento: data.docNumber } }
+      existingUserByDoc = await prisma.usuarios.findFirst({
+        where: { persona: { documento: data.docNumber } },
+        include: { persona: true }
       });
-      if (existingUser) {
-        return error(res, 'Este número de documento ya está registrado como usuario', 400);
+    }
+
+    // Check conflicts with active users
+    if (existingUserByEmail && existingUserByEmail.status === 'active') {
+      return error(res, 'Este correo electrónico ya está registrado como usuario activo', 400);
+    }
+    if (existingUserByDoc && existingUserByDoc.status === 'active') {
+      return error(res, 'Este número de documento ya está registrado como usuario activo', 400);
+    }
+
+    const userToRestore = existingUserByEmail || existingUserByDoc;
+
+    if (userToRestore) {
+      // Restore persona
+      const persona = await prisma.personas.update({
+        where: { id: userToRestore.personaId },
+        data: {
+          nombres: formatName(data.firstName || data.name?.split(' ')[0] || userToRestore.persona.nombres),
+          apellidos: formatName(data.lastName || data.name?.split(' ').slice(1).join(' ') || userToRestore.persona.apellidos),
+          tipoDocumentoId: tipoDocumentoId || userToRestore.persona.tipoDocumentoId,
+          email: data.email || userToRestore.persona.email,
+          telefono: data.phone || userToRestore.persona.telefono,
+          birthDate: data.birthDate ? new Date(data.birthDate) : userToRestore.persona.birthDate,
+          avatarUrl: data.avatar || userToRestore.persona.avatarUrl,
+          status: 'active',
+          deletedAt: null
+        }
+      });
+
+      const rol = await prisma.roles.findUnique({ where: { nombre: data.role } });
+      if (!rol) return error(res, 'Rol no válido', 400);
+
+      // Restore usuario
+      const usuario = await prisma.usuarios.update({
+        where: { id: userToRestore.id },
+        data: {
+          email: data.email.toLowerCase(),
+          passwordHash,
+          rolId: rol.id,
+          status: 'active'
+        },
+        include: { persona: { include: { tipoDocumento: true } }, rol: true }
+      });
+
+      try {
+        const emailResult = await emailService.sendEmail({
+          to: data.email,
+          subject: '¡Bienvenido a Moon Travel Co - Cuenta Reactivada!',
+          html: `
+            <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eaeaec; border-radius: 8px; overflow: hidden;">
+              <div style="background-color: #0f172a; padding: 20px; text-align: center;">
+                <h1 style="color: #ffffff; margin: 0; font-size: 24px;">¡Bienvenido a Moon Travel Co!</h1>
+              </div>
+              <div style="padding: 30px;">
+                <p style="font-size: 16px;">Hola <strong>${persona.nombres}</strong>,</p>
+                <p style="font-size: 16px;">Tu cuenta ha sido reactivada exitosamente en nuestro sistema.</p>
+                <p style="font-size: 16px;"><strong>Tus credenciales de acceso son:</strong></p>
+                <ul style="font-size: 16px; background: #f8fafc; padding: 15px 30px; border-radius: 6px;">
+                  <li><strong>Correo:</strong> ${data.email}</li>
+                  <li><strong>Contraseña:</strong> ${data.password}</li>
+                </ul>
+                <p style="font-size: 16px; margin-top: 20px;">Te recomendamos cambiar tu contraseña una vez inicies sesión por motivos de seguridad.</p>
+              </div>
+            </div>
+          `
+        });
+        if (emailResult.success) {
+          console.log(`[USER REACTIVATE] Welcome email sent successfully to ${data.email}`);
+        } else {
+          console.error('[ERROR] Sending welcome email (reactivate):', emailResult.error?.message || emailResult.error);
+        }
+      } catch (emailErr) {
+        console.error('[ERROR] Sending welcome email (reactivate exception):', emailErr.message);
       }
+
+      return success(res, {
+        id: usuario.id,
+        name: `${usuario.persona.nombres} ${usuario.persona.apellidos}`,
+        firstName: usuario.persona.nombres,
+        lastName: usuario.persona.apellidos,
+        email: usuario.email,
+        role: usuario.rol.nombre,
+        phone: usuario.persona.telefono,
+        docType: usuario.persona.tipoDocumento?.abreviatura || null,
+        docNumber: usuario.persona.documento,
+        status: usuario.status,
+        birthDate: usuario.persona.birthDate,
+        avatar: usuario.persona.avatarUrl,
+        createdAt: usuario.creadoAt,
+        lastLogin: usuario.ultimoLogin
+      }, null, 201);
     }
 
     let persona;
@@ -195,7 +291,7 @@ exports.create = async (req, res, next) => {
     const usuario = await prisma.usuarios.create({
       data: {
         personaId: persona.id,
-        email: data.email,
+        email: data.email.toLowerCase(),
         passwordHash,
         rolId: rol.id,
         status: data.status || 'active'
@@ -204,13 +300,13 @@ exports.create = async (req, res, next) => {
     });
 
     try {
-      await emailService.sendEmail({
+      const emailResult = await emailService.sendEmail({
         to: data.email,
-        subject: '¡Bienvenido a Samtur Travel - Cuenta Creada!',
+        subject: '¡Bienvenido a Moon Travel Co - Cuenta Creada!',
         html: `
           <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eaeaec; border-radius: 8px; overflow: hidden;">
             <div style="background-color: #0f172a; padding: 20px; text-align: center;">
-              <h1 style="color: #ffffff; margin: 0; font-size: 24px;">¡Bienvenido a Samtur Travel!</h1>
+              <h1 style="color: #ffffff; margin: 0; font-size: 24px;">¡Bienvenido a Moon Travel Co!</h1>
             </div>
             <div style="padding: 30px;">
               <p style="font-size: 16px;">Hola <strong>${persona.nombres}</strong>,</p>
@@ -225,9 +321,13 @@ exports.create = async (req, res, next) => {
           </div>
         `
       });
-      console.log(`[USER CREATE] Welcome email sent successfully to ${data.email}`);
+      if (emailResult.success) {
+        console.log(`[USER CREATE] Welcome email sent successfully to ${data.email}`);
+      } else {
+        console.error('[ERROR] Sending welcome email:', emailResult.error?.message || emailResult.error);
+      }
     } catch (emailErr) {
-      console.error('[ERROR] Sending welcome email:', emailErr.message);
+      console.error('[ERROR] Sending welcome email exception:', emailErr.message);
     }
 
     success(res, {

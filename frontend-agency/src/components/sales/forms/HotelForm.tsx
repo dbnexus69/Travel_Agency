@@ -99,20 +99,18 @@ export function HotelForm({ hotel, onChange, data, triggerError, mainClient }: H
             />
           </FormField>
           <FormField label="Tipo de Hotel">
-            <Combobox
+            <Select
               value={hotel.hotelType || ""}
-              onChange={(val) => onChange({ hotelType: val })}
+              onChange={(e) => onChange({ hotelType: e.target.value })}
               options={[
                 { value: "", label: "Seleccionar..." },
                 { value: "hotel", label: "Hotel" },
-                { value: "hotel_turistico", label: "Hotel Turístico" },
                 { value: "resort", label: "Resort / Todo Incluido" },
                 { value: "boutique", label: "Hotel Boutique" },
                 { value: "apartamento", label: "Apartamento / AirBnB" },
                 { value: "hostal", label: "Hostal / Albergue" },
-                { value: "finca", label: "Finca / Casa Rural" },
+                { value: "fincas", label: "Finca / Casa Rural" },
               ]}
-              placeholder="Seleccionar tipo..."
             />
           </FormField>
         </div>

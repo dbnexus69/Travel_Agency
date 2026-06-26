@@ -935,7 +935,7 @@ exports.create = async (req, res, next) => {
               console.log(`[VOUCHER] Sending email to ${clientEmail} for ${handler.nombreServicio}...`);
               const result = await emailService.sendEmail({
                 to: clientEmail,
-                subject: `Tu voucher de ${handler.nombreServicio} - iTea Travel`,
+                subject: `Tu voucher de ${handler.nombreServicio} - Moon Travel Co`,
                 html: `
                   <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eaeaec; border-radius: 8px; overflow: hidden;">
                     <div style="background-color: #0f172a; padding: 20px; text-align: center;">
@@ -1204,7 +1204,7 @@ exports.sendVoucher = async (req, res, next) => {
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Voucher de Viaje - iTea Travel Agency</title>
+        <title>Voucher de Viaje - Moon Travel Co</title>
       </head>
       <body style="margin:0;padding:0;background:#f4f7fb;font-family:'Segoe UI',Arial,sans-serif;">
         <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f7fb;padding:32px 0;">
@@ -1216,7 +1216,7 @@ exports.sendVoucher = async (req, res, next) => {
                 <tr>
                   <td style="background:linear-gradient(135deg,#032650 0%,#0b396b 60%,#021a36 100%);padding:32px 40px;text-align:center;">
                     <div style="font-size:32px;font-weight:900;color:#ffffff;letter-spacing:3px;font-family:'Montserrat',sans-serif;">
-                      i<span style="color:#07818e;">T</span>ea
+                      Moon <span style="color:#07818e;">Travel</span> Co
                     </div>
                     <div style="font-size:11px;color:rgba(255,255,255,0.55);letter-spacing:4px;text-transform:uppercase;margin-top:4px;">
                       Travel Agency
@@ -1315,7 +1315,7 @@ exports.sendVoucher = async (req, res, next) => {
                       El voucher completo con todos los detalles de tu reserva se encuentra adjunto en este correo en formato PDF.
                     </p>
                     <p style="margin:0;font-size:14px;color:#475569;line-height:1.7;">
-                      Gracias por confiar en <strong style="color:#032650;">iTea Travel Agency</strong>. 
+                      Gracias por confiar en <strong style="color:#032650;">Moon Travel Co</strong>. 
                       ¡Te deseamos un excelente viaje! ✈️
                     </p>
                   </td>
@@ -1325,10 +1325,10 @@ exports.sendVoucher = async (req, res, next) => {
                 <tr>
                   <td style="background:linear-gradient(135deg,#021a36 0%,#032650 50%,#0b396b 100%);border-top:4px solid #07818e;padding:20px 40px;text-align:center;">
                     <p style="margin:0 0 6px;font-size:11px;color:rgba(255,255,255,0.55);letter-spacing:1px;">
-                      iTea Travel Agency &nbsp;|&nbsp; Carrera 65A 13-157, Aeropuerto Olaya Herrera, Medellín
+                      Moon Travel Co &nbsp;|&nbsp; Carrera 65A 13-157, Aeropuerto Olaya Herrera, Medellín
                     </p>
                     <p style="margin:0;font-size:11px;color:rgba(255,255,255,0.45);">
-                      info@itea.com.co &nbsp;|&nbsp; +57 (312) 875 15 89
+                      info@moontravelco.net &nbsp;|&nbsp; +57 (312) 875 15 89
                     </p>
                   </td>
                 </tr>
@@ -1343,11 +1343,11 @@ exports.sendVoucher = async (req, res, next) => {
 
     // Convertir base64 a Buffer para adjuntar
     const pdfBuffer = Buffer.from(pdfBase64, 'base64');
-    const fileName = `Voucher_iTea_Orden_${saleId}_${clientName.replace(/\s+/g, '_')}.pdf`;
+    const fileName = `Voucher_MoonTravelCo_Orden_${saleId}_${clientName.replace(/\s+/g, '_')}.pdf`;
 
     const emailResult = await emailService.sendEmail({
       to: clientEmail,
-      subject: `✈ Tu Voucher de Viaje - Orden #${saleId} | iTea Travel Agency`,
+      subject: `✈ Tu Voucher de Viaje - Orden #${saleId} | Moon Travel Co`,
       html,
       attachments: [
         {

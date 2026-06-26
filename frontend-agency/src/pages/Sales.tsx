@@ -155,7 +155,7 @@ export default function Sales() {
     setVoucherFullSale(null); // will be fetched on demand
   };
 
-  /** Carga la venta completa, renderiza el VoucherPDF y devuelve canvas + doc jsPDF listos */
+  /** Carga la venta completa, renderiza el VoucherPDF y devuelve el doc jsPDF listo */
   const buildVoucherPdf = async (sale: Sale) => {
     // 1. Traer venta completa
     let fullSale: Sale = sale;
@@ -165,117 +165,52 @@ export default function Sales() {
 
     // 2. Inyectar en el componente oculto y esperar render
     setVoucherFullSale(fullSale);
-    await new Promise(resolve => setTimeout(resolve, 800));
+    await new Promise(resolve => setTimeout(resolve, 900));
 
     if (!voucherRef.current) throw new Error('Contenedor del PDF no disponible');
 
-    // Helper to calculate element height with margins
-    const getElementHeightWithMargins = (el: HTMLElement) => {
-      const rect = el.getBoundingClientRect();
-      const style = window.getComputedStyle(el);
-      const marginTop = parseFloat(style.marginTop) || 0;
-      const marginBottom = parseFloat(style.marginBottom) || 0;
-      return rect.height + marginTop + marginBottom;
-    };
+    // 3. Encontrar el contenedor principal del nuevo diseño
+    const pageEl = voucherRef.current;
+    if (!pageEl) throw new Error('No se encontró el contenedor del voucher');
 
-    // 3. Distribución dinámica de elementos en páginas
-    const originalChildren = Array.from(voucherRef.current.children) as HTMLElement[];
-    const footerElement = originalChildren.find(el => el.classList.contains('v-footer'));
-    const childrenToDistribute = originalChildren.filter(el => !el.classList.contains('v-footer'));
-
-    const pagesData: HTMLElement[][] = [];
-    let currentPageContent: HTMLElement[] = [];
-    let currentPageHeight = 0;
-
-    // Altura máxima del contenido por página A4 (820px de ancho -> 1160px de alto. Restando pie de página ~75px y margen de seguridad)
-    const maxContentHeight = 1070;
-
-    for (const child of childrenToDistribute) {
-      const childHeight = getElementHeightWithMargins(child);
-      
-      if (currentPageHeight + childHeight > maxContentHeight && currentPageContent.length > 0) {
-        pagesData.push(currentPageContent);
-        currentPageContent = [child];
-        currentPageHeight = childHeight;
-      } else {
-        currentPageContent.push(child);
-        currentPageHeight += childHeight;
-      }
-    }
-    if (currentPageContent.length > 0) {
-      pagesData.push(currentPageContent);
-    }
-
-    const totalPages = pagesData.length;
-    const currentDate = new Date().toLocaleDateString('es-CO', {
-      day: '2-digit', month: '2-digit', year: 'numeric',
-    });
-
-    // 4. Crear contenedor temporal para renderizar las páginas paginadas
-    const tempContainer = document.createElement('div');
-    tempContainer.className = 'moontravel-voucher';
-    tempContainer.style.position = 'absolute';
-    tempContainer.style.left = '-9999px';
-    tempContainer.style.top = '-9999px';
-    tempContainer.style.width = '820px';
-    document.body.appendChild(tempContainer);
-
-    const pageElements: HTMLDivElement[] = [];
-
-    // Construir cada página
-    for (let i = 0; i < totalPages; i++) {
-      const pageDiv = document.createElement('div');
-      pageDiv.className = 'v-page v-page-temp';
-      
-      const contentDiv = document.createElement('div');
-      contentDiv.className = 'v-page-content-temp';
-      
-      pagesData[i].forEach(child => {
-        contentDiv.appendChild(child.cloneNode(true));
-      });
-      
-      pageDiv.appendChild(contentDiv);
-
-      // Agregar el footer personalizado con paginación
-      if (footerElement) {
-        const clonedFooter = footerElement.cloneNode(true) as HTMLElement;
-        const footerRight = clonedFooter.querySelector('.v-footer-right');
-        if (footerRight) {
-          footerRight.innerHTML = `Voucher Electrónico — Orden #${fullSale.id}<br />Comercial@samturtravel.com<br />Impreso el ${currentDate}<br />Página ${i + 1} de ${totalPages}`;
-        }
-        pageDiv.appendChild(clonedFooter);
-      }
-
-      tempContainer.appendChild(pageDiv);
-      pageElements.push(pageDiv);
-    }
-
-    // Esperar un instante para que el navegador termine de renderizar el contenedor temporal
-    await new Promise(resolve => setTimeout(resolve, 100));
-
-    // 5. Capturar canvas por cada página y armar el jsPDF
     const html2canvas = (await import('html2canvas')).default;
     const { jsPDF } = await import('jspdf');
+
+    // Ancho fijo del diseño en px (coincide con el CSS)
+    const DESIGN_WIDTH = 820;
+    // A4 en mm
+    const A4_W_MM = 210;
+    const A4_H_MM = 297;
+    // A4 en px a 96dpi (referencia del navegador)
+    const A4_H_PX = Math.round(DESIGN_WIDTH * (A4_H_MM / A4_W_MM)); // ≈ 1161px
+
+    const totalHeight = pageEl.scrollHeight;
+    const totalPages = Math.ceil(totalHeight / A4_H_PX);
+
     const doc = new jsPDF('p', 'mm', 'a4');
-    const imgWidth = 210;
-    const imgHeight = 297; // exact A4 height in mm
 
     for (let i = 0; i < totalPages; i++) {
       if (i > 0) doc.addPage();
-      
-      const canvas = await html2canvas(pageElements[i], {
+
+      // Capturar solo el segmento de esta página mediante clipping en el canvas
+      const canvas = await html2canvas(pageEl, {
         scale: 2,
         useCORS: true,
         allowTaint: true,
         logging: false,
         backgroundColor: '#ffffff',
+        // Capturar la "ventana" de esta página
+        y: i * A4_H_PX,
+        height: A4_H_PX,
+        windowWidth: DESIGN_WIDTH,
+        windowHeight: A4_H_PX,
+        width: DESIGN_WIDTH,
       });
-      
-      doc.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, imgWidth, imgHeight);
-    }
 
-    // Limpiar contenedor temporal
-    document.body.removeChild(tempContainer);
+      // El canvas resultante tiene exactamente la sección de la página i
+      // lo incrustamos ocupando todo el A4 sin distorsión
+      doc.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, A4_W_MM, A4_H_MM);
+    }
 
     return { doc, fullSale };
   };
@@ -288,7 +223,7 @@ export default function Sales() {
       setShowSuccess(true);
 
       const { doc } = await buildVoucherPdf(voucherSale);
-      doc.save(`Voucher_Samtur_#${voucherSale.id}_${voucherSale.clientName.replace(/\s+/g, '_')}.pdf`);
+      doc.save(`Voucher_MoonTravel_#${voucherSale.id}_${voucherSale.clientName.replace(/\s+/g, '_')}.pdf`);
 
       setSuccessMessage(`✅ Voucher descargado correctamente`);
       setTimeout(() => setShowSuccess(false), 3000);
